@@ -1,0 +1,37 @@
+{
+	// Visual Studio, LLVM, Google, Chromium, Mozilla, WebKit, none
+	"C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 80 }",
+	"cSpell.words": [
+        "cmath",
+        "delims",
+        "FORI",
+        "FORJ",
+        "FORR",
+        "FORRI",
+        "FORRJ",
+        "FORRK",
+        "getchar",
+        "getline",
+        "iostream",
+        "toupper",
+        "unistd"
+    ],
+	"C_Cpp.intelliSenseEngine": "Disabled",
+	"C_Cpp.intelliSenseEngineFallback": "Disabled",
+	"C_Cpp.autocomplete": "Disabled",
+	"editor.rulers": [
+		80
+	],
+	"files.encoding": "utf8",
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/vcpkg": true,
+		"**/build*": true
+	},
+	"files.restoreUndoStack": true,
+	"files.trimTrailingWhitespace": true
+}
