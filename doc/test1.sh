@@ -8,9 +8,9 @@
 #
 # RCC will concat all the 3 arguments together.
 #    1           2   3
-#    v________v  vv  v___________________________________v
-rcc 'string s="' $1 '"; s[0]=toupper(s[0]); cout<<s<<endl;'
+#    v__________v  vv  v_________________________________________v
+rcc 'string s = "' $1 '"; s[0] = toupper(s[0]); cout << s << endl;'
 
 # Avoid using single quote, use `CH(c)` instead of `char c='c'`.
 # CH() is a wrapper macro returns the first character passed in.
-rcc 'char c=CH(f); cout<<c<<endl;'
+rcc 'char c = CH(f); cout << c << endl;'

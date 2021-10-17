@@ -47,12 +47,12 @@ __Only two things you need to know, the first is double quotes, second is single
 #
 # RCC will concat all the 3 arguments together.
 #    1           2   3
-#    v________v  vv  v___________________________________v
-rcc 'string s="' $1 '"; s[0]=toupper(s[0]); cout<<s<<endl;'
+#    v__________v  vv  v_________________________________________v
+rcc 'string s = "' $1 '"; s[0] = toupper(s[0]); cout << s << endl;'
 
-# Avoid using single quotes, use `CH(c)` instead of `char c='c'`.
+# Avoid using single quote, use `CH(c)` instead of `char c='c'`.
 # CH() is a wrapper macro returns the first character passed in.
-rcc 'char c=CH(f); cout<<c<<endl;'
+rcc 'char c = CH(f); cout << c << endl;'
 ```
 
 While run with `./test1.sh abc`, it prints
@@ -64,9 +64,9 @@ f
 
 ### More examples
 
-Something else you may want to know
+Something else you may want to know.
 
-```bash
+```shell
 # test2.sh
 
 #!/bin/bash
