@@ -3,10 +3,10 @@
 rcc_cache_dir="$HOME/.cache/rcc"
 
 # For test_cpp_standard.sh
-chmod +x ./*.sh
+chmod +x scripts/*.sh
 
 # Get C++ highest standard
-cpp_std=`./test_cpp_standard.sh` || exit 1
+cpp_std=`scripts/test_cpp_standard.sh` || exit 1
 
 # Build rcc
 make rebuild "CPP_STD=$cpp_std" "RCC_CACHE_DIR=$rcc_cache_dir" || exit 1
