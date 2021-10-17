@@ -7,7 +7,7 @@
 # quotes while variables should be outside single quotes.
 #
 # RCC will concat all the 3 arguments together.
-#    1           2   3
+#    1             2   3
 #    v__________v  vv  v_________________________________________v
 rcc 'string s = "' $1 '"; s[0] = toupper(s[0]); cout << s << endl;'
 
