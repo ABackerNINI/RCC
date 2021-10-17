@@ -2,7 +2,7 @@
 
 Only for linux now.
 
-[![GitHub](https://img.shields.io/github/license/ABackerNINI/RCC/blob/master/LICENSE)](https://github.com/ABackerNINI/RCC/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/ABackerNINI/RCC)](https://github.com/ABackerNINI/RCC/blob/master/LICENSE)
 
 * Run short C/C++ codes in terminal or shell scripts just using `rcc 'c++ codes'`, e.g. `rcc 'cout << sqrt(56) * pow(2,13) << endl;'`. RCC will place the c++ codes inside a main function, which is a pre-defined template, which includes frequently-used headers, then compile and run the codes.
 
