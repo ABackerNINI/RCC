@@ -6,3 +6,4 @@ build/
 rcc
 *.gch
 test
+p?.txt
