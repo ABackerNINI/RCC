@@ -33,18 +33,10 @@ int system(const std::string &cmd) { return system(cmd.c_str()); }
 
 ## Functions
 
-### split
-
-Use it to split strings into lines or tokens.
-
 ```c++
 // Split string into tokens like strtok().
 std::vector<std::string> split(const std::string &s, const std::string &delims = " \t\r\n\v\f");
-```
 
-### ascii
-
-```c++
 // Show the ascii value of the given characters.
 void ascii(const char *characters = NULL);
 ```
