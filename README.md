@@ -21,7 +21,7 @@ RCC will place the c++ codes inside a main function, which is a pre-defined temp
 
 ## Requirements
 
-* g++11 or later
+* g++ with c++11 or higher
 
 ## Install
 
@@ -113,7 +113,7 @@ rcc '
 
 ## Define your own template
 
-Before that, you may want to see the [Pre-defined Template](./doc/PredefinedTemplate.md).
+Before that, you may want to see the [Pre-Defined Template](./doc/PredefinedTemplate.md).
 
 You could add your own helper functions in `template/rcc_template.h`, or macros or include library you want to use or whatever. Remember to define functions as `inline`.
 
@@ -121,12 +121,12 @@ It's not recommended to add more codes in `template/rcc_template.cpp` because it
 
 Steps:
 * Edit the template files in `template/rcc_template.[h/cpp]`.
-* Edit the `template/test.cpp`, then `./test.sh` to test your codes. Note that `test.sh` is in the RCC directory.
+* Edit the `template/test.cpp`, then `./test.sh` to test your codes.
 * Finally `./install.sh`.
 
 ## Is it fast?
 
-Well, the g++/clang++ will take around 0.4 seconds to compile, even if a small piece of codes. But with Pre-Compiled Header, it takes around 0.1 seconds, which is acceptable for most cases. And RCC will cache the binaries, so the next time you run RCC with the same arguments, RCC should be really fast, 0.004 seconds according to my tests.
+Well, the g++/clang++ will take around 0.4 seconds to compile, even if a small piece of codes. But with _Pre-Compiled Header_, it takes around 0.1 seconds, which is acceptable for most cases. And RCC will cache the binaries, so the next time you run RCC with the same arguments, RCC should be really fast, 0.004 seconds according to my tests.
 
 Of course, 0.1 seconds is far more than 0.001 seconds which you could easily achieve with raw shell commands. Use RCC just when it's hard to write shell commands for what you want to achieve while C++ does.
 
