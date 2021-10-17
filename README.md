@@ -4,7 +4,9 @@ Only for linux now.
 
 [![GitHub](https://img.shields.io/github/license/ABackerNINI/RCC)](https://github.com/ABackerNINI/RCC/blob/master/LICENSE)
 
-* Run short C/C++ codes in terminal or shell scripts just using `rcc 'c++ codes'`, e.g. `rcc 'cout << sqrt(56) * pow(2,13) << endl;'`. RCC will place the c++ codes inside a main function, which is a pre-defined template, which includes frequently-used headers, then compile and run the codes.
+* Run short C/C++ codes in terminal or shell scripts just using `rcc 'c++ codes'`,
+e.g. `rcc 'cout << sqrt(56) * pow(2,13) << endl;'`.
+RCC will place the c++ codes inside a main function, which is a pre-defined template, which includes frequently-used headers, then compile and run the codes.
 
 * RCC allows you to access all the C/C++ libraries, it's a good extension for your shell scripts.
 
@@ -21,9 +23,7 @@ Only for linux now.
 
 * g++11 or later
 
-## Usage
-
-### Install
+## Install
 
 ```shell
 git clone https://github.com/ABackerNINI/RCC.git
@@ -32,7 +32,7 @@ chmod +x ./install.sh
 ./install.sh
 ```
 
-### Use in terminal or shell scripts
+## Usage
 
 __Only two things you need to know, the first is double quotes, second is single quotes.__
 
@@ -50,7 +50,7 @@ __Only two things you need to know, the first is double quotes, second is single
 #    v________v  vv  v___________________________________v
 rcc 'string s="' $1 '"; s[0]=toupper(s[0]); cout<<s<<endl;'
 
-# Avoid using single quote, use `CH(c)` instead of `char c='c'`.
+# Avoid using single quotes, use `CH(c)` instead of `char c='c'`.
 # CH() is a wrapper macro returns the first character passed in.
 rcc 'char c=CH(f); cout<<c<<endl;'
 ```
@@ -61,6 +61,8 @@ While run with `./test1.sh abc`, it prints
 Abc
 f
 ```
+
+### More examples
 
 Something else you may want to know
 
@@ -73,35 +75,43 @@ Something else you may want to know
 rcc 'cout << sqrt(56) * pow(2,13) << endl;'
 
 # Use C++ stl
-rcc 'map<string, string> m; m["a"] = "b"; m["c"]="d"; cout<<m["c"]<<endl;'
-
-# Call shell inside C++
 # Create 3 files: p0.txt p1.txt and p2.txt.
-rcc 'for(int i=0;i<3;++i){string cmd="touch p"+to_string(i)+".txt"; system(cmd.c_str());}'
+rcc '
+    for(int i = 0; i < 3; ++i){
+        string cmd = "touch p" + to_string(i) + ".txt";
+        system(cmd.c_str());
+    }
+'
 
 # Pipes
 # Print the first column of output of `ls -l`.
 # split() is a pre-defined helper function in the template.
-ls -l | rcc 'string line; getline(cin,line); while(getline(cin,line)){vector<string> v=split(line); cout<<v[0]<<endl;}'
+ls -l | rcc '
+    string line;
+    getline(cin, line);
+    while(getline(cin, line)){
+        vector<string> v = split(line);
+        cout << v[0] << endl;
+    }
+'
 
 # File redirection
 # Equal to `cat Makefile`.
-rcc 'char c; while((c=getchar())!=EOF) {cout<<c;}' < Makefile
-
-# Multiple lines
 rcc '
-    string s = "abc";
-    cout << s << endl;
-'
+    char c;
+    while((c = getchar()) != EOF) {
+        cout << c;
+    }
+' < Makefile
 
 # Want to define functions? use Lambda
 rcc '
     auto f = [&](int a) -> bool { return a==10; };
-    cout << f(a) << endl;
+    cout << f(10) << endl;
 '
 ```
 
-### Define your own template
+## Define your own template
 
 Before that, you may want to see the [Pre-defined Template](./doc/PredefinedTemplate.md).
 
@@ -114,18 +124,18 @@ Steps:
 * Edit the `template/test.cpp`, then `./test.sh` to test your codes. Note that `test.sh` is in the RCC directory.
 * Finally `./install.sh`.
 
-### Is it fast
+## Is it fast?
 
 Well, the g++/clang++ will take around 0.4 seconds to compile, even if a small piece of codes. But with Pre-Compiled Header, it takes around 0.1 seconds, which is acceptable for most cases. And RCC will cache the binaries, so the next time you run RCC with the same arguments, RCC should be really fast, 0.004 seconds according to my tests.
 
 Of course, 0.1 seconds is far more than 0.001 seconds which you could easily achieve with raw shell commands. Use RCC just when it's hard to write shell commands for what you want to achieve while C++ does.
 
-### Uninstall:
+## Uninstall:
 
 ```shell
 rm -rf "$HOME/.local/rcc"
 rm -rf "$HOME/.cache/rcc"
-rm -rf "/usr/local/bin/rcc"
+sudo rm -rf "/usr/local/bin/rcc"
 ```
 
 ## License
