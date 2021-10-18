@@ -57,7 +57,7 @@ rcc 'char c = CH(f); cout << c << endl;'
 
 While run with `./test1.sh abc`, it prints
 
-```
+```text
 Abc
 f
 ```
@@ -120,6 +120,7 @@ You could add your own helper functions in `template/rcc_template.h`, or macros 
 It's not recommended to add more codes in `template/rcc_template.cpp` because it will slow down the compiling process. Add codes in the `rcc_template.h` file, `make install` will compile the header into a Pre-Compiled Header.
 
 Steps:
+
 * Edit the template files in `template/rcc_template.[h/cpp]`.
 * Edit the `template/test.cpp`, then `./test.sh` to test your codes.
 * Finally `./install.sh`.
@@ -130,7 +131,7 @@ Well, the g++/clang++ will take around 0.4 seconds to compile, even if a small p
 
 Of course, 0.1 seconds is far more than 0.001 seconds which you could easily achieve with raw shell commands. Use RCC just when it's hard to write shell commands for what you want to achieve while C++ does.
 
-## Uninstall:
+## Uninstall
 
 ```shell
 rm -rf "$HOME/.local/rcc"
