@@ -184,7 +184,7 @@ int traversal_helper(std::string &dir, traversal_callback_t callback) {
                         break;
                     }
 
-                    if (ret == TRAVERSAL_CALLBACK_RETURN_CODE_SKIP_DIR) {
+                    if (ret != TRAVERSAL_CALLBACK_RETURN_CODE_SKIP_DIR) {
                         traversal_helper(dir, callback);
                     }
                 }
