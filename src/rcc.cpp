@@ -135,6 +135,7 @@ int main(int argc, char **argv) {
     // TODO: add option --print only
     // TODO: add option --pretty
     // TODO: add option -c, compile only, return binary's name, run later
+    // TODO: add option -c, wrap the code in a "cout" and "endl"
     // TODO: add option --arg, run with arguments
     // TODO: add option --clean, clean cached files manually
     // TODO: add support for clang++
