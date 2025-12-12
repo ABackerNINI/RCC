@@ -50,7 +50,7 @@ __Only two things you need to know, the first is double quotes, second is single
 #    v__________v  vv  v_________________________________________v
 rcc 'string s = "' $1 '"; s[0] = toupper(s[0]); cout << s << endl;'
 
-# Avoid using single quote, use `CH(c)` instead of `char c='c'`.
+# Avoid using single quote, use 'CH(c)' instead of 'char c='c''.
 # CH() is a wrapper macro returns the first character passed in.
 rcc 'char c = CH(f); cout << c << endl;'
 ```
@@ -77,7 +77,7 @@ rcc 'cout << sqrt(56) * pow(2,13) << endl;'
 # Use C++ stl
 # Create 3 files: p0.txt p1.txt and p2.txt.
 rcc '
-    for(int i = 0; i < 3; ++i){
+    for(int i = 0; i < 3; ++i) {
         string cmd = "touch p" + to_string(i) + ".txt";
         system(cmd.c_str());
     }
@@ -89,7 +89,7 @@ rcc '
 ls -l | rcc '
     string line;
     getline(cin, line);
-    while(getline(cin, line)){
+    while(getline(cin, line)) {
         vector<string> v = split(line);
         cout << v[0] << endl;
     }
@@ -106,8 +106,8 @@ rcc '
 
 # Want to define functions? use Lambda
 rcc '
-    auto f = [&](int a) -> bool { return a==10; };
-    cout << f(10) << endl;
+    auto func = [&](int a) -> bool { return a==10; };
+    cout << func(10) << endl;
 '
 ```
 
@@ -129,7 +129,7 @@ Steps:
 
 Well, the g++/clang++ will take around 0.4 seconds to compile, even if a small piece of codes. But with _Pre-Compiled Header_, it takes around 0.1 seconds, which is acceptable for most cases. And RCC will cache the binaries, so the next time you run RCC with the same arguments, RCC should be really fast, 0.004 seconds according to my tests.
 
-Of course, 0.1 seconds is far more than 0.001 seconds which you could easily achieve with raw shell commands. Use RCC just when it's hard to write shell commands for what you want to achieve while C++ does.
+Of course, 0.1 seconds is far more than 0.001 seconds which you could easily achieve with raw shell commands. Use RCC just when it's hard to write shell commands for what you want to do while C++ does.
 
 ## Uninstall
 
