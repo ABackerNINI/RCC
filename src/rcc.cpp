@@ -14,7 +14,7 @@ using namespace std;
 #endif
 
 #ifndef RCC_CACHE_DIR
-// Store all temperary files in this directory, including auto-generated .cpp
+// Store all temporary files in this directory, including auto-generated .cpp
 // and .bin files.
 #define RCC_CACHE_DIR ""
 #endif
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     // Seed the random number generator
     //? Why time() + getpid()?
     //* If we only use time() as the seed, rcc may run in one second multiple
-    //* times, thus get the same seed.
+    //* times, and get the same seed.
     srand((unsigned int)time(NULL) + (unsigned int)getpid());
 
     // Save the template cpp file in $HOME/.cache/RCC_TEMP_SRC_NAME
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
     string rcc_local_dir = string(HOME) + "/.local/rcc";
     string rcc_cache_dir = RCC_CACHE_DIR;
     if (rcc_cache_dir == "") {
-        string(HOME) + "/.cache/rcc";
+        rcc_cache_dir = string(HOME) + "/.cache/rcc";
     }
 
     /*------------------------------------------------------------------------*/
