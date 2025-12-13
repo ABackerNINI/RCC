@@ -1,23 +1,14 @@
 #ifndef __RCC_TEMPLATE_H__
 #define __RCC_TEMPLATE_H__
 
-#include <algorithm>
-#include <cmath>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include <dirent.h>
 #include <fcntl.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <bits/stdc++.h>
 
 #define FOR(l, r)  for (int i = l; i < r; ++i)
 #define FORR(r, l) for (int i = r; i >= l; --i)
