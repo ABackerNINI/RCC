@@ -1,47 +1,67 @@
-# Build details
+# BUILD DETAILS
 
-CXX = g++
-# there should be a space before "-std"
-CXXFLAGS  = -W -Wall -g -std=$(CPP_STD)     \
-	"-DCPP_STD=\" -std=$(CPP_STD)\""        \
-	"-DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\""
+CPP_COMPILER ?= g++
+CPP_STD      ?= c++17
+RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
 
-CXXLFLAGS = -W -Wall -g -std=$(CPP_STD)
+CXX      = $(CPP_COMPILER)
+CXXFLAGS = -W -Wall -std=$(CPP_STD)     			\
+		   "-DRCC_COMPILER=\"$(CPP_COMPILER)\""		\
+		   "-DRCC_CPP_STD=\"-std=$(CPP_STD)\""      \
+		   "-DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\""
+LDFLAGS  = -lm
+BUILD    = build
 
-BD = ./build
+# TARGETS
 
-# Compile to objects
+TARGET = rcc
 
-$(BD)/%.o: %.cpp
-	@$(if $(wildcard $(BD)),,mkdir -p $(BD))
-	$(CXX) -c -o $@ $< $(CXXFLAGS)
+.PHONY: default debug release clean
 
-# Build Executable
+default: debug
 
-bin = rcc
+debug: CXXFLAGS += -g -DDEBUG=1
+debug: $(BUILD)/debug.mode $(TARGET)
 
-all: $(bin)
-
-rebuild: clean all
-
-# Executable 1
-
-obj = rcc.o
-objbd = $(obj:%=$(BD)/%)
-
-$(bin): $(objbd)
-	$(CXX) -o $(bin) $(objbd) $(CXXLFLAGS)
-
-# Dependencies
-
-rcc.o: rcc.cpp
-
-# Clean up
+release: CXXFLAGS += -O3 # -DNDEBUG=1
+release: $(BUILD)/release.mode $(TARGET)
 
 clean:
-	rm -f "$(bin)" $(objbd)
-	rm -fd "$(BD)"
+	rm -rf "$(TARGET)" "$(BUILD)"
 
-# PHONY
+# EXECUTABLE DETAILS
 
-.PHONY: all rebuild install clean
+OBJS = rcc.o
+
+OBJSBD = $(OBJS:%=$(BUILD)/%)
+
+$(TARGET): $(OBJSBD)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# COMPILE TO OBJECTS
+
+$(BUILD)/%.o: %.cpp
+	@mkdir -p "$(BUILD)"
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+# MODE CONTROL
+
+$(BUILD)/%.mode:
+	@if [ ! -f "$@" ]; then \
+		if [ -d "$(BUILD)" ]; then \
+			echo "Switching to $* mode..."; \
+			$(MAKE) clean; \
+		fi; \
+		mkdir -p "$(BUILD)"; \
+		touch "$@"; \
+	fi
+
+# DEPENDENCIES
+
+SRC = $(wildcard *.h *.hpp *.c *.cpp *.cc)
+
+$(BUILD)/depend.mk: $(SRC)
+	@mkdir -p "$(BUILD)"
+	@$(CXX) $(CXXFLAGS) -MM *.cpp $(LDFLAGS) | sed 's/^\(.*\).o:/$$(BUILD)\/\1.o:/' > $@
+
+include $(BUILD)/depend.mk

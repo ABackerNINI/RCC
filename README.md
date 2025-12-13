@@ -136,7 +136,7 @@ Of course, 0.1 seconds is far more than 0.001 seconds which you could easily ach
 ```shell
 rm -rf "$HOME/.local/rcc"
 rm -rf "$HOME/.cache/rcc"
-sudo rm -rf "/usr/local/bin/rcc"
+sudo rm -f "/usr/local/bin/rcc"
 ```
 
 ## License

@@ -8,9 +8,17 @@
 
 using namespace std;
 
-#ifndef CPP_STD
+#ifndef RCC_COMPILER
+// Use this compiler to compile the code.
+
+// The clang++ compiler uses a different strategy for Pre-Compiled Header.
+// So use g++ for now.
+#define RCC_COMPILER "g++"
+#endif
+
+#ifndef RCC_CPP_STD
 // Use this standard to compile the code.
-#define CPP_STD ""
+#define RCC_CPP_STD "c++11"
 #endif
 
 #ifndef RCC_CACHE_DIR
@@ -21,8 +29,8 @@ using namespace std;
 
 #define HASH_SEED 13
 
-#define RCC_TEMP_SRC_NAME "rcc_src_"
-#define RCC_TEMP_BIN_NAME "rcc_bin_"
+#define RCC_TEMP_SRC_NAME_PREFIX "rcc_src_"
+#define RCC_TEMP_BIN_NAME_PREFIX "rcc_bin_"
 // #define RCC_LOG_NAME "rcc.log"
 
 // Merge all command line arguments together in a string.
@@ -79,15 +87,15 @@ string gen_code(const string &template_filename,
     return code;
 }
 
-// Assemble c++ code using the template file and command line arguments.
-void output_cpp_code(const string &out_filename, const string &full_code) {
-    ofstream outfile(out_filename);
+// Write string to a file.
+void write_file(const string &filename, const string &content) {
+    ofstream outfile(filename);
     if (!outfile) {
-        cerr << "Can't open file: " << out_filename << endl;
+        cerr << "Can't open file: " << filename << endl;
         exit(1);
     }
 
-    outfile << full_code;
+    outfile << content;
 }
 
 // Delete old cached files.
@@ -100,18 +108,21 @@ pid_t clean_cache() {
     if (rand() % 256 == 0) {
         pid_t pid = fork();
         if (pid == 0) { // in child process
-            // find and remove src/bin files whose access time is 3 days ago
+            // find and remove src/bin files whose access time is 30 days ago
             string find_rm_cmd;
-            find_rm_cmd += string("find . -atime +3 -name \"") +
-                           RCC_TEMP_SRC_NAME + "*.cpp\"";
+            find_rm_cmd += string("find . -atime +30 -name \"") +
+                           RCC_TEMP_SRC_NAME_PREFIX + "*.cpp\"";
             find_rm_cmd +=
-                string(" -o -name \"") + RCC_TEMP_BIN_NAME + "*.bin\"";
+                string(" -o -name \"") + RCC_TEMP_BIN_NAME_PREFIX + "*.bin\"";
             //! Caution: rm command
             find_rm_cmd += string(" | xargs rm -f");
 
             // cout << find_rm_cmd << endl;
 
-            system(find_rm_cmd.c_str());
+            if (system(find_rm_cmd.c_str()) != 0) {
+                perror("system:find");
+                exit(1);
+            }
 
             // Leave this process to the init
             exit(0);
@@ -121,6 +132,16 @@ pid_t clean_cache() {
         return pid;
     }
     return -1;
+}
+
+// Ignore the result of a function call so that compiler doesn't warn about
+// unused result.
+template <typename T> void IGNORE_RESULT(T &&) {}
+
+// Wrapper for system() to ignore return value.
+void ignore_system(const char *cmd) {
+    // [[maybe_unused]] auto result = system(cmd); // ignore result
+    IGNORE_RESULT(system(cmd));
 }
 
 int main(int argc, char **argv) {
@@ -155,7 +176,7 @@ int main(int argc, char **argv) {
     //* times, and get the same seed.
     srand((unsigned int)time(NULL) + (unsigned int)getpid());
 
-    // Save the template cpp file in $HOME/.cache/RCC_TEMP_SRC_NAME
+    // Save the template cpp file in $HOME/.cache/RCC_TEMP_SRC_NAME_PREFIX
     const char *HOME = getenv("HOME");
     if (HOME == NULL) {
         cerr << "Can't get $HOME" << endl;
@@ -169,10 +190,17 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    string rcc_local_dir = string(HOME) + "/.local/rcc";
     string rcc_cache_dir = RCC_CACHE_DIR;
     if (rcc_cache_dir == "") {
         rcc_cache_dir = string(HOME) + "/.cache/rcc";
+    }
+
+    // Create rcc cache directory if not exist
+    if (access(rcc_cache_dir.c_str(), F_OK) != 0) {
+        if (system(("mkdir -p " + rcc_cache_dir).c_str()) != 0) {
+            perror("system:mkdir");
+            exit(1);
+        }
     }
 
     /*------------------------------------------------------------------------*/
@@ -189,12 +217,6 @@ int main(int argc, char **argv) {
 
     // command line c++ code
     string code = merge_args(argc, argv);
-
-    // Create rcc cache directory if not exist
-    if (access(rcc_cache_dir.c_str(), F_OK) != 0) {
-        system(("mkdir -p " + rcc_cache_dir).c_str());
-        // TODO:
-    }
 
     // cpp template path
     string temp_cpp_path = "rcc_template.cpp";
@@ -213,9 +235,9 @@ int main(int argc, char **argv) {
     hash_str = zeros + hash_str;
 
     // write temporary c++ code in this file
-    string out_cpp_name = RCC_TEMP_SRC_NAME + hash_str + ".cpp";
+    string out_cpp_name = RCC_TEMP_SRC_NAME_PREFIX + hash_str + ".cpp";
     // compile output file
-    string out_bin_name = RCC_TEMP_BIN_NAME + hash_str + ".bin";
+    string out_bin_name = RCC_TEMP_BIN_NAME_PREFIX + hash_str + ".bin";
     // the executable full path
     string out_bin_full_path = rcc_cache_dir + "/" + out_bin_name;
 
@@ -229,35 +251,32 @@ int main(int argc, char **argv) {
     if (access(out_bin_name.c_str(), F_OK) == 0) {
         string code_old = read_file(out_cpp_name);
         if (code_old == full_code) {
-            // Cached, skip the compiling process, run the executable
+            // Cached, skip the compiling process, run the executable directly
+            //* Note that the result of this system call is ignored
             // cout << run_exec_str << endl;
-            system(run_exec_cmd.c_str());
+            ignore_system(run_exec_cmd.c_str());
             return 0;
         }
     }
 
-    // Write temporary c++ code
-    // output_cpp_code(out_cpp_name, temp_cpp_path, code);
-    output_cpp_code(out_cpp_name, full_code);
+    // Write c++ code to the temp file
+    write_file(out_cpp_name, full_code);
 
     /*------------------------------------------------------------------------*/
     // * Compile And Run
 
-    // The clang++ compiler uses a different strategy for Pre-Compiled Header.
-    // So use g++ for now.
-
     // the compiler
-    string compiler = "g++";
+    string compiler = RCC_COMPILER;
 
     //? Should use a C++ standard like "-std=c++11"?
     //* This will be necessary on some lower version compilers. But this will
     //* prevent us using a higher default standard.
     //* The current solution is test C++ standard before making rcc, then use
     //* the highest possible standard to compile the rcc and template header as
-    //* well as use it here. See CPP_STD.
+    //* well as use it here. See RCC_CPP_STD.
 
-    // compile with warning and error messages
-    string compile_cmd = compiler + CPP_STD +
+    // compile with warning and error messages, but no unused warnings
+    string compile_cmd = compiler + " " + RCC_CPP_STD +
                          " -W -Wall"
                          " -Wno-unused-variable"
                          " -Wno-unused-parameter"
@@ -271,7 +290,8 @@ int main(int argc, char **argv) {
     // If compile succeed, run the program from cwd directory,
     // else print the out cpp full path.
     if (system(compile_cmd.c_str()) == 0) {
-        system(run_exec_cmd.c_str());
+        //* Note that the result of this system call is ignored
+        ignore_system(run_exec_cmd.c_str());
     } else {
         cout << "\n" << rcc_cache_dir << "/" << out_cpp_name << endl;
     }
