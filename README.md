@@ -27,7 +27,7 @@ RCC will place the c++ codes inside a main function, which is a pre-defined temp
 
 ```shell
 git clone https://github.com/ABackerNINI/RCC.git
-cd RCC
+cd RCC/src/
 chmod +x ./install.sh
 ./install.sh
 ```
@@ -134,9 +134,8 @@ Of course, 0.1 seconds is far more than 0.001 seconds which you could easily ach
 ## Uninstall
 
 ```shell
-rm -rf "$HOME/.local/rcc"
-rm -rf "$HOME/.cache/rcc"
-sudo rm -f "/usr/local/bin/rcc"
+chmod +x ./uninstall.sh
+./uninstall.sh
 ```
 
 ## License
