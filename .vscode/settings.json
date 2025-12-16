@@ -1,6 +1,6 @@
 {
 	// Visual Studio, LLVM, Google, Chromium, Mozilla, WebKit, none
-	"C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 80 }",
+	"C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 120 }",
 	"cSpell.words": [
         "cmath",
         "DCPP",
@@ -18,11 +18,11 @@
         "toupper",
         "unistd"
     ],
-	"C_Cpp.intelliSenseEngine": "Disabled",
-	"C_Cpp.intelliSenseEngineFallback": "Disabled",
-	"C_Cpp.autocomplete": "Disabled",
+    // "C_Cpp.intelliSenseEngine": "disabled",
+    // "C_Cpp.intelliSenseEngineFallback": "disabled",
+    // "C_Cpp.autocomplete": "disabled",
 	"editor.rulers": [
-		80
+		120
 	],
 	"files.encoding": "utf8",
 	"files.exclude": {
@@ -35,5 +35,9 @@
 		"**/build*": true
 	},
 	"files.restoreUndoStack": true,
-	"files.trimTrailingWhitespace": true
+    "autoHide.autoHidePanel": true,
+    "shellcheck.exclude": [
+        "2002",
+        "2034"
+    ]
 }
