@@ -5,7 +5,7 @@ Only for linux now.
 [![GitHub](https://img.shields.io/github/license/ABackerNINI/RCC)](https://github.com/ABackerNINI/RCC/blob/master/LICENSE)
 
 * Run short C/C++ codes in terminal or shell scripts just using `rcc 'c++ codes'`,
-e.g. `rcc 'cout << sqrt(56) * pow(2,13) << endl;'`.
+e.g. `rcc 'cout << sqrt(56) * pow(2, 13) << endl;'` or `rcc 'sqrt(56) * pow(2, 13)'`.
 RCC will place the c++ codes inside a main function, which is a pre-defined template, which includes frequently-used headers, then compile and run the codes.
 
 * RCC allows you to access all the C/C++ libraries, it's a good extension for your shell scripts.
@@ -17,11 +17,11 @@ RCC will place the c++ codes inside a main function, which is a pre-defined temp
 * Run C/C++ codes in the command line or shell scripts.
 * Cache compiled executable files.
 * Show syntax errors.
-* Simple and fast enough with Pre-Compiled Header.
+* Simple and fast enough with _Pre-Compiled Header_.
 
 ## Requirements
 
-* g++ with c++11 or higher
+* `g++` or `clang++` with c++11 or higher.
 
 ## Install
 
@@ -72,7 +72,13 @@ Something else you may want to know.
 #!/bin/bash
 
 # Use C++ math functions
-rcc 'cout << sqrt(56) * pow(2,13) << endl;'
+rcc 'cout << sqrt(56) * pow(2, 13) << endl;'
+
+# Even simpler
+# If only one argument is given without the trailing semicolon, rcc will
+# automatically add the semicolon and cout << ... << endl;
+# This is the same as the above.
+rcc 'sqrt(56) * pow(2, 13)'
 
 # Use C++ stl
 # Create 3 files: p0.txt p1.txt and p2.txt.
@@ -106,7 +112,7 @@ rcc '
 
 # Want to define functions? use Lambda
 rcc '
-    auto func = [&](int a) -> bool { return a==10; };
+    auto func = [&](int a) -> bool { return a == 10; };
     cout << func(10) << endl;
 '
 ```
@@ -115,13 +121,13 @@ rcc '
 
 Before that, you may want to see the [Pre-Defined Template](./doc/PredefinedTemplate.md).
 
-You could add your own helper functions in `template/rcc_template.h`, or macros or include library you want to use or whatever. Remember to define functions as `inline`.
+You could add your own helper functions in `template/rcc_template.hpp`, or macros or include library you want to use or whatever.
 
-It's not recommended to add more codes in `template/rcc_template.cpp` because it will slow down the compiling process. Add codes in the `rcc_template.h` file, `make install` will compile the header into a Pre-Compiled Header.
+It's not recommended to add more codes in `template/rcc_template.cpp` because it will slow down the compiling process. Add codes in the `rcc_template.hpp` file instead, `make install` will compile the header into a _Pre-Compiled Header_.
 
 Steps:
 
-* Edit the template files in `template/rcc_template.[h/cpp]`.
+* Edit the template files in `template/rcc_template.[hpp/cpp]`.
 * Edit the `template/test.cpp`, then `./test.sh` to test your codes.
 * Finally `./install.sh`.
 
