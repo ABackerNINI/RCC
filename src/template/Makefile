@@ -1,6 +1,9 @@
 # Build details
 
-CXX = g++
+CPP_COMPILER  ?= g++
+CPP_STD       ?= c++17
+
+CXX = $(CPP_COMPILER)
 CXXFLAGS = -W -Wall -std=$(CPP_STD) -Wno-unused-parameter
 BD = ./build
 
@@ -12,12 +15,24 @@ $(BD)/%.o: %.cpp
 
 # Pre-Compiled Header
 
-%.h.gch: %.h
-	$(CXX) -x c++-header -c -o $@ $< $(CXXFLAGS)
+# for g++ PCH
+%.hpp.gch: %.hpp
+	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
+
+# for clang++ PCH
+%.hpp.pch: %.hpp
+	$(CXX) $(CXXFLAGS) -Xclang -emit-pch -o $@ $<
 
 # Build Executable
 
-pch = rcc_template.h.gch
+pch = ""
+
+ifeq ($(CPP_COMPILER), g++)
+	pch = rcc_template.hpp.gch
+else ifeq ($(CPP_COMPILER), clang++)
+	pch = rcc_template.hpp.pch
+endif
+
 bin = test
 
 all: $(pch)
@@ -30,11 +45,11 @@ obj = test.o
 objbd = $(obj:%=$(BD)/%)
 
 $(bin): $(pch) $(objbd)
-	$(CXX) -g -I. -o $(bin) $(objbd) $(CXXFLAGS)
+	$(CXX) $(CXXFLAGS) -g -I. -o $(bin) $(objbd)
 
 # Dependencies
 
-test.o: rcc_template.h test.cpp
+test.o: rcc_template.hpp test.cpp
 
 # Clean up
 

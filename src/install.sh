@@ -55,7 +55,7 @@ rcc_cache_dir="$HOME/.cache/rcc"
 # The compiler to use to both compile the rcc and use inside rcc
 #! The clang++ compiler uses a different strategy for Pre-Compiled Header.
 #! So use g++ for now.
-compiler="g++"
+compiler="clang++"
 
 echo "${YELLOW}Using compiler:${NORMAL} ${UNDERLINE}$compiler${NORMAL}"
 
@@ -89,7 +89,7 @@ check_error "mkdir -p $rcc_cache_dir/templates"
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
 cd template || exit 1
-make clean
+make clean "CPP_COMPILER=$compiler"
 check_error "make clean"
 make "CPP_COMPILER=$compiler" "CPP_STD=$cpp_std"
 check_error "make"
@@ -97,7 +97,7 @@ cd ..
 
 # Copy templates and PCH to rcc cache dir
 echo "${YELLOW}Copying templates and PCH to cache directory${NORMAL}"
-cp -r template/*.cpp template/*.h template/*.gch -t "$rcc_cache_dir/templates"
+cp -r template/* -t "$rcc_cache_dir/templates"
 
 echo ""
 echo "${GREEN}${UNDERLINE}INSTALLATION COMPLETE!${NORMAL}"

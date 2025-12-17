@@ -6,10 +6,10 @@ RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
 
 CXX      = $(CPP_COMPILER)
 CXXFLAGS = -W -Wall -std=$(CPP_STD)     			\
-		   "-DRCC_COMPILER=\"$(CPP_COMPILER)\""		\
-		   "-DRCC_CPP_STD=\"-std=$(CPP_STD)\""      \
-		   "-DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\""
-LDFLAGS  = -lm
+		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
+		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
+		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
+LDFLAGS  = 
 BUILD    = build
 
 # TARGETS
@@ -31,7 +31,7 @@ clean:
 
 # EXECUTABLE DETAILS
 
-OBJS = rcc.o paths.o
+OBJS = rcc.o paths.o compiler_support.o
 
 OBJSBD = $(OBJS:%=$(BUILD)/%)
 

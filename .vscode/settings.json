@@ -15,8 +15,9 @@
         "getchar",
         "getline",
         "iostream",
+        "pchs",
         "toupper",
-        "unistd"
+        "Xclang"
     ],
     // "C_Cpp.intelliSenseEngine": "disabled",
     // "C_Cpp.intelliSenseEngineFallback": "disabled",

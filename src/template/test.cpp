@@ -1,4 +1,4 @@
-#include "rcc_template.h"
+#include "rcc_template.hpp"
 #include <cassert>
 #include <fstream>
 #include <iostream>

@@ -116,24 +116,6 @@ void Path::write_file(const string &content) const {
     outfile << content;
 }
 
-// class Paths {
-//   public:
-//     Paths& get_instance(); // Singleton
-//
-//     std::string get_cwd();
-//
-//     std::string get_cache_dir();
-//
-//     std::string get_sub_cache_dir();
-//     std::string get_sub_templates_dir();
-//
-//     std::string get_bin_full_path();
-//     std::string get_src_full_path();
-//
-//   private:
-//     Paths();
-// };
-
 Paths &Paths::get_instance() {
     static Paths instance;
     return instance;
@@ -148,10 +130,10 @@ Paths::Paths() {
     }
 
     this->cwd = std::string(cwd);
-    
+
     validate_cache_dir();
 
-    this->template_path=sub_templates_dir;
+    this->template_path = sub_templates_dir;
     this->template_path.join("rcc_template.cpp");
 }
 
@@ -225,6 +207,7 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     // the source code full path
     src_path = cache_dir;
     src_path.join(SUB_DIR_CACHE).join(out_cpp_name);
+
     // the executable full path
     bin_path = cache_dir;
     bin_path.join(SUB_DIR_CACHE).join(out_bin_name);
