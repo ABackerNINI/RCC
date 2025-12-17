@@ -1,7 +1,7 @@
 # BUILD DETAILS
 
-CPP_COMPILER ?= g++
-CPP_STD      ?= c++17
+CPP_COMPILER  ?= g++
+CPP_STD       ?= c++17
 RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
 
 CXX      = $(CPP_COMPILER)
@@ -23,7 +23,7 @@ default: debug
 debug: CXXFLAGS += -g -DDEBUG=1
 debug: $(BUILD)/debug.mode $(TARGET)
 
-release: CXXFLAGS += -O3 # -DNDEBUG=1
+release: CXXFLAGS += -O3# -DNDEBUG=1
 release: $(BUILD)/release.mode $(TARGET)
 
 clean:
@@ -31,7 +31,7 @@ clean:
 
 # EXECUTABLE DETAILS
 
-OBJS = rcc.o
+OBJS = rcc.o paths.o
 
 OBJSBD = $(OBJS:%=$(BUILD)/%)
 

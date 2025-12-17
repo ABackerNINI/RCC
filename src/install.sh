@@ -81,8 +81,10 @@ check_error "sudo cp rcc /usr/local/bin/"
 
 # Create rcc cache dir
 echo "${YELLOW}Creating cache directory \"$rcc_cache_dir\"${NORMAL}"
-mkdir -p "$rcc_cache_dir"
-check_error "mkdir -p $rcc_cache_dir"
+mkdir -p "$rcc_cache_dir/cache"
+check_error "mkdir -p $rcc_cache_dir/cache"
+mkdir -p "$rcc_cache_dir/templates"
+check_error "mkdir -p $rcc_cache_dir/templates"
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
@@ -95,7 +97,7 @@ cd ..
 
 # Copy templates and PCH to rcc cache dir
 echo "${YELLOW}Copying templates and PCH to cache directory${NORMAL}"
-cp -r template/*.cpp template/*.h template/*.gch -t "$rcc_cache_dir"
+cp -r template/*.cpp template/*.h template/*.gch -t "$rcc_cache_dir/templates"
 
 echo ""
 echo "${GREEN}${UNDERLINE}INSTALLATION COMPLETE!${NORMAL}"

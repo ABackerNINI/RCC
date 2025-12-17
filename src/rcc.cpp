@@ -2,38 +2,51 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <sys/stat.h>
+
 #include <cstring>
 #include <ctime>
 
-#include <fstream>
 #include <iostream>
 
+#include "paths.h"
+
 using namespace std;
+using namespace rcc;
 
 #ifndef RCC_COMPILER
 // Use this compiler to compile the code.
-
-// The clang++ compiler uses a different strategy for Pre-Compiled Header.
-// So use g++ for now.
+//* The clang++ compiler uses a different strategy for Pre-Compiled Header.
+//* So use g++ for now.
 #define RCC_COMPILER "g++"
 #endif
 
 #ifndef RCC_CPP_STD
-// Use this standard to compile the code.
+// Use this standard to compile the code, at least c++11.
 #define RCC_CPP_STD "c++11"
 #endif
 
-#ifndef RCC_CACHE_DIR
-// Store all temporary files in this directory, including auto-generated .cpp
-// and .bin files.
-#define RCC_CACHE_DIR ""
-#endif
+// Ignore the result of a function call so that compiler doesn't warn about
+// unused result.
+template <typename T> void IGNORE_RESULT(T &&) {}
 
-#define HASH_SEED 13
+// Wrapper function of system(const char *);
+int system(const string &cmd) {
+    // cout << cmd << endl;
+    return system(cmd.c_str());
+}
 
-#define RCC_TEMP_SRC_NAME_PREFIX "rcc_src_"
-#define RCC_TEMP_BIN_NAME_PREFIX "rcc_bin_"
-// #define RCC_LOG_NAME "rcc.log"
+// Wrapper for system() to ignore return value.
+void ignore_system(const char *cmd) {
+    // [[maybe_unused]] auto result = system(cmd); // ignore result
+    IGNORE_RESULT(system(cmd));
+}
+
+// Wrapper for system() to ignore return value.
+void ignore_system(const string &cmd) {
+    // [[maybe_unused]] auto result = system(cmd); // ignore result
+    IGNORE_RESULT(system(cmd));
+}
 
 // Merge all command line arguments together in a string.
 // Each argument forms a new line, and indent 4 spaces except the first line.
@@ -55,48 +68,9 @@ string merge_args(int argc, char **argv) {
     return s;
 }
 
-// Read file line by line and put them together in a string.
-string read_file(const string &filename) {
-    ifstream infile(filename);
-    if (!infile) {
-        cerr << "Can't open file: " << filename << endl;
-        exit(1);
-    }
-    string content;
-    content.reserve(1024);
-    string line;
-
-    while (getline(infile, line)) {
-        content += line;
-        content.push_back('\n');
-    }
-
-    return content;
-}
-
-// Write string to a file.
-void write_file(const string &filename, const string &content) {
-    ofstream outfile(filename);
-    if (!outfile) {
-        cerr << "Can't open file: " << filename << endl;
-        exit(1);
-    }
-
-    outfile << content;
-}
-
-// Return hash of the string.
-unsigned long long hash_string(const string &s) {
-    unsigned long long hash = 0;
-    for (const char &c : s) {
-        hash = hash * HASH_SEED + (unsigned char)c;
-    }
-    return hash;
-}
-
 // Assemble c++ code using the template file and command line arguments.
-string gen_code(const string &template_filename, const string &commandline_code) {
-    string temp = read_file(template_filename);
+string gen_code(const Path &template_filename, const string &commandline_code) {
+    string temp = template_filename.read_file();
     // The template file should be checked during installation
     // so do not check it here
     string code = temp.replace(temp.find("%s"), 2, commandline_code);
@@ -105,21 +79,26 @@ string gen_code(const string &template_filename, const string &commandline_code)
 }
 
 // Delete old cached files.
-//! IMPORTANT: Please make sure that cwd is at the rcc cache directory.
 pid_t clean_cache() {
     // 1/256 chances
     //? Why not use the hash value of code as the seed?
-    //* The srand() and rand() is fast enough. And the same code has the same
-    //* hash value.
+    //* The srand() and rand() is fast enough. And the same code has the same hash value.
     if (rand() % 256 == 0) {
+        // Flush stdout and stderr before fork() to avoid duplicate output.
+        fflush(stdout);
+        fflush(stderr);
+
         pid_t pid = fork();
         if (pid == 0) { // in child process
-            // find and remove src/bin files whose access time is 30 days ago
+            Paths &paths = Paths::get_instance();
+            // find and remove src/bin files whose access time is 31 days ago
             string find_rm_cmd;
-            find_rm_cmd += string("find . -atime +30 -name \"") + RCC_TEMP_SRC_NAME_PREFIX + "*.cpp\"";
-            find_rm_cmd += string(" -o -name \"") + RCC_TEMP_BIN_NAME_PREFIX + "*.bin\"";
+            find_rm_cmd += string("find ") + paths.get_sub_cache_dir().get_path();
+            find_rm_cmd += string(" -type f");
+            find_rm_cmd += string(" \\( -name \"") + RCC_TEMP_SRC_NAME_PREFIX + "*.cpp\"";
+            find_rm_cmd += string(" -o -name \"") + RCC_TEMP_BIN_NAME_PREFIX + "*.bin\" \\)";
             //! Caution: rm command
-            find_rm_cmd += string(" | xargs rm -f");
+            find_rm_cmd += string(" -atime +30 | xargs rm -f");
 
             // cout << find_rm_cmd << endl;
 
@@ -136,25 +115,6 @@ pid_t clean_cache() {
         return pid;
     }
     return -1;
-}
-
-// Ignore the result of a function call so that compiler doesn't warn about
-// unused result.
-template <typename T> void IGNORE_RESULT(T &&) {}
-
-// Wrapper function of system(const char *);
-int system(const string &cmd) { return system(cmd.c_str()); }
-
-// Wrapper for system() to ignore return value.
-void ignore_system(const char *cmd) {
-    // [[maybe_unused]] auto result = system(cmd); // ignore result
-    IGNORE_RESULT(system(cmd));
-}
-
-// Wrapper for system() to ignore return value.
-void ignore_system(const string &cmd) {
-    // [[maybe_unused]] auto result = system(cmd); // ignore result
-    IGNORE_RESULT(system(cmd));
 }
 
 int main(int argc, char **argv) {
@@ -189,77 +149,28 @@ int main(int argc, char **argv) {
     //* times, and get the same seed.
     srand((unsigned int)time(NULL) + (unsigned int)getpid());
 
-    // Save the template cpp file in $HOME/.cache/RCC_TEMP_SRC_NAME_PREFIX
-    const char *HOME = getenv("HOME");
-    if (HOME == NULL) {
-        cerr << "Can't get $HOME" << endl;
-        exit(1);
-    }
-
-    // Save cwd
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, PATH_MAX) == NULL) {
-        perror("getcwd");
-        exit(1);
-    }
-
-    // Get rcc cache directory, default is $HOME/.cache/rcc
-    string rcc_cache_dir = RCC_CACHE_DIR;
-    if (rcc_cache_dir == "") {
-        rcc_cache_dir = string(HOME) + "/.cache/rcc";
-    }
-
-    // Create rcc cache directory if not exist
-    if (access(rcc_cache_dir.c_str(), F_OK) != 0) {
-        if (system(("mkdir -p " + rcc_cache_dir)) != 0) {
-            perror("system:mkdir");
-            exit(1);
-        }
-    }
-
-    /*------------------------------------------------------------------------*/
-    // * Working at the cache directory
-
-    // Change to the cache directory
-    if (chdir(rcc_cache_dir.c_str()) != 0) {
-        perror("chdir");
-        exit(1);
-    }
-
     // Clean old cached files
     clean_cache();
+
+    // rcc paths
+    Paths &paths = Paths::get_instance();
 
     // command line c++ code
     string code = merge_args(argc, argv);
 
-    // cpp template path
-    string temp_cpp_path = "rcc_template.cpp";
+    // the output cpp code and executable file's full paths
+    Path out_cpp_full_path, out_bin_full_path;
+    paths.get_src_bin_full_path(code, out_cpp_full_path, out_bin_full_path);
 
-    unsigned long long hash = hash_string(code);
-
-    string hash_str = to_string(hash);
-
-    // Max value of unsigned long long is 18446744073709551615, 19 digits
-    // so we make the length of hash_str to 20 so that all the filenames of
-    // files generated will be the same length
-    hash_str = string(20 - hash_str.length(), '0') + hash_str;
-
-    // write temporary c++ code in this file
-    const string out_cpp_name = RCC_TEMP_SRC_NAME_PREFIX + hash_str + ".cpp";
-    // compile output file
-    const string out_bin_name = RCC_TEMP_BIN_NAME_PREFIX + hash_str + ".bin";
-    // the executable full path
-    const string out_bin_full_path = rcc_cache_dir + "/" + out_bin_name;
-
-    // cd back to the cwd and run the executable from cwd
-    const string run_exec_cmd = string("cd \"") + cwd + "\"; " + out_bin_full_path;
+    // run the executable from cwd
+    const string run_exec_cmd = out_bin_full_path.get_path();
 
     // full c++ code generated by the template and the command line arguments
-    const string full_code = gen_code(temp_cpp_path, code);
+    const string full_code = gen_code(paths.get_template_path(), code);
 
     // Check if cached
-    if (access(out_bin_name.c_str(), F_OK) == 0) {
-        const string code_old = read_file(out_cpp_name);
+    if (out_bin_full_path.exists()) {
+        const string code_old = out_cpp_full_path.read_file();
         if (code_old == full_code) {
             // Cached, skip the compiling process, run the executable directly
             //* Note that the result of this system call is ignored
@@ -270,7 +181,7 @@ int main(int argc, char **argv) {
     }
 
     // Write c++ code to the temp file
-    write_file(out_cpp_name, full_code);
+    out_cpp_full_path.write_file(full_code);
 
     /*------------------------------------------------------------------------*/
     // * Compile And Run
@@ -290,12 +201,12 @@ int main(int argc, char **argv) {
                                " -W -Wall"
                                " -Wno-unused-variable"
                                " -Wno-unused-parameter"
-                               " -Wno-unused-function"
-                               " -o " +
-                               out_bin_name + " " + out_cpp_name;
+                               " -Wno-unused-function" +
+                               (" -I" + paths.get_sub_templates_dir().get_path()) +
+                               (" -o " + out_bin_full_path.get_path()) + " " + out_cpp_full_path.get_path();
     // compile without warning and error messages will be ignored
     // string compile_without_warning_log_cmd =
-    //   compiler + " -o " + out_bin_name + " " + out_cpp_name + " 2>/dev/null";
+    //   compiler + " -o " + out_bin_full_path + " " + out_cpp_full_path + " 2>/dev/null";
 
     // If compile succeed, run the program from cwd directory,
     // else print the out cpp full path.
@@ -303,7 +214,10 @@ int main(int argc, char **argv) {
         //* Note that the result of this system call is ignored
         ignore_system(run_exec_cmd);
     } else {
-        cout << "\n" << rcc_cache_dir << "/" << out_cpp_name << endl;
+        cout << "\n" << out_cpp_full_path.get_path() << endl;
+        cout << "\n" << "Compilation failed!" << endl;
+        cout << "Try to compile with: " << compile_cmd << endl;
+        cout << "Try to run with: " << run_exec_cmd << endl;
     }
 
     return 0;
