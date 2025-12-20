@@ -53,8 +53,7 @@ chmod +x scripts/*.sh
 rcc_cache_dir="$HOME/.cache/rcc"
 
 # The compiler to use to both compile the rcc and use inside rcc
-#! The clang++ compiler uses a different strategy for Pre-Compiled Header.
-#! So use g++ for now.
+# compiler="g++"
 compiler="clang++"
 
 echo "${YELLOW}Using compiler:${NORMAL} ${UNDERLINE}$compiler${NORMAL}"

@@ -8,6 +8,10 @@
 
 namespace rcc {
 
+// Abstract base class for compiler support.
+// Each subclass implements the get_compile_command() method for a specific compiler.
+// The get_compile_command() method returns a string that can be executed to compile
+// the given sources into a binary using that compiler.
 class compiler_support {
   public:
     compiler_support(const std::string &compiler_name) : compiler_name(compiler_name) {}
@@ -24,6 +28,7 @@ class compiler_support {
     std::string compiler_name;
 };
 
+// Subclass for Linux g++ compiler.
 class linux_gcc : public compiler_support {
   public:
     linux_gcc() : compiler_support("g++") {}
@@ -35,6 +40,7 @@ class linux_gcc : public compiler_support {
                                             const std::string &additional_flags) const override;
 };
 
+// Subclass for Linux clang++ compiler.
 class linux_clang : public compiler_support {
   public:
     linux_clang() : compiler_support("clang++") {}

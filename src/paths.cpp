@@ -187,10 +187,10 @@ Path Paths::get_sub_cache_dir() const { return this->sub_cache_dir; }
 
 Path Paths::get_sub_templates_dir() const { return this->sub_templates_dir; }
 
-Path Paths::get_template_path() const { return this->template_path; }
+Path Paths::get_template_file_path() const { return this->template_path; }
 
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
-    const uint64_t hash = hash_string(code_for_hash);
+    const uint64_t hash = fnv1a_hash(code_for_hash);
 
     string hash_str = to_string(hash);
 
@@ -213,12 +213,18 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     bin_path.join(SUB_DIR_CACHE).join(out_bin_name);
 }
 
-// Return hash of the string.
-uint64_t Paths::hash_string(const string &s) {
-    uint64_t hash = 0;
-    for (const char &c : s) {
-        hash = hash * HASH_SEED + (unsigned char)c;
+// FNV-1a hash function for strings.
+uint64_t Paths::fnv1a_hash(const string &str) {
+    const uint64_t FNV_PRIME = 16777619;
+    const uint64_t FNV_OFFSET = 2166136261;
+
+    uint64_t hash = FNV_OFFSET;
+
+    for (char c : str) {
+        hash ^= static_cast<uint64_t>(c);
+        hash *= FNV_PRIME;
     }
+
     return hash;
 }
 } // namespace rcc
