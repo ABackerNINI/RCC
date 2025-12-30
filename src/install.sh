@@ -78,7 +78,12 @@ echo "${YELLOW}Installing rcc to /usr/local/bin/${NORMAL}"
 sudo cp rcc /usr/local/bin/
 check_error "sudo cp rcc /usr/local/bin/"
 
-# Create rcc cache dir
+# Remove and then create rcc cache dir
+if [ -d "$rcc_cache_dir" ]; then
+    echo "${YELLOW}Removing old cache directory \"$rcc_cache_dir\"${NORMAL}"
+    rm -rf "$rcc_cache_dir"
+    check_error "rm -rf $rcc_cache_dir"
+fi
 echo "${YELLOW}Creating cache directory \"$rcc_cache_dir\"${NORMAL}"
 mkdir -p "$rcc_cache_dir/cache"
 check_error "mkdir -p $rcc_cache_dir/cache"
