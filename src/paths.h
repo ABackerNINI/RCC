@@ -18,8 +18,6 @@
 #define SUB_DIR_CACHE     "cache"
 #define SUB_DIR_TEMPLATES "templates"
 
-#define HASH_SEED 13
-
 namespace rcc {
 
 // Represent a path in the filesystem.
@@ -106,7 +104,7 @@ class Paths {
 
     // Hash a string using the FNV-1a algorithm. This is used to generate unique filenames
     // for the source and binary files.
-    static uint64_t fnv1a_hash(const std::string &str);
+    static uint64_t fnv1a_64_hash_string(const std::string &str);
 
   private:
     Path cwd;

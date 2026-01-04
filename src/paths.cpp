@@ -190,7 +190,7 @@ Path Paths::get_sub_templates_dir() const { return this->sub_templates_dir; }
 Path Paths::get_template_file_path() const { return this->template_path; }
 
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
-    const uint64_t hash = fnv1a_hash(code_for_hash);
+    const uint64_t hash = fnv1a_64_hash_string(code_for_hash);
 
     string hash_str = to_string(hash);
 
@@ -214,9 +214,9 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
 }
 
 // FNV-1a hash function for strings.
-uint64_t Paths::fnv1a_hash(const string &str) {
-    const uint64_t FNV_PRIME = 16777619;
-    const uint64_t FNV_OFFSET = 2166136261;
+uint64_t Paths::fnv1a_64_hash_string(const string &str) {
+    const uint64_t FNV_PRIME = 1099511628211ULL; // 2^40 + 2^8 + 0xb3
+    const uint64_t FNV_OFFSET = 14695981039346656037ULL; // 2^64 - 2^32 - 2^16 - 2^8 - 1
 
     uint64_t hash = FNV_OFFSET;
 
