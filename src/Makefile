@@ -31,7 +31,7 @@ clean:
 
 # EXECUTABLE DETAILS
 
-OBJS = rcc.o paths.o compiler_support.o
+OBJS = rcc.o paths.o compiler_support.o settings.o
 
 OBJSBD = $(OBJS:%=$(BUILD)/%)
 
