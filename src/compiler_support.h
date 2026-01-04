@@ -52,6 +52,8 @@ class linux_clang : public compiler_support {
                                             const std::string &additional_flags) const override;
 };
 
+compiler_support *new_compiler_support(const std::string &compiler_name);
+
 } // namespace rcc
 
 #endif // __COMPILER_SUPPORT_H__

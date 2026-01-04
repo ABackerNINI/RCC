@@ -1,5 +1,7 @@
 #include "compiler_support.h"
 
+#include <iostream>
+
 using namespace std;
 
 namespace rcc {
@@ -54,6 +56,19 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + additional_flags;
     }
     return compile_cmd;
+}
+
+compiler_support *new_compiler_support(const std::string &compiler_name) {
+    compiler_support *cs = NULL;
+    if (compiler_name == "g++") {
+        cs = new linux_gcc();
+    } else if (compiler_name == "clang++") {
+        cs = new linux_clang();
+    } else {
+        cerr << "Unsupported compiler: " + compiler_name + "\n";
+        exit(EXIT_FAILURE);
+    }
+    return cs;
 }
 
 } // namespace rcc

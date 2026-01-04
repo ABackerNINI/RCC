@@ -192,15 +192,7 @@ int main(int argc, char **argv) {
     //* the highest possible standard to compile the rcc and template header as
     //* well as use it here. See RCC_CPP_STD.
 
-    compiler_support *cs = NULL;
-    if (compiler == "g++") {
-        cs = new linux_gcc();
-    } else if (compiler == "clang++") {
-        cs = new linux_clang();
-    } else {
-        cerr << "Unsupported compiler: " + compiler + "\n";
-        exit(EXIT_FAILURE);
-    }
+    compiler_support *cs = new_compiler_support(compiler);
 
     // compile with warning and error messages, but no unused warnings
     const string cxxflags = string(RCC_CPP_STD) + " -Wno-unused-variable"
