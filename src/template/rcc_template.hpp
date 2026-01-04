@@ -111,9 +111,8 @@ inline void ascii(const char *characters = NULL) {
             std::cout << *p << ": " << (int)*p << std::endl;
             ++p;
         }
-        std::cout << std::endl;
     } else {
-        // TODO:
+        // TODO: show ascii chart
     }
 }
 
