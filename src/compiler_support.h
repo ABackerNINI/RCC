@@ -24,6 +24,7 @@ class compiler_support {
     // Assemble c++ code using the template file and command line arguments.
     virtual std::string gen_code(const Path &template_filename,
                                  const std::vector<std::string> &includes,
+                                 const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
                                  const std::string &commandline_code) const = 0;
 
@@ -48,6 +49,7 @@ class linux_gcc : public compiler_support {
 
     virtual std::string gen_code(const Path &template_filename,
                                  const std::vector<std::string> &includes,
+                                 const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
                                  const std::string &commandline_code) const override;
 
@@ -65,6 +67,7 @@ class linux_clang : public compiler_support {
 
     virtual std::string gen_code(const Path &template_filename,
                                  const std::vector<std::string> &includes,
+                                 const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
                                  const std::string &commandline_code) const override;
 

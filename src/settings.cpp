@@ -70,6 +70,14 @@ int Settings::parse_argv(int argc, char **argv) {
         "--compile-with",
         [&](const string &fname) { additional_sources.push_back(fname); },
         "Compile with additional source file");
+    app.add_option_function<string>(
+        "--put-above-main",
+        [&](const string &code) { above_main.push_back(code); },
+        "Any code that should be put above the main function");
+    app.add_option_function<string>(
+        "--function",
+        [&](const string &code) { functions.push_back(code); },
+        "Define a function");
 
     try {
         app.parse(argc, argv);

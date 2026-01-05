@@ -47,13 +47,16 @@ std::string compiler_support::gen_additional_includes(const std::vector<std::str
 
 std::string linux_gcc::gen_code(const Path &template_filename,
                                 const std::vector<std::string> &includes,
+                                const std::vector<std::string> &above_main,
                                 const std::vector<std::string> &functions,
                                 const std::string &commandline_code) const {
-
     string temp = template_filename.read_file();
+
     // The template file should be checked during installation
     // so do not check it here
+
     temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
+    temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));
     temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
     temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
 
@@ -91,12 +94,16 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
 
 std::string linux_clang::gen_code(const Path &template_filename,
                                   const std::vector<std::string> &includes,
+                                  const std::vector<std::string> &above_main,
                                   const std::vector<std::string> &functions,
                                   const std::string &commandline_code) const {
     string temp = template_filename.read_file();
+
     // The template file should be checked during installation
     // so do not check it here
+
     temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
+    temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));
     temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
     temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
 
