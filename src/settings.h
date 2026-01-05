@@ -29,6 +29,7 @@ class Settings {
     const std::vector<std::string> &get_functions() const { return functions; }
     const std::vector<std::string> &get_codes() const { return codes; }
     const std::vector<std::string> &get_cxxflags() const { return cxxflags; }
+    const std::vector<std::string> &get_additional_sources() const { return additional_sources; }
 
     std::string get_cxxflags_as_string() const;
     std::string get_additional_flags_as_string() const { return vector_to_string(additional_flags); }
@@ -36,6 +37,7 @@ class Settings {
     std::string get_additional_includes_as_string() const { return vector_to_string(additional_includes); }
     std::string get_functions_as_string() const { return vector_to_string(functions); }
     std::string get_codes_as_string() const { return merge_codes(codes); }
+    std::string get_additional_sources_as_string() const { return vector_to_string(additional_sources); }
 
     bool has_code() const { return !codes.empty(); }
     bool has_included_stdcpp() const { return included_stdcpp; }

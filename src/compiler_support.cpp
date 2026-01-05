@@ -32,7 +32,11 @@ std::string compiler_support::gen_additional_includes(const std::vector<std::str
             //* clang++ seems to have a problem with including multiple PCHs, so we use a similar strategy as g++
             // includes += "#include \"rcc_bits_stdc++.hpp\"\n";
         } else {
-            includes += "#include <" + inc + ">\n";
+            if (Path(inc).exists()) {
+                includes += "#include \"" + inc + "\"\n";
+            } else {
+                includes += "#include <" + inc + ">\n";
+            }
         }
     }
     if (includes.length() > 0) {
@@ -67,6 +71,7 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + cxxflags;
     }
 
+    compile_cmd += " -I.";
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
 
     // g++ will detect PCH files automatically, so we don't need to add them here
@@ -111,6 +116,7 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + cxxflags;
     }
 
+    compile_cmd += " -I.";
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
 
     // clang++ needs to specify the .pch file explicitly

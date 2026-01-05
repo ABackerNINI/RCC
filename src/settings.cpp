@@ -66,6 +66,10 @@ int Settings::parse_argv(int argc, char **argv) {
             additional_includes.push_back("bits/stdc++.h");
         },
         "Include the bits/stdc++.h header, this will increase compile time");
+    app.add_option_function<string>(
+        "--compile-with",
+        [&](const string &fname) { additional_sources.push_back(fname); },
+        "Compile with additional source file");
 
     try {
         app.parse(argc, argv);

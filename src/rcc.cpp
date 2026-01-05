@@ -97,7 +97,7 @@ void signal_handler(int s) {
 // The main function of rcc.
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
-    // TODO: support including local headers
+    // TODO: add option --put-above-main, to support macros, using namespaces, etc.
     // TODO: add option --function, create a function
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, --compile-only, compile only, return binary's name, run later
@@ -163,8 +163,9 @@ int rcc_main(int argc, char **argv) {
     const string cxxflags = settings.get_cxxflags_as_string();
     const string additional_flags = settings.get_additional_flags_as_string();
     const string additional_includes = settings.get_additional_includes_as_string();
+    const string additional_sources = settings.get_additional_sources_as_string();
 
-    const string to_hash = code + compiler + cxxflags + additional_flags + additional_includes;
+    const string to_hash = code + compiler + cxxflags + additional_flags + additional_includes + additional_sources;
 
     // the output cpp code and executable file's full paths
     Path cpp_path, bin_path;
@@ -200,7 +201,12 @@ int rcc_main(int argc, char **argv) {
     /*------------------------------------------------------------------------*/
     // * Compile And Run
 
-    const string compile_cmd = cs->get_compile_command({cpp_path}, bin_path, cxxflags, additional_flags);
+    vector<Path> sources = {cpp_path};
+    for (auto &src : settings.get_additional_sources()) {
+        sources.emplace_back(src);
+    }
+
+    const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags);
     delete cs;
 
     // cout << compile_cmd << endl;
