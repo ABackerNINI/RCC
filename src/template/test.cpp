@@ -7,9 +7,7 @@
 using namespace std;
 
 template <typename T> bool compare_arr(const T &arr1, const T &arr2) {
-    for (auto it1 = arr1.begin(), it2 = arr2.begin();
-         it1 != arr1.end() && it2 != arr2.end();
-         ++it1, ++it2) {
+    for (auto it1 = arr1.begin(), it2 = arr2.begin(); it1 != arr1.end() && it2 != arr2.end(); ++it1, ++it2) {
         if (*it1 != *it2) {
             cout << "\"" << *it1 << "\" != \"" << *it2 << "\"" << endl;
             return false;
@@ -54,8 +52,7 @@ void test_split_quoted() {
 
     assert(compare_arr(v, exp_v));
 
-    vector<string> exp_v2 = {
-        "name", "mode", "size", "create Time", "access \t Time"};
+    vector<string> exp_v2 = {"name", "mode", "size", "create Time", "access \t Time"};
     str = " name\n mode size\t\t\t \"create Time\" \"access \t Time\" \n ";
     v = split_quoted(str);
 
@@ -72,9 +69,7 @@ void test_traversal() {
 
     // This will print every file and directory in current directory and its
     // subdirectory.
-    auto callback = [&](const string &path,
-                        const string &filename,
-                        bool is_file) {
+    auto callback = [&](const string &path, const string &filename, bool is_file) {
         cout << path << ", " << filename << (is_file ? "" : " [dir]") << endl;
         // return 0 to continue traversing
         // return -1 to stop traversing

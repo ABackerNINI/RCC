@@ -46,7 +46,7 @@
 // #include <stack>
 // #include <unordered_map>
 // #include <unordered_set>
-// 
+//
 // #if __cplusplus >= 201703L
 // #include <filesystem>
 // #include <optional>
@@ -55,7 +55,7 @@
 
 // IWYU pragma: end_keep
 
-#define FOR(l, r)  for (int i = l; i < r; ++i)
+#define FOR(l, r) for (int i = l; i < r; ++i)
 #define FORR(r, l) for (int i = r; i >= l; --i)
 
 #define FORI(l, r) for (int i = l; i < r; ++i)
@@ -72,16 +72,19 @@
 #define CH(c) __ch(#c)
 
 // Return the first character passed in.
-inline char __ch(const char *c) { return c[0]; }
+inline char __ch(const char *c) {
+    return c[0];
+}
 
 // Wrapper function of system(const char *);
-inline int system(const std::string &cmd) { return system(cmd.c_str()); }
+inline int system(const std::string &cmd) {
+    return system(cmd.c_str());
+}
 
 /*==========================================================================*/
 
 // Split string into tokens like strtok().
-inline std::vector<std::string>
-split(const std::string &s, const std::string &delims = " \t\r\n\v\f") {
+inline std::vector<std::string> split(const std::string &s, const std::string &delims = " \t\r\n\v\f") {
     std::vector<std::string> words;
 
     bool has_content = false;
@@ -107,10 +110,9 @@ split(const std::string &s, const std::string &delims = " \t\r\n\v\f") {
 }
 
 // Split string into tokens, support quoted string.
-inline std::vector<std::string>
-split_quoted(const std::string &s,
-             const std::string &delims = " \t\r\n\v\f",
-             const std::string &quotes = "\"'") {
+inline std::vector<std::string> split_quoted(const std::string &s,
+                                             const std::string &delims = " \t\r\n\v\f",
+                                             const std::string &quotes = "\"'") {
     std::vector<std::string> words; // The list to be created
     // // Use a string stream to read individual words
     // std::istringstream is(line);
@@ -165,7 +167,7 @@ inline void ascii(const char *characters = NULL) {
 
 #define TRAVERSAL_CALLBACK_RETURN_CODE_CONTINUE 0
 #define TRAVERSAL_CALLBACK_RETURN_CODE_SKIP_DIR 1
-#define TRAVERSAL_CALLBACK_RETURN_CODE_BREAK    -1
+#define TRAVERSAL_CALLBACK_RETURN_CODE_BREAK -1
 
 /**
  * @brief Traverse files and directories in directory 'dir'.
@@ -176,11 +178,8 @@ inline void ascii(const char *characters = NULL) {
  *       return false;
  *   });
  */
-#define TRAVERSAL(dir, ...)                                                    \
-    traversal(dir,                                                             \
-              [&](const std::string &path,                                     \
-                  const std::string &filename,                                 \
-                  bool is_file) -> int { __VA_ARGS__ });
+#define TRAVERSAL(dir, ...)                                                                                            \
+    traversal(dir, [&](const std::string &path, const std::string &filename, bool is_file) -> int { __VA_ARGS__ });
 
 /**
  * @brief Helper function for traverse files in directory 'dir' recursively.
@@ -190,15 +189,13 @@ inline void ascii(const char *characters = NULL) {
  *      @retval 0 if no errors.
  *      @retval -1 if error.
  */
-template <typename traversal_callback_t>
-int traversal_helper(std::string &dir, traversal_callback_t callback) {
+template <typename traversal_callback_t> int traversal_helper(std::string &dir, traversal_callback_t callback) {
     DIR *p_dir = NULL;
     struct dirent *p_entry = NULL;
     struct stat statbuf;
 
     if ((p_dir = opendir(dir.c_str())) == NULL) {
-        std::cerr << "opendir: " << strerror(errno) << "'" << dir << "'"
-                  << std::endl;
+        std::cerr << "opendir: " << strerror(errno) << "'" << dir << "'" << std::endl;
         return -1;
     }
 
@@ -210,12 +207,10 @@ int traversal_helper(std::string &dir, traversal_callback_t callback) {
         if (lstat(dir.c_str(), &statbuf) == 0) {
             if ((statbuf.st_mode & S_IFMT) == S_IFDIR) { /* dir */
                 /* ignore "." and ".." */
-                if (strcmp(".", p_entry->d_name) != 0 &&
-                    strcmp("..", p_entry->d_name) != 0) {
+                if (strcmp(".", p_entry->d_name) != 0 && strcmp("..", p_entry->d_name) != 0) {
 
                     int ret;
-                    if ((ret = callback(dir, p_entry->d_name, false)) ==
-                        TRAVERSAL_CALLBACK_RETURN_CODE_BREAK) {
+                    if ((ret = callback(dir, p_entry->d_name, false)) == TRAVERSAL_CALLBACK_RETURN_CODE_BREAK) {
                         break;
                     }
 
@@ -240,8 +235,7 @@ int traversal_helper(std::string &dir, traversal_callback_t callback) {
 /**
  * @brief Traverse file tree in directory 'dir' recursively.
  */
-template <typename traversal_callback_t>
-void traversal(const std::string &dir, traversal_callback_t callback) {
+template <typename traversal_callback_t> void traversal(const std::string &dir, traversal_callback_t callback) {
     if (dir.length() >= FILENAME_MAX) {
         fprintf(stderr, "Error: filename too long!\n");
         return;

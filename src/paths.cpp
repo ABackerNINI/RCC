@@ -11,15 +11,22 @@ using namespace std;
 
 namespace rcc {
 
-Path::Path(const std::string &path) : path(check_whitespaces(path)) {}
+Path::Path(const std::string &path) : path(check_whitespaces(path)) {
+}
 
-Path::Path(const char *path) : path(check_whitespaces(path)) {}
+Path::Path(const char *path) : path(check_whitespaces(path)) {
+}
 
-Path::Path() : path("") {}
+Path::Path() : path("") {
+}
 
-Path &Path::join(const std::string &path) { return join(Path(path)); }
+Path &Path::join(const std::string &path) {
+    return join(Path(path));
+}
 
-Path &Path::join(const char *path) { return join(Path(path)); }
+Path &Path::join(const char *path) {
+    return join(Path(path));
+}
 
 Path &Path::join(const Path &other) {
     if (other.path.empty()) {
@@ -34,7 +41,9 @@ Path &Path::join(const Path &other) {
     return *this;
 }
 
-const std::string &Path::get_path() const { return this->path; }
+const std::string &Path::get_path() const {
+    return this->path;
+}
 
 // Return the path without quotes and trailing slash.
 std::string Path::get_plain_path() const {
@@ -181,13 +190,21 @@ void Paths::validate_cache_dir() {
     this->sub_templates_dir = sub_templates_dir;
 }
 
-Path Paths::get_cache_dir() const { return this->cache_dir; }
+Path Paths::get_cache_dir() const {
+    return this->cache_dir;
+}
 
-Path Paths::get_sub_cache_dir() const { return this->sub_cache_dir; }
+Path Paths::get_sub_cache_dir() const {
+    return this->sub_cache_dir;
+}
 
-Path Paths::get_sub_templates_dir() const { return this->sub_templates_dir; }
+Path Paths::get_sub_templates_dir() const {
+    return this->sub_templates_dir;
+}
 
-Path Paths::get_template_file_path() const { return this->template_path; }
+Path Paths::get_template_file_path() const {
+    return this->template_path;
+}
 
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
     const uint64_t hash = fnv1a_64_hash_string(code_for_hash);

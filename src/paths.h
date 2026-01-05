@@ -15,7 +15,7 @@
 #define RCC_TEMP_BIN_NAME_PREFIX "rcc_bin_"
 // #define RCC_LOG_NAME "rcc.log"
 
-#define SUB_DIR_CACHE     "cache"
+#define SUB_DIR_CACHE "cache"
 #define SUB_DIR_TEMPLATES "templates"
 
 namespace rcc {
