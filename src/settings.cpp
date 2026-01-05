@@ -9,91 +9,91 @@ using namespace std;
 
 namespace rcc {
 
-static int locate_code(int argc, char **argv) {
+static int locate_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
-        if (argv[i][0] != '-' || (strlen(argv[i]) >= 2 && (!isalpha(argv[i][1])) && argv[i][1] != '-')) {
+        if (strcmp(argv[i], "--") == 0) {
             return i;
         }
     }
     return argc;
 }
 
-static int locate_args(char **code_start, int code_count) {
-    for (int i = 0; i < code_count; i++) {
-        if (strcmp(code_start[i], "--") == 0) {
-            return i;
-        }
-    }
-    return code_count;
-}
-
-static std::string vector_to_string(const std::vector<std::string> &vec) {
-    string result = "";
-    for (const auto &item : vec) {
-        result += item + " ";
-    }
-    if (result.size() > 0) {
-        result.pop_back();
-    }
-    return result;
-}
-
-// Merge all command line arguments together into a string.
-static string merge_args(char **code_start, int n) {
+// Merge all user codes together into a string.
+string Settings::merge_codes(const std::vector<std::string> &codes) {
     string s;
     s.reserve(256);
-    s += "User code\n    ";
     // If there is only one argument and it doesn't end with ';', wrap it in
     // 'cout << ... << endl;' directly. This is for convenience, e.g. rcc '2+3*5'.
-    if (n == 1 && strlen(code_start[0]) > 0 && code_start[0][strlen(code_start[0]) - 1] != ';') {
-        s += "cout << " + string(code_start[0]) + " << endl;";
+    if (codes.size() == 1 && codes[0].length() > 0 && codes[0][codes[0].length() - 1] != ';') {
+        s += "cout << " + codes[0] + " << endl;";
     } else {
         // Otherwise, merge all arguments together without any modification.
-        for (int i = 0; i < n; ++i) {
-            s.append(code_start[i]);
+        for (auto &code : codes) {
+            s.append(code);
         }
     }
     return s;
 }
 
 int Settings::parse_argv(int argc, char **argv) {
-    int code_index = locate_code(argc, argv);
+    int args_index = locate_args(argc, argv);
 
-    code_start = &argv[code_index];
-    code_count = argc - code_index;
-    argc -= code_count;
-
-    int args_index = locate_args(code_start, code_count);
-    args_start = &code_start[args_index + 1];
-    args_count = max(code_count - args_index - 1, 0);
-    code_count -= code_count - args_index;
+    if (args_index < argc) {
+        args_start = &argv[args_index + 1];
+        args_count = argc - args_index - 1;
+        argc -= args_count + 1;
+    }
 
     CLI::App app{"RCC - Run C/C++ codes in terminal"};
-    app.add_flag("--clean_cache", clean_cache, "Clean cached source and binary files");
     app.allow_non_standard_option_names();
     app.allow_extras();
+    app.add_flag("--clean-cache", clean_cache, "Clean cached source and binary files");
+    app.add_option_function<string>(
+           "--include",
+           [&](const string &inc) {
+               if (inc == "bits/stdc++.h") {
+                   included_stdcpp = true;
+               }
+               additional_includes.push_back(inc);
+           },
+           "Include additional header")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
+        ->trigger_on_parse();
+    app.add_flag_callback(
+        "--include-all",
+        [&]() {
+            included_stdcpp = true;
+            additional_includes.push_back("bits/stdc++.h");
+        },
+        "Include the bits/stdc++.h header, this will increase compile time");
+
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
         std::cout << (e.get_exit_code() == 0 ? rang::fg::blue : rang::fg::red);
         return app.exit(e);
     }
+
     vector<string> remaining = app.remaining(true);
 
     for (auto &s : remaining) {
-        if (s.substr(0, 4) == "-std") {
-            std = s;
-        } else if (s.substr(0, 2) == "-l" || s == "-math" || s == "-pthread") {
-            additional_flags.push_back(s);
+        if (s.substr(0, 1) == "-") {
+            if (s.substr(0, 4) == "-std") {
+                std = s;
+            } else if (s.substr(0, 2) == "-l" || s == "-math" || s == "-pthread") {
+                additional_flags.push_back(s);
+            } else {
+                cxxflags.push_back(s);
+            }
         } else {
-            cxxflags.push_back(s);
+            codes.push_back(s);
         }
     }
 
     return 0;
 }
 
-std::string Settings::gen_cxxflags() const {
+std::string Settings::get_cxxflags_as_string() const {
     //? Should use a C++ standard like "-std=c++11"?
     //* This will be necessary on some lower version compilers. But this will
     //* prevent us using a higher default standard.
@@ -104,11 +104,7 @@ std::string Settings::gen_cxxflags() const {
     return std + (cxxflags.empty() ? "" : " " + vector_to_string(cxxflags));
 }
 
-std::string Settings::gen_additional_flags() const { return vector_to_string(additional_flags); }
-
-std::string Settings::gen_command_line_code() const { return merge_args(code_start, code_count); }
-
-std::string Settings::gen_command_line_args() const {
+std::string Settings::get_cli_args_as_string() const {
     string args = "";
     for (int i = 0; i < args_count; i++) {
         char *arg = args_start[i];
@@ -120,10 +116,11 @@ std::string Settings::gen_command_line_args() const {
                 has_space = true;
                 break;
             }
+            ++p;
         }
 
         if (has_space) {
-            // TODO: maybe wrap the arg in single or double quotes depending on whether it 
+            // TODO: maybe wrap the arg in single or double quotes depending on whether it
             // contains single or double quotes.
             args += "'" + string(arg) + "' ";
         } else {
@@ -132,24 +129,34 @@ std::string Settings::gen_command_line_args() const {
     }
 
     if (args.size() > 0) {
-        args.pop_back(); // Remove the trailing space
+        args.pop_back(); // remove the trailing space
     }
 
     return args;
 }
 
-bool Settings::has_code() const { return code_count > 0; }
-
 void Settings::debug_print(std::ostream &os) const {
     os << "Settings:" << endl;
     os << "  compiler: " << compiler << endl;
-    os << "  cxxflags: " << gen_cxxflags() << endl;
-    os << "  additional_flags: " << gen_additional_flags() << endl;
+    os << "  cxxflags: " << get_cxxflags_as_string() << endl;
+    os << "  additional_flags: " << get_additional_flags_as_string() << endl;
+    os << "  additional_includes: " << vector_to_string(additional_includes) << endl;
 
-    os << "  code_count: " << code_count << endl;
+    os << "  code_count: " << codes.size() << endl;
     os << "  args_count: " << args_count << endl;
 
     os << "  clean_cache: " << clean_cache << endl;
+}
+
+std::string Settings::vector_to_string(const std::vector<std::string> &vec, const std::string &sep) {
+    string result = "";
+    for (const auto &item : vec) {
+        result += item + sep;
+    }
+    if (result.size() > 0) {
+        result.pop_back();
+    }
+    return result;
 }
 
 } // namespace rcc

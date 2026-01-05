@@ -15,22 +15,28 @@ $(BD)/%.o: %.cpp
 
 # Pre-Compiled Header
 
+gcc_gch_dir = rcc_template.hpp.gch
+
 # for g++ PCH
-%.hpp.gch: %.hpp
+$(gcc_gch_dir)/%.hpp.gch: %.hpp
 	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
+$(gcc_gch_dir)/%.hpp.stdc++.gch: %.hpp
+	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
 
 # for clang++ PCH
 %.hpp.pch: %.hpp
-	$(CXX) $(CXXFLAGS) -Xclang -emit-pch -o $@ $<
+	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
+%.hpp.stdc++.pch: %.hpp
+	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
 
 # Build Executable
 
 pch = ""
 
 ifeq ($(CPP_COMPILER), g++)
-	pch = rcc_template.hpp.gch
+	pch = create_gch_dir_for_gcc $(gcc_gch_dir)/rcc_template.hpp.gch $(gcc_gch_dir)/rcc_template.hpp.stdc++.gch
 else ifeq ($(CPP_COMPILER), clang++)
-	pch = rcc_template.hpp.pch
+	pch = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
 endif
 
 bin = test
@@ -38,6 +44,9 @@ bin = test
 all: $(pch)
 
 rebuild: clean all
+
+create_gch_dir_for_gcc:
+	mkdir -p $(gcc_gch_dir)
 
 # Executable 1
 
@@ -54,7 +63,7 @@ test.o: rcc_template.hpp test.cpp
 # Clean up
 
 clean:
-	rm -f "$(pch)" "$(bin)" $(objbd)
+	rm -f $(pch) "$(bin)" $(objbd)
 	rm -fd "$(BD)"
 
 # PHONY

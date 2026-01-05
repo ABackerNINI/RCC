@@ -20,7 +20,7 @@
 
 namespace rcc {
 
-// Represent a path in the filesystem.
+// Represent a path in the filesystem. Maybe use std::filesystem in C++17?
 //* Currently, this supports only Linux.
 class Path {
   public:

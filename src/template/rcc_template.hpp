@@ -1,6 +1,11 @@
 #ifndef __RCC_TEMPLATE_H__
 #define __RCC_TEMPLATE_H__
 
+// IWYU pragma: begin_keep
+
+//* Note: The more we include, the more time it takes to compile the code.
+//* So we should only include the most common used headers here.
+
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -8,7 +13,47 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifdef INCLUDE_BITS_STDCPP_H
 #include <bits/stdc++.h>
+#else
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+// #include <cassert>
+// #include <cerrno>
+// #include <climits>
+// #include <csignal>
+// #include <cstdint>
+
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+// #include <chrono>
+// #include <deque>
+// #include <limits>
+// #include <list>
+// #include <memory>
+// #include <numeric>
+// #include <stack>
+// #include <unordered_map>
+// #include <unordered_set>
+// 
+// #if __cplusplus >= 201703L
+// #include <filesystem>
+// #include <optional>
+// #endif
+#endif // INCLUDE_BITS_STDCPP_H
+
+// IWYU pragma: end_keep
 
 #define FOR(l, r)  for (int i = l; i < r; ++i)
 #define FORR(r, l) for (int i = r; i >= l; --i)

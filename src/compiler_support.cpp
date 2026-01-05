@@ -6,6 +6,56 @@ using namespace std;
 
 namespace rcc {
 
+static std::string vector_to_string(const std::vector<std::string> &vec, const std::string &sep = " ") {
+    string result = "";
+    for (const auto &item : vec) {
+        result += item + sep;
+    }
+    if (result.size() > 0) {
+        result.pop_back();
+    }
+    return result;
+}
+
+std::string compiler_support::gen_additional_includes(const std::vector<std::string> &additional_includes) const {
+    string includes = "";
+    for (auto &inc : additional_includes) {
+        if (inc == "bits/stdc++.h") {
+            //* g++ and clang++ uses different strategies for PCH.
+            //* g++ can only include one PCH for one translation unit. Since we already include `rcc_template.hpp`
+            //* as PCH, so we cannot include `rcc_bits_stdc++.hpp` as PCH here.
+            //* g++ can match the correct PCH inside one directory. For example, for the `rcc_template.hpp`, we
+            //* can generate two versions of PCHs inside the `rcc_template.hpp.pch` directory using different compiler
+            //* flags, one defines the macro `INCLUDE_BITS_STDCPP_H` so that the `bits/stdc++.h` can be included, and
+            //* the other does not define the macro. When compiling a translation unit, g++ will match the correct PCH
+            //* inside the `rcc_template.hpp.pch` directory based on the compiler flags.
+            //* clang++ seems to have a problem with including multiple PCHs, so we use a similar strategy as g++
+            // includes += "#include \"rcc_bits_stdc++.hpp\"\n";
+        } else {
+            includes += "#include <" + inc + ">\n";
+        }
+    }
+    if (includes.length() > 0) {
+        includes.pop_back(); // remove last newline character
+    }
+    return includes;
+}
+
+std::string linux_gcc::gen_code(const Path &template_filename,
+                                const std::vector<std::string> &includes,
+                                const std::vector<std::string> &functions,
+                                const std::string &commandline_code) const {
+
+    string temp = template_filename.read_file();
+    // The template file should be checked during installation
+    // so do not check it here
+    temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
+    temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
+    temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
+
+    return temp;
+}
+
 std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
                                            const Path &bin_path,
                                            const std::string &cxxflags,
@@ -17,9 +67,13 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + cxxflags;
     }
 
-    // g++ will detect PCH files automatically, so we don't need to add them here
-
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
+
+    // g++ will detect PCH files automatically, so we don't need to add them here
+    if (settings.has_included_stdcpp()) {
+        compile_cmd += " -DINCLUDE_BITS_STDCPP_H";
+    }
+
     compile_cmd += " -o " + bin_path.get_path();
     for (const auto &source : sources) {
         compile_cmd += " " + source.get_path();
@@ -28,6 +82,20 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + additional_flags;
     }
     return compile_cmd;
+}
+
+std::string linux_clang::gen_code(const Path &template_filename,
+                                  const std::vector<std::string> &includes,
+                                  const std::vector<std::string> &functions,
+                                  const std::string &commandline_code) const {
+    string temp = template_filename.read_file();
+    // The template file should be checked during installation
+    // so do not check it here
+    temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
+    temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
+    temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
+
+    return temp;
 }
 
 std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
@@ -37,17 +105,24 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
     Paths &paths = Paths::get_instance();
 
     Path pch_path = paths.get_sub_templates_dir();
-    pch_path.join("rcc_template.hpp.pch");
 
     string compile_cmd = "clang++";
     if (cxxflags != "") {
         compile_cmd += " " + cxxflags;
     }
 
-    // clang++ needs to specify the pch file explicitly
-    compile_cmd += " -Xclang -include-pch -Xclang " + pch_path.get_path();
-
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
+
+    // clang++ needs to specify the .pch file explicitly
+    if (settings.has_included_stdcpp()) {
+        pch_path.join("rcc_template.hpp.stdc++.pch");
+        compile_cmd += " -DINCLUDE_BITS_STDCPP_H";
+        compile_cmd += " -include-pch " + pch_path.get_path();
+    } else {
+        pch_path.join("rcc_template.hpp.pch");
+        compile_cmd += " -include-pch " + pch_path.get_path();
+    }
+
     compile_cmd += " -o " + bin_path.get_path();
     for (const auto &source : sources) {
         compile_cmd += " " + source.get_path();
@@ -58,12 +133,12 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
     return compile_cmd;
 }
 
-compiler_support *new_compiler_support(const std::string &compiler_name) {
+compiler_support *new_compiler_support(const std::string &compiler_name, const Settings &settings) {
     compiler_support *cs = NULL;
     if (compiler_name == "g++") {
-        cs = new linux_gcc();
+        cs = new linux_gcc(settings);
     } else if (compiler_name == "clang++") {
-        cs = new linux_clang();
+        cs = new linux_clang(settings);
     } else {
         cerr << "Unsupported compiler: " + compiler_name + "\n";
         exit(EXIT_FAILURE);
