@@ -81,8 +81,10 @@ check_error "sudo cp rcc /usr/local/bin/"
 # Remove and then create rcc cache dir
 if [ -d "$rcc_cache_dir" ]; then
     echo "${YELLOW}Removing old cache directory \"$rcc_cache_dir\"${NORMAL}"
-    rm -rf "$rcc_cache_dir"
-    check_error "rm -rf \"$rcc_cache_dir\""
+    rm -rf "$rcc_cache_dir/cache"/*
+    check_error "rm -r \"$rcc_cache_dir/cache\"/*"
+    rm -rf "$rcc_cache_dir/templates"/*
+    check_error "rm -r \"$rcc_cache_dir/templates\"/*"
 fi
 echo "${YELLOW}Creating cache directory \"$rcc_cache_dir\"${NORMAL}"
 mkdir -p "$rcc_cache_dir/cache"
