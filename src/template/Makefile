@@ -63,8 +63,9 @@ test.o: rcc_template.hpp test.cpp
 # Clean up
 
 clean:
-	rm -f $(pch) "$(bin)" $(objbd)
-	rm -fd "$(BD)"
+	rm -f *.gch *.pch
+	rm -f "$(bin)" $(objbd)
+	rm -fd "$(gcc_gch_dir)" "$(BD)"
 
 # PHONY
 
