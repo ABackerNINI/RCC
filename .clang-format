@@ -48,7 +48,7 @@ AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: false
 # 允许短的函数放在同一行: None, InlineOnly(定义在类中), Empty(空函数), Inline(定义在类中，空函数), All
 AllowShortFunctionsOnASingleLine: Inline
-AllowShortLambdasOnASingleLine: All
+AllowShortLambdasOnASingleLine: Inline
 # 允许短的if语句保持在同一行
 AllowShortIfStatementsOnASingleLine: Never
 # 允许短的循环保持在同一行
@@ -187,7 +187,7 @@ ObjCSpaceBeforeProtocolList: true
 # 在=后换行的penalty
 PenaltyBreakAssignment: 30
 # 在call(后对函数调用换行的penalty
-PenaltyBreakBeforeFirstCallParameter: 1100
+PenaltyBreakBeforeFirstCallParameter: 100
 # 在一个注释中引入换行的penalty
 PenaltyBreakComment: 5
 # 第一次在<<前换行的penalty
