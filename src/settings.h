@@ -55,7 +55,10 @@ class Settings {
     std::vector<std::string> functions;
     std::vector<std::string> codes; // the command line code snippets
     std::vector<std::string> additional_sources;
-    std::vector<std::string> cxxflags = {"-Wall", "-Wextra", "-Wno-unused-variable", "-Wno-unused-parameter",
+    std::vector<std::string> cxxflags = {"-Wall",
+                                         "-Wextra",
+                                         "-Wno-unused-variable",
+                                         "-Wno-unused-parameter",
                                          "-Wno-unused-function"};
 
     char **args_start = NULL;

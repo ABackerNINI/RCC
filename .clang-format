@@ -29,7 +29,7 @@ AlignTrailingComments: false
 # Bin Pack #####################################################################
 
 # false表示函数实参(function call)要么都在同一行，要么都各自一行
-BinPackArguments: true
+BinPackArguments: false
 # false表示所有形参(function declaration or function definition)要么都在同一行，要么都各自一行
 BinPackParameters: false
 
@@ -47,7 +47,7 @@ AllowShortBlocksOnASingleLine: Always
 # 允许短的case标签放在同一行
 AllowShortCaseLabelsOnASingleLine: false
 # 允许短的函数放在同一行: None, InlineOnly(定义在类中), Empty(空函数), Inline(定义在类中，空函数), All
-AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortLambdasOnASingleLine: All
 # 允许短的if语句保持在同一行
 AllowShortIfStatementsOnASingleLine: Never

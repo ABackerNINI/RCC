@@ -11,14 +11,11 @@ using namespace std;
 
 namespace rcc {
 
-Path::Path(const std::string &path) : path(check_whitespaces(path)) {
-}
+Path::Path(const std::string &path) : path(check_whitespaces(path)) {}
 
-Path::Path(const char *path) : path(check_whitespaces(path)) {
-}
+Path::Path(const char *path) : path(check_whitespaces(path)) {}
 
-Path::Path() : path("") {
-}
+Path::Path() : path("") {}
 
 Path &Path::join(const std::string &path) {
     return join(Path(path));
