@@ -82,26 +82,25 @@ check_error "sudo cp rcc /usr/local/bin/"
 if [ -d "$rcc_cache_dir" ]; then
     echo "${YELLOW}Removing old cache directory \"$rcc_cache_dir\"${NORMAL}"
     rm -rf "$rcc_cache_dir"
-    check_error "rm -rf $rcc_cache_dir"
+    check_error "rm -rf \"$rcc_cache_dir\""
 fi
 echo "${YELLOW}Creating cache directory \"$rcc_cache_dir\"${NORMAL}"
 mkdir -p "$rcc_cache_dir/cache"
-check_error "mkdir -p $rcc_cache_dir/cache"
+check_error "mkdir -p \"$rcc_cache_dir/cache\""
 mkdir -p "$rcc_cache_dir/templates"
-check_error "mkdir -p $rcc_cache_dir/templates"
+check_error "mkdir -p \"$rcc_cache_dir/templates\""
+
+# Copy templates to rcc cache dir
+make -C template clean "CPP_COMPILER=$compiler"
+check_error "make clean"
+echo "${YELLOW}Copying templates to cache directory${NORMAL}"
+cp -r template/* -t "$rcc_cache_dir/templates"
+check_error "cp -r template/* -t \"$rcc_cache_dir/templates\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
-cd template || exit 1
-make clean "CPP_COMPILER=$compiler"
-check_error "make clean"
-make "CPP_COMPILER=$compiler" "CPP_STD=$cpp_std"
+make -C "$rcc_cache_dir/templates" "CPP_COMPILER=$compiler" "CPP_STD=$cpp_std"
 check_error "make"
-cd ..
-
-# Copy templates and PCH to rcc cache dir
-echo "${YELLOW}Copying templates and PCH to cache directory${NORMAL}"
-cp -r template/* -t "$rcc_cache_dir/templates"
 
 echo ""
 echo "${GREEN}${UNDERLINE}INSTALLATION COMPLETE!${NORMAL}"
