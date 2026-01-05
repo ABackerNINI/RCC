@@ -45,7 +45,7 @@ string gen_code(const Path &template_filename, const string &commandline_code) {
     string temp = template_filename.read_file();
     // The template file should be checked during installation
     // so do not check it here
-    string code = temp.replace(temp.find("%s"), 2, commandline_code);
+    string code = temp.replace(temp.find("$code"), 5, commandline_code);
 
     return code;
 }
@@ -104,7 +104,11 @@ void signal_handler(int s) {
     std::exit(1); // will call the correct exit func, no unwinding of the stack though
 }
 
-int main(int argc, char **argv) {
+// The main function of rcc.
+// Convenient for testing.
+int rcc_main(int argc, char **argv) {
+    // TODO: add option --include, include header file
+    // TODO: add option --include_stdc++, include the bits/stdc++.h header file
     // TODO: add option --function, create a function
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, compile only, return binary's name, run later
@@ -218,3 +222,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+int main(int argc, char **argv) { return rcc_main(argc, argv); }

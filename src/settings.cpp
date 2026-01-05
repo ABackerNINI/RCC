@@ -21,7 +21,7 @@ static int locate_code(int argc, char **argv) {
 static int locate_args(char **code_start, int code_count) {
     for (int i = 0; i < code_count; i++) {
         if (strcmp(code_start[i], "--") == 0) {
-            return i + 1;
+            return i;
         }
     }
     return code_count;
@@ -64,9 +64,9 @@ int Settings::parse_argv(int argc, char **argv) {
     argc -= code_count;
 
     int args_index = locate_args(code_start, code_count);
-    args_start = &code_start[args_index];
-    args_count = code_count - args_index;
-    code_count -= args_count + 1;
+    args_start = &code_start[args_index + 1];
+    args_count = max(code_count - args_index - 1, 0);
+    code_count -= code_count - args_index;
 
     CLI::App app{"RCC - Run C/C++ codes in terminal"};
     app.add_flag("--clean_cache", clean_cache, "Clean cached source and binary files");
@@ -123,7 +123,9 @@ std::string Settings::gen_command_line_args() const {
         }
 
         if (has_space) {
-            args += "\"" + string(arg) + "\" ";
+            // TODO: maybe wrap the arg in single or double quotes depending on whether it 
+            // contains single or double quotes.
+            args += "'" + string(arg) + "' ";
         } else {
             args += string(arg) + " ";
         }
