@@ -130,7 +130,7 @@ int rcc_main(int argc, char **argv) {
         return result;
     }
 
-    dbg_stmt(settings.debug_print(cdbg));
+    dbg_stmt(settings.debug_print());
 
     // Seed the random number generator
     //? Why time() + getpid()?

@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "libs/CLI11.hpp"
+#include "libs/debug.h"
 #include "libs/rang.hpp"
 
 using namespace std;
@@ -67,17 +68,23 @@ int Settings::parse_argv(int argc, char **argv) {
         },
         "Include the bits/stdc++.h header, this will increase compile time");
     app.add_option_function<string>(
-        "--compile-with",
-        [&](const string &fname) { additional_sources.push_back(fname); },
-        "Compile with additional source file");
+           "--compile-with",
+           [&](const string &fname) { additional_sources.push_back(fname); },
+           "Compile with additional source file")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
+        ->trigger_on_parse();
     app.add_option_function<string>(
-        "--put-above-main",
-        [&](const string &code) { above_main.push_back(code); },
-        "Any code that should be put above the main function");
+           "--put-above-main",
+           [&](const string &code) { above_main.push_back(code); },
+           "Any code that should be put above the main function")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
+        ->trigger_on_parse();
     app.add_option_function<string>(
-        "--function",
-        [&](const string &code) { functions.push_back(code); },
-        "Define a function");
+           "--function",
+           [&](const string &code) { functions.push_back(code); },
+           "Define a function")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
+        ->trigger_on_parse();
 
     try {
         app.parse(argc, argv);
@@ -147,17 +154,20 @@ std::string Settings::get_cli_args_as_string() const {
     return args;
 }
 
-void Settings::debug_print(std::ostream &os) const {
-    os << "Settings:" << endl;
-    os << "  compiler: " << compiler << endl;
-    os << "  cxxflags: " << get_cxxflags_as_string() << endl;
-    os << "  additional_flags: " << get_additional_flags_as_string() << endl;
-    os << "  additional_includes: " << vector_to_string(additional_includes) << endl;
+void Settings::debug_print() const {
+    cdbg << "Settings:" << endl;
+    cdbgc << "compiler: " << compiler << endl;
+    cdbgc << "std: " << std << endl;
+    cdbgc << "cxxflags: " << get_cxxflags_as_string() << endl;
+    cdbgc << "additional_flags: " << get_additional_flags_as_string() << endl;
+    cdbgc << "additional_includes: " << vector_to_string(additional_includes) << endl;
+    cdbgc << "above_main_count: " << above_main.size() << endl;
+    cdbgc << "functions_count: " << functions.size() << endl;
+    cdbgc << "code_count: " << codes.size() << endl;
+    cdbgc << "additional_sources: " << vector_to_string(additional_sources) << endl;
+    cdbgc << "args_count: " << args_count << endl;
 
-    os << "  code_count: " << codes.size() << endl;
-    os << "  args_count: " << args_count << endl;
-
-    os << "  clean_cache: " << clean_cache << endl;
+    cdbgc << "clean_cache: " << clean_cache << endl;
 }
 
 std::string Settings::vector_to_string(const std::vector<std::string> &vec, const std::string &sep) {

@@ -1,7 +1,6 @@
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
 
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -44,7 +43,7 @@ class Settings {
     bool has_code() const { return !codes.empty(); }
     bool has_included_stdcpp() const { return included_stdcpp; }
 
-    void debug_print(std::ostream &os = std::cerr) const;
+    void debug_print() const;
 
   private:
     static std::string vector_to_string(const std::vector<std::string> &vec, const std::string &sep = " ");
@@ -53,18 +52,19 @@ class Settings {
   private:
     std::string compiler = RCC_COMPILER;
     std::string std = RCC_CPP_STD;
-    bool clean_cache = false;
+    std::vector<std::string> cxxflags = {"-Wall",
+                                         "-Wextra",
+                                         "-Wno-unused-variable",
+                                         "-Wno-unused-parameter",
+                                         "-Wno-unused-function"};
     std::vector<std::string> additional_flags;
     std::vector<std::string> additional_includes;
     std::vector<std::string> above_main;
     std::vector<std::string> functions;
     std::vector<std::string> codes; // the command line code snippets
     std::vector<std::string> additional_sources;
-    std::vector<std::string> cxxflags = {"-Wall",
-                                         "-Wextra",
-                                         "-Wno-unused-variable",
-                                         "-Wno-unused-parameter",
-                                         "-Wno-unused-function"};
+
+    bool clean_cache = false;
 
     char **args_start = NULL;
     int args_count = 0;

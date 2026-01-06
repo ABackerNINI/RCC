@@ -434,19 +434,56 @@ extern int debug_level;
 
 #ifdef DEBUG
 
+// For debug printing.
 #define cdbg __cdbg()
+// For continuous debug printing.
+#define cdbgc __cdbgc()
+// For extended debug printing.
 #define cdbgx __cdbgx()
 
-std::ostream &__cdbg() {
-    if (isatty(STDERR_FILENO)) {
-        std::cerr << CC(CC_FG_MAGENTA, "[DEBUG] ");
-    } else {
-        std::cerr << "[DEBUG] ";
+class cdbg_ostream {
+  public:
+    template <typename T> inline std::ostream &operator<<(const T &x) {
+        if (isatty(STDERR_FILENO)) {
+            std::cerr << CC(CC_FG_MAGENTA, "[DEBUG] ") << x;
+        } else {
+            std::cerr << "[DEBUG] " << x;
+        }
+        return std::cerr;
     }
-    return std::cerr;
+    inline std::ostream &operator<<(std::ostream &(*func)(std::ostream &os)) {
+        std::cerr << func;
+        return std::cerr;
+    }
+};
+
+class cdbgc_ostream {
+  public:
+    template <typename T> inline std::ostream &operator<<(const T &x) {
+        if (isatty(STDERR_FILENO)) {
+            std::cerr << CC(CC_FG_MAGENTA, " > ") << x;
+        } else {
+            std::cerr << " > " << x;
+        }
+        return std::cerr;
+    }
+    inline std::ostream &operator<<(std::ostream &(*func)(std::ostream &os)) {
+        std::cerr << func;
+        return std::cerr;
+    }
+};
+
+inline cdbg_ostream &__cdbg() {
+    static cdbg_ostream cdbg_os;
+    return cdbg_os;
 }
 
-std::ostream &__cdbgx() {
+inline cdbgc_ostream &__cdbgc() {
+    static cdbgc_ostream cdbgc_os;
+    return cdbgc_os;
+}
+
+inline std::ostream &__cdbgx() {
     return std::cerr;
 }
 
@@ -466,22 +503,19 @@ class null_ostream {
     }
 };
 
-inline null_ostream &__cdbg() {
+inline null_ostream &__null_cdbg() {
     do {
         static null_ostream nul;
         return nul;
     } while (0);
 }
 
-inline null_ostream &__cdbgx() {
-    do {
-        static null_ostream nul;
-        return nul;
-    } while (0);
-}
-
-#define cdbg __cdbg()
-#define cdbgx __cdbgx()
+// For debug printing.
+#define cdbg __null_cdbg()
+// For continuous debug printing.
+#define cdbgc __null_cdbg()
+// For extended debug printing.
+#define cdbgx __null_cdbg()
 
 #endif /* DEBUG */
 
