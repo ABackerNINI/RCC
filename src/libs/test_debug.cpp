@@ -4,27 +4,51 @@
 #include <iomanip>
 #include <iostream>
 #include <type_traits>
+#include <unistd.h>
 #include <vector>
 
 using namespace std;
 
 #define DEBUG
 
+#if __cplusplus >= 201103L
+
 #ifdef DEBUG
 
 #define cdbg __cdbg()
-#define cdbg_ex __cdbg_ex()
+#define cdbgx __cdbgx()
 
-ostream &__cdbg() {
-    cerr << "[debug] ";
-    return cerr;
+#include <ostream>
+
+class cerr_ostream {
+  public:
+    template <typename T> inline cerr_ostream &operator<<(const T &x) {
+        if (isatty(STDERR_FILENO)) {
+            // std::cerr << CC(CC_FG_MAGENTA, "[DEBUG] ") << x;
+        } else {
+            std::cerr << "[DEBUG] " << x;
+        }
+        return *this;
+    }
+    inline cerr_ostream &operator<<(std::ostream &(*func)(std::ostream &os)) {
+        cerr << func;
+        return *this;
+    }
+};
+
+inline cerr_ostream &__cdbg() {
+    static cerr_ostream cerr_os;
+    return cerr_os;
 }
 
-ostream &__cdbg_ex() {
-    return cerr;
+inline cerr_ostream &__cdbgx() {
+    static cerr_ostream cerr_os;
+    return cerr_os;
 }
 
-#else
+#else /* DEBUG */
+
+#include <ostream>
 
 class null_ostream {
   public:
@@ -32,31 +56,37 @@ class null_ostream {
         (void)x;
         return *this;
     }
-    inline null_ostream &operator<<(ostream &(*f)(ostream &)) {
-        (void)f;
+    inline null_ostream &operator<<(std::ostream &(*func)(std::ostream &os)) {
+        (void)func;
         return *this;
     }
 };
 
 inline null_ostream &__cdbg() {
-    static null_ostream nul;
-    return nul;
+    do {
+        static null_ostream nul;
+        return nul;
+    } while (0);
 }
 
-inline null_ostream &__cdbg_ex() {
-    static null_ostream nul;
-    return nul;
+inline null_ostream &__cdbgx() {
+    do {
+        static null_ostream nul;
+        return nul;
+    } while (0);
 }
 
 #define cdbg __cdbg()
-#define cdbg_ex __cdbg_ex()
+#define cdbgx __cdbgx()
 
-#endif
+#endif /* DEBUG */
+
+#endif /* __cplusplus */
 
 int main() {
     int a = 10;
-    cdbg << "what" << a << endl;
-    cdbg_ex << "what" << a << endl;
+    // cdbg << "what" << a << endl;
+    // cdbg_ex << "what" << a << endl;
 
     return 0;
 }

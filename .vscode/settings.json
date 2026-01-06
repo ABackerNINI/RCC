@@ -2,9 +2,15 @@
 	// Visual Studio, LLVM, Google, Chromium, Mozilla, WebKit, none
 	"C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 120 }",
 	"cSpell.words": [
+        "cdbc",
+        "cdbgc",
+        "cdbgx",
         "cmath",
+        "cppm",
+        "curdir",
         "DCPP",
         "delims",
+        "DINCLUDE",
         "DRCC",
         "FORI",
         "FORJ",
@@ -16,6 +22,8 @@
         "getline",
         "iostream",
         "pchs",
+        "stdc",
+        "stdcpp",
         "toupper",
         "Xclang"
     ],
