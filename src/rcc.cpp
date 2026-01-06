@@ -13,6 +13,7 @@
 #include "paths.h"
 #include "settings.h"
 
+#include "libs/debug.h"
 #include "libs/rang.hpp"
 
 using namespace std;
@@ -97,8 +98,6 @@ void signal_handler(int s) {
 // The main function of rcc.
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
-    // TODO: add option --put-above-main, to support macros, using namespaces, etc.
-    // TODO: add option --function, create a function
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, --compile-only, compile only, return binary's name, run later
     // TODO: add option --dry-run, show what would be done without actually doing it
@@ -131,7 +130,7 @@ int rcc_main(int argc, char **argv) {
         return result;
     }
 
-    // settings.debug_print();
+    dbg_stmt(settings.debug_print(cdbg));
 
     // Seed the random number generator
     //? Why time() + getpid()?
@@ -213,13 +212,15 @@ int rcc_main(int argc, char **argv) {
     const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags);
     delete cs;
 
-    // cout << compile_cmd << endl;
+    cdbg << compile_cmd << endl;
 
     // If compile succeed, run the program from cwd directory,
     // else print the out cpp full path.
     if (system(compile_cmd) == 0) {
+        cdbgx << rang::fg::yellow << rang::style::bold << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" << rang::style::reset << endl;
         //* Note that the result of this system call is ignored
         ignore_system(run_exec_cmd);
+        cdbgx << rang::fg::yellow << rang::style::bold << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << rang::style::reset << endl;
     } else {
         cout << "\n" << cpp_path.get_path() << endl;
         cout << "\n" << rang::fg::red << rang::style::bold << "COMPILATION FAILED!" << rang::style::reset << endl;
