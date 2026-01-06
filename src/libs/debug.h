@@ -406,7 +406,7 @@ extern int debug_level;
 #define dbg_print(...) printf(__VA_ARGS__)
 #define dbg_stmt(...)                                                                                                  \
     do {                                                                                                               \
-        __VA_ARGS__                                                                                                    \
+        __VA_ARGS__;                                                                                                   \
     } while (0)
 
 #include <assert.h> /* assert */
@@ -430,20 +430,24 @@ extern int debug_level;
 
 #endif /* DEBUG */
 
-#ifdef __cplusplus
+#if __cplusplus >= 201103L
 
 #ifdef DEBUG
 
 #define cdbg __cdbg()
-#define cdbg_ex __cdbg_ex()
+#define cdbgx __cdbgx()
 
-ostream &__cdbg() {
-    cerr << "[debug] ";
-    return cerr;
+std::ostream &__cdbg() {
+    if (isatty(STDERR_FILENO)) {
+        std::cerr << CC(CC_FG_MAGENTA, "[DEBUG] ");
+    } else {
+        std::cerr << "[DEBUG] ";
+    }
+    return std::cerr;
 }
 
-ostream &__cdbg_ex() {
-    return cerr;
+std::ostream &__cdbgx() {
+    return std::cerr;
 }
 
 #else /* DEBUG */
@@ -463,17 +467,21 @@ class null_ostream {
 };
 
 inline null_ostream &__cdbg() {
-    static null_ostream nul;
-    return nul;
+    do {
+        static null_ostream nul;
+        return nul;
+    } while (0);
 }
 
-inline null_ostream &__cdbg_ex() {
-    static null_ostream nul;
-    return nul;
+inline null_ostream &__cdbgx() {
+    do {
+        static null_ostream nul;
+        return nul;
+    } while (0);
 }
 
 #define cdbg __cdbg()
-#define cdbg_ex __cdbg_ex()
+#define cdbgx __cdbgx()
 
 #endif /* DEBUG */
 
