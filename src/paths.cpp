@@ -100,13 +100,22 @@ string Path::read_file() const {
         cerr << "Can't open file: " << path << endl;
         exit(1);
     }
+
     string content;
     content.reserve(1024);
-    string line;
 
-    while (getline(infile, line)) {
-        content += line;
-        content.push_back('\n');
+    char buf[1024];
+    streamsize bytes_read = 0;
+    while (infile.read(buf, 1024), (bytes_read = infile.gcount()) > 0) {
+        content.append(buf, bytes_read);
+    }
+
+    if (!infile.eof()) {
+        if (infile.fail()) {
+            throw runtime_error("Error: Failed to read from file.");
+        } else if (infile.bad()) {
+            throw runtime_error("Error: Bad stream state.");
+        }
     }
 
     return content;
