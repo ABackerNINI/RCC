@@ -4,7 +4,7 @@ CPP_COMPILER  ?= g++
 CPP_STD       ?= c++17
 
 CXX = $(CPP_COMPILER)
-CXXFLAGS = -W -Wall -std=$(CPP_STD) -Wno-unused-parameter
+CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -Wno-unused-parameter
 BD = ./build
 
 # Compile to objects
