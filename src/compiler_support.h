@@ -41,6 +41,7 @@ class compiler_support {
                                             const std::string &additional_flags) const = 0;
 
   protected:
+    static size_t safe_replace(std::string &str, size_t pos, const std::string &from, const std::string &to);
     std::string gen_additional_includes(const std::vector<std::string> &additional_includes) const;
 
   protected:

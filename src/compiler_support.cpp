@@ -1,8 +1,6 @@
+#include "pch.h"
+
 #include "compiler_support.h"
-
-#include <iostream>
-
-using namespace std;
 
 namespace rcc {
 
@@ -16,6 +14,18 @@ static std::string vector_to_string(const std::vector<std::string> &vec, const s
         result.pop_back();
     }
     return result;
+}
+
+size_t compiler_support::safe_replace(std::string &str, size_t pos, const std::string &from, const std::string &to) {
+    if (pos >= str.size()) {
+        return string::npos;
+    }
+    size_t found = str.find(from, pos);
+    if (found == string::npos) {
+        return string::npos;
+    }
+    str.replace(found, from.size(), to);
+    return found + to.size();
 }
 
 std::string compiler_support::gen_additional_includes(const std::vector<std::string> &additional_includes) const {
@@ -56,6 +66,8 @@ std::string compiler_support::gen_code(const Path &template_filename,
 
     // The template file should be checked during installation
     // so do not check it here
+
+    // TODO: safe replace
 
     temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
     temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));

@@ -1,23 +1,9 @@
-#include <dirent.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#include <csignal>
-#include <cstring>
-#include <ctime>
-
-#include <iostream>
-#include <memory>
-
-#include "libs/debug.h"
-#include "libs/rang.hpp"
+#include "pch.h"
 
 #include "compiler_support.h"
 #include "paths.h"
 #include "settings.h"
 
-using namespace std;
 using namespace rcc;
 
 // Ignore the result of a function call so that compiler doesn't warn about
@@ -26,7 +12,7 @@ template <typename T> void IGNORE_RESULT(T &&) {}
 
 // Wrapper function of system(const char *);
 int system(const string &cmd) {
-    // cout << cmd << endl;
+    // print(cmd);
     return system(cmd.c_str());
 }
 
@@ -47,7 +33,7 @@ void signal_handler(int s) {
     (void)s;
     std::cout << std::endl << rang::style::reset << rang::fg::red << rang::style::bold;
     std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
-    std::exit(1); // will call the correct exit func, no unwinding of the stack though
+    std::exit(1);
 }
 
 // Register signal handler for SIGINT to exit the program gracefully.
@@ -82,7 +68,7 @@ pid_t random_clean_cache() {
             //! Caution: rm command
             find_rm_cmd += string(" -atime +30 | xargs rm -f");
 
-            // cout << find_rm_cmd << endl;
+            // print(find_rm_cmd);
 
             if (system(find_rm_cmd.c_str()) != 0) {
                 perror("system:find");
@@ -130,7 +116,7 @@ bool compile_code(const Settings &settings,
                   const string &cxxflags,
                   const string &additional_flags,
                   const string &exec_cmd,
-                  shared_ptr<compiler_support> cs) {
+                  std::shared_ptr<compiler_support> cs) {
     vector<Path> sources = {cpp_path};
     for (auto &src : settings.get_additional_sources()) {
         sources.emplace_back(src);
@@ -141,12 +127,13 @@ bool compile_code(const Settings &settings,
     cdbg << compile_cmd << endl;
 
     if (system(compile_cmd) != 0) {
-        cout << "\n" << cpp_path.get_path() << endl;
-        cout << "\n" << rang::fg::red << rang::style::bold << "COMPILATION FAILED!\n" << rang::style::reset << endl;
-        cout << rang::fg::yellow << rang::style::bold << "COMPILE COMMAND: " << rang::style::reset << compile_cmd
-             << rang::style::reset << endl;
-        cout << rang::fg::yellow << rang::style::bold << "EXECUTE COMMAND: " << rang::style::reset << exec_cmd
-             << rang::style::reset << endl;
+        print(fmt::emphasis::underline, "\n{}\n", cpp_path.get_path());
+        print(fg(fmt::color::red) | fmt::emphasis::bold, "\nCOMPILATION FAILED!\n");
+        print(fg(fmt::color::saddle_brown) | fmt::emphasis::bold, "COMPILE COMMAND: ").print("{}\n", compile_cmd);
+        print(fg(fmt::color::saddle_brown) | fmt::emphasis::bold, "EXECUTE COMMAND: ").print("{}\n", exec_cmd);
+
+        fmt::print(std::cerr, "{}", 1);
+
         return false;
     }
     return true;
@@ -237,7 +224,7 @@ int rcc_main(int argc, char **argv) {
     const string exec_cmd = bin_path.get_path() + (command_line_args.empty() ? "" : " " + command_line_args);
 
     // the compiler support
-    auto cs = shared_ptr<compiler_support>(new_compiler_support(compiler, settings));
+    auto cs = std::shared_ptr<compiler_support>(new_compiler_support(compiler, settings));
 
     // The hash of this string will be written into the cpp file, so that if one of the fields change, we can detect it
     // and recompile the code. This is an insurance in case the first hash collides.
@@ -253,7 +240,7 @@ int rcc_main(int argc, char **argv) {
                                           settings.get_above_main(),
                                           settings.get_functions(),
                                           code,
-                                          to_string(Paths::fnv1a_64_hash_string(id)));
+                                          std::to_string(Paths::fnv1a_64_hash_string(id)));
 
     /*------------------------------------------------------------------------*/
     // * Compile If Needed

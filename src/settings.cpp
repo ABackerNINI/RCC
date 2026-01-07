@@ -1,10 +1,6 @@
+#include "pch.h"
+
 #include "settings.h"
-
-#include <cstring>
-
-#include "libs/CLI11.hpp"
-#include "libs/debug.h"
-#include "libs/rang.hpp"
 
 using namespace std;
 

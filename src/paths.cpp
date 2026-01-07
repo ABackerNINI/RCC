@@ -1,13 +1,6 @@
+#include "pch.h"
+
 #include "paths.h"
-#include <dirent.h>
-#include <unistd.h>
-
-#include <sys/stat.h>
-
-#include <fstream>
-#include <iostream>
-
-using namespace std;
 
 namespace rcc {
 
@@ -95,7 +88,7 @@ std::string Path::check_whitespaces(const std::string &path) {
 
 // Read file line by line and put them together in a string.
 string Path::read_file() const {
-    ifstream infile(path);
+    std::ifstream infile(path);
     if (!infile) {
         cerr << "Can't open file: " << path << endl;
         exit(1);
@@ -105,16 +98,16 @@ string Path::read_file() const {
     content.reserve(1024);
 
     char buf[1024];
-    streamsize bytes_read = 0;
+    std::streamsize bytes_read = 0;
     while (infile.read(buf, 1024), (bytes_read = infile.gcount()) > 0) {
         content.append(buf, bytes_read);
     }
 
     if (!infile.eof()) {
         if (infile.fail()) {
-            throw runtime_error("Error: Failed to read from file.");
+            throw std::runtime_error("Error: Failed to read from file.");
         } else if (infile.bad()) {
-            throw runtime_error("Error: Bad stream state.");
+            throw std::runtime_error("Error: Bad stream state.");
         }
     }
 
@@ -123,7 +116,7 @@ string Path::read_file() const {
 
 // Write string to a file.
 void Path::write_file(const string &content) const {
-    ofstream outfile(path);
+    std::ofstream outfile(path);
     if (!outfile) {
         cerr << "Can't open file: " << path << endl;
         exit(1);
@@ -215,7 +208,7 @@ Path Paths::get_template_file_path() const {
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
     const uint64_t hash = fnv1a_64_hash_string(code_for_hash);
 
-    string hash_str = to_string(hash);
+    string hash_str = std::to_string(hash);
 
     // Max value of uint64_t is 18446744073709551615, 19 digits,
     // so we make the length of hash_str to 20 so that all the filenames of
