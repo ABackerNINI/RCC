@@ -18,6 +18,7 @@ namespace rcc {
 
 class Settings {
   public:
+    // Parse the command line arguments and initialize the settings.
     int parse_argv(int argc, char **argv);
 
     const std::string get_compiler() const { return compiler; }
@@ -40,36 +41,53 @@ class Settings {
     std::string get_codes_as_string() const { return merge_codes(codes); }
     std::string get_additional_sources_as_string() const { return vector_to_string(additional_sources); }
 
+    // Check if at least one code snippet is present.
     bool has_code() const { return !codes.empty(); }
+
+    // Check if the `bits/stdc++.h` header is included.
+    // It is true if the "--include-all" option is used or if the `bits/stdc++.h` header is
+    // explicitly included by the "--include" option.
     bool has_included_stdcpp() const { return included_stdcpp; }
 
+    // Print the settings to standard error for debugging purposes.
     void debug_print() const;
 
   private:
+    // Concatenate a vector of strings into one string with a separator.
     static std::string vector_to_string(const std::vector<std::string> &vec, const std::string &sep = " ");
+
+    // Merge multiple code snippets into one string.
     static std::string merge_codes(const std::vector<std::string> &codes);
 
   private:
-    std::string compiler = RCC_COMPILER;
-    std::string std = RCC_CPP_STD;
+    std::string compiler = RCC_COMPILER; // the compiler to use
+    std::string std = RCC_CPP_STD; // the c++ standard to use, relates to "-std"
+    // the c++ flags to use, default to a set of common flags.
     std::vector<std::string> cxxflags = {"-Wall",
                                          "-Wextra",
                                          "-Wno-unused-variable",
                                          "-Wno-unused-parameter",
                                          "-Wno-unused-function"};
+    // additional flags to pass to the compiler, at the end of the compile command, the libraries to link against have
+    // to be specified after source files that use them. Relates to anything that starts with "-l", or "-pthread", or
+    // "-math".
     std::vector<std::string> additional_flags;
-    std::vector<std::string> additional_includes;
-    std::vector<std::string> above_main;
-    std::vector<std::string> functions;
+    std::vector<std::string> additional_includes; // additional include headers, relates to "--include" and
+                                                  // "--include-all"
+    std::vector<std::string> above_main; // code to put above the main function, relates to "--put-above-main"
+    std::vector<std::string> functions; // functions to declare before the main function, relates to "--function"
     std::vector<std::string> codes; // the command line code snippets
-    std::vector<std::string> additional_sources;
+    std::vector<std::string> additional_sources; // additional source files to compile with, relates to "--compile-with"
 
-    bool clean_cache = false;
+    bool clean_cache = false; // whether to clean the cache, relates to "--clean-cache"
 
+    // the start of the arguments that are going to pass to the program, anything after "--".
+    //* These arguments will not be parsed by CLI11, and will be passed to the program as is.
     char **args_start = NULL;
-    int args_count = 0;
+    int args_count = 0; // the number of arguments
 
-    bool included_stdcpp = false;
+    bool included_stdcpp = false; // whether the `bits/stdc++.h` has been included, relates to "--include-all"
+                                  // and"--include"
 };
 
 } // namespace rcc

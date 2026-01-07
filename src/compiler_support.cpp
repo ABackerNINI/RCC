@@ -6,6 +6,7 @@ using namespace std;
 
 namespace rcc {
 
+// Concatenate a vector of strings into one string with a separator.
 static std::string vector_to_string(const std::vector<std::string> &vec, const std::string &sep = " ") {
     string result = "";
     for (const auto &item : vec) {

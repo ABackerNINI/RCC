@@ -42,6 +42,7 @@ void ignore_system(const string &cmd) {
     IGNORE_RESULT(system(cmd));
 }
 
+// Signal handler for SIGINT (Control-C) to exit the program gracefully.
 void signal_handler(int s) {
     (void)s;
     std::cout << std::endl << rang::style::reset << rang::fg::red << rang::style::bold;
@@ -49,6 +50,7 @@ void signal_handler(int s) {
     std::exit(1); // will call the correct exit func, no unwinding of the stack though
 }
 
+// Register signal handler for SIGINT to exit the program gracefully.
 void register_signal_handler() {
     // Nice Control-C
     struct sigaction sigIntHandler;
@@ -97,6 +99,7 @@ pid_t random_clean_cache() {
     return -1;
 }
 
+// Clean up all cached sources and binaries.
 int clean_cache() {
     //! Caution: rm command
     const string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().get_path();
@@ -104,8 +107,9 @@ int clean_cache() {
     return system(rm_cmd.c_str());
 }
 
+// Check if the binary is cached and the content matches.
+//* The file hash may collide, so we need to check the content as well.
 bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &full_code) {
-    // Check if cached
     if (bin_path.exists()) {
         const string code_old = cpp_path.read_file();
         if (code_old == full_code) {
@@ -119,6 +123,7 @@ bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &f
     return false;
 }
 
+// Compile the code.
 bool compile_code(const Settings &settings,
                   const Path &bin_path,
                   const Path &cpp_path,
@@ -137,7 +142,7 @@ bool compile_code(const Settings &settings,
 
     if (system(compile_cmd) != 0) {
         cout << "\n" << cpp_path.get_path() << endl;
-        cout << "\n" << rang::fg::red << rang::style::bold << "COMPILATION FAILED!" << rang::style::reset << endl;
+        cout << "\n" << rang::fg::red << rang::style::bold << "COMPILATION FAILED!\n" << rang::style::reset << endl;
         cout << rang::fg::yellow << rang::style::bold << "COMPILE COMMAND: " << rang::style::reset << compile_cmd
              << rang::style::reset << endl;
         cout << rang::fg::yellow << rang::style::bold << "EXECUTE COMMAND: " << rang::style::reset << exec_cmd
@@ -251,7 +256,7 @@ int rcc_main(int argc, char **argv) {
                                           to_string(Paths::fnv1a_64_hash_string(id)));
 
     /*------------------------------------------------------------------------*/
-    // * Compile And Run
+    // * Compile If Needed
 
     if (check_if_cached(bin_path, cpp_path, full_code)) {
         // Cached, skip the compiling process, run the executable directly
@@ -265,6 +270,9 @@ int rcc_main(int argc, char **argv) {
             return 1; // Compile failed
         }
     }
+
+    /*------------------------------------------------------------------------*/
+    // * Run the Executable
 
     cdbgx << rang::fg::yellow << rang::style::bold << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" << rang::style::reset << endl;
     int ret = system(exec_cmd);
