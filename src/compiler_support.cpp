@@ -49,7 +49,8 @@ std::string linux_gcc::gen_code(const Path &template_filename,
                                 const std::vector<std::string> &includes,
                                 const std::vector<std::string> &above_main,
                                 const std::vector<std::string> &functions,
-                                const std::string &commandline_code) const {
+                                const std::string &commandline_code,
+                                const std::string &identifier) const {
     string temp = template_filename.read_file();
 
     // The template file should be checked during installation
@@ -59,6 +60,7 @@ std::string linux_gcc::gen_code(const Path &template_filename,
     temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));
     temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
     temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
+    temp.replace(temp.find("$rcc-id"), 7, "ID: " + identifier);
 
     return temp;
 }
@@ -96,7 +98,8 @@ std::string linux_clang::gen_code(const Path &template_filename,
                                   const std::vector<std::string> &includes,
                                   const std::vector<std::string> &above_main,
                                   const std::vector<std::string> &functions,
-                                  const std::string &commandline_code) const {
+                                  const std::string &commandline_code,
+                                  const std::string &identifier) const {
     string temp = template_filename.read_file();
 
     // The template file should be checked during installation
@@ -106,6 +109,7 @@ std::string linux_clang::gen_code(const Path &template_filename,
     temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));
     temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
     temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
+    temp.replace(temp.find("$rcc-id"), 7, "ID: " + identifier);
 
     return temp;
 }

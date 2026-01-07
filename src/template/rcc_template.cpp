@@ -1,4 +1,5 @@
 #include "rcc_template.hpp"
+
 // $rcc-inc
 
 using namespace std;
@@ -12,3 +13,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+// $rcc-id

@@ -95,16 +95,16 @@ class Paths {
     // The filenames are based on the hash of the code.
     void get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const;
 
+    // Hash a string using the FNV-1a algorithm. This is used to generate unique filenames
+    // for the source and binary files.
+    static uint64_t fnv1a_64_hash_string(const std::string &str);
+
   private:
     // Private constructor to prevent instantiation.
     Paths();
 
     // Validate the root cache directory to ensure that everything is set up correctly.
     void validate_cache_dir();
-
-    // Hash a string using the FNV-1a algorithm. This is used to generate unique filenames
-    // for the source and binary files.
-    static uint64_t fnv1a_64_hash_string(const std::string &str);
 
   private:
     Path cwd;

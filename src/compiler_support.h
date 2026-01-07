@@ -26,7 +26,8 @@ class compiler_support {
                                  const std::vector<std::string> &includes,
                                  const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
-                                 const std::string &commandline_code) const = 0;
+                                 const std::string &commandline_code,
+                                 const std::string &identifier) const = 0;
 
     virtual std::string get_compile_command(const std::vector<Path> &sources,
                                             const Path &bin_path,
@@ -51,7 +52,8 @@ class linux_gcc : public compiler_support {
                                  const std::vector<std::string> &includes,
                                  const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
-                                 const std::string &commandline_code) const override;
+                                 const std::string &commandline_code,
+                                 const std::string &identifier) const override;
 
     virtual std::string get_compile_command(const std::vector<Path> &sources,
                                             const Path &bin_path,
@@ -69,7 +71,8 @@ class linux_clang : public compiler_support {
                                  const std::vector<std::string> &includes,
                                  const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
-                                 const std::string &commandline_code) const override;
+                                 const std::string &commandline_code,
+                                 const std::string &identifier) const override;
 
     virtual std::string get_compile_command(const std::vector<Path> &sources,
                                             const Path &bin_path,
