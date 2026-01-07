@@ -11,13 +11,13 @@ src_file="scripts/test_cpp_standard.cpp"
 standards="c++23 c++20 c++17 c++14 c++11"
 
 for standard in $standards; do
-    if $compiler "-std=$standard" $src_file -o scripts/test 2>/dev/null; then
-        rm -f scripts/test
+    if $compiler "-std=$standard" $src_file -o scripts/test.bin 2>/dev/null; then
+        rm -f scripts/test.bin
         echo "$standard"
         exit 0
     fi
 done
 
-echo "Current g++ does not support one of the standards \"$standards\""
-echo "Please install a higher version of g++"
+echo "Current $compiler does not support one of the standards \"$standards\""
+echo "Please install a higher version of $compiler"
 exit 1
