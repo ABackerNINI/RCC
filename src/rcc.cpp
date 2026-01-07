@@ -42,6 +42,22 @@ void ignore_system(const string &cmd) {
     IGNORE_RESULT(system(cmd));
 }
 
+void signal_handler(int s) {
+    (void)s;
+    std::cout << std::endl << rang::style::reset << rang::fg::red << rang::style::bold;
+    std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
+    std::exit(1); // will call the correct exit func, no unwinding of the stack though
+}
+
+void register_signal_handler() {
+    // Nice Control-C
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signal_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, nullptr);
+}
+
 // Delete old cached files with probability of 1/256.
 pid_t random_clean_cache() {
     // 1/256 chances
@@ -88,11 +104,47 @@ int clean_cache() {
     return system(rm_cmd.c_str());
 }
 
-void signal_handler(int s) {
-    (void)s;
-    std::cout << std::endl << rang::style::reset << rang::fg::red << rang::style::bold;
-    std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
-    std::exit(1); // will call the correct exit func, no unwinding of the stack though
+bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &full_code) {
+    // Check if cached
+    if (bin_path.exists()) {
+        const string code_old = cpp_path.read_file();
+        if (code_old == full_code) {
+            return true;
+        }
+        cdbg << rang::fg::red << rang::style::bold << "WARNING: hash collided but content does not match!"
+             << rang::style::reset << endl;
+        cdbg << "Old code: " << rang::fg::blue << code_old << rang::style::reset << endl;
+        cdbg << "New code: " << rang::fg::green << full_code << rang::style::reset << endl;
+    }
+    return false;
+}
+
+bool compile_code(const Settings &settings,
+                  const Path &bin_path,
+                  const Path &cpp_path,
+                  const string &cxxflags,
+                  const string &additional_flags,
+                  const string &exec_cmd,
+                  shared_ptr<compiler_support> cs) {
+    vector<Path> sources = {cpp_path};
+    for (auto &src : settings.get_additional_sources()) {
+        sources.emplace_back(src);
+    }
+
+    const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags);
+
+    cdbg << compile_cmd << endl;
+
+    if (system(compile_cmd) != 0) {
+        cout << "\n" << cpp_path.get_path() << endl;
+        cout << "\n" << rang::fg::red << rang::style::bold << "COMPILATION FAILED!" << rang::style::reset << endl;
+        cout << rang::fg::yellow << rang::style::bold << "COMPILE COMMAND: " << rang::style::reset << compile_cmd
+             << rang::style::reset << endl;
+        cout << rang::fg::yellow << rang::style::bold << "EXECUTE COMMAND: " << rang::style::reset << exec_cmd
+             << rang::style::reset << endl;
+        return false;
+    }
+    return true;
 }
 
 // The main function of rcc.
@@ -116,21 +168,20 @@ int rcc_main(int argc, char **argv) {
     // TODO: boost with multi-thread
     //? TODO: add option --stdin, read input from stdin instead of arguments
 
+    // Reset colors at exit to avoid terminal issues after program termination
     std::atexit([]() { std::cout << rang::style::reset; });
 
-    // Nice Control-C
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signal_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, nullptr);
+    // Handle signals gracefully
+    register_signal_handler();
 
+    // Parse arguments and set up settings
     Settings settings;
     int result;
     if ((result = settings.parse_argv(argc, argv)) != 0) {
         return result;
     }
 
+    // Print the settings
     dbg_stmt(settings.debug_print());
 
     // Seed the random number generator
@@ -180,7 +231,8 @@ int rcc_main(int argc, char **argv) {
     const string command_line_args = settings.get_cli_args_as_string();
     const string exec_cmd = bin_path.get_path() + (command_line_args.empty() ? "" : " " + command_line_args);
 
-    auto cs = unique_ptr<compiler_support>(new_compiler_support(compiler, settings));
+    // the compiler support
+    auto cs = shared_ptr<compiler_support>(new_compiler_support(compiler, settings));
 
     // The hash of this string will be written into the cpp file, so that if one of the fields change, we can detect it
     // and recompile the code. This is an insurance in case the first hash collides.
@@ -198,57 +250,27 @@ int rcc_main(int argc, char **argv) {
                                           code,
                                           to_string(Paths::fnv1a_64_hash_string(id)));
 
-    // Check if cached
-    if (bin_path.exists()) {
-        const string code_old = cpp_path.read_file();
-        if (code_old == full_code) {
-            cdbg << "Running cached binary" << endl;
-            cdbg << "run: " << exec_cmd << endl;
-            // Cached, skip the compiling process, run the executable directly
-            //* Note that the result of this system call is ignored
-            // cout << run_exec_str << endl;
-            ignore_system(exec_cmd);
-            return 0;
-        }
-        cdbg << rang::fg::red << rang::style::bold << "Recompiling: content does not match!" << rang::style::reset
-             << endl;
-        cdbg << "Old code: " << rang::fg::blue << code_old << rang::style::reset << endl;
-        cdbg << "New code: " << rang::fg::green << full_code << rang::style::reset << endl;
-    }
-
-    // Write c++ code to the temp file
-    cpp_path.write_file(full_code);
-
     /*------------------------------------------------------------------------*/
     // * Compile And Run
 
-    vector<Path> sources = {cpp_path};
-    for (auto &src : settings.get_additional_sources()) {
-        sources.emplace_back(src);
-    }
-
-    const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags);
-
-    cdbg << compile_cmd << endl;
-
-    // If compile succeed, run the program from cwd directory,
-    // else print the out cpp full path.
-    if (system(compile_cmd) == 0) {
-        cdbgx << rang::fg::yellow << rang::style::bold << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" << rang::style::reset << endl;
-        //* Note that the result of this system call is ignored
-        ignore_system(exec_cmd);
-        cdbgx << rang::fg::yellow << rang::style::bold << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << rang::style::reset << endl;
+    if (check_if_cached(bin_path, cpp_path, full_code)) {
+        // Cached, skip the compiling process, run the executable directly
+        cdbg << "Running cached binary" << endl;
+        cdbg << "run: " << exec_cmd << endl;
     } else {
-        cout << "\n" << cpp_path.get_path() << endl;
-        cout << "\n" << rang::fg::red << rang::style::bold << "COMPILATION FAILED!" << rang::style::reset << endl;
-        cout << rang::fg::yellow << rang::style::bold << "COMPILE COMMAND: " << rang::style::reset << compile_cmd
-             << rang::style::reset << endl;
-        cout << rang::fg::yellow << rang::style::bold << "EXECUTE COMMAND: " << rang::style::reset << exec_cmd
-             << rang::style::reset << endl;
-        return 1;
+        // Write c++ code to the cpp file
+        cpp_path.write_file(full_code);
+
+        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, exec_cmd, cs)) {
+            return 1; // Compile failed
+        }
     }
 
-    return 0;
+    cdbgx << rang::fg::yellow << rang::style::bold << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" << rang::style::reset << endl;
+    int ret = system(exec_cmd);
+    cdbgx << rang::fg::yellow << rang::style::bold << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << rang::style::reset << endl;
+
+    return ret;
 }
 
 int main(int argc, char **argv) {
