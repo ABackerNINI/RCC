@@ -181,6 +181,11 @@ check_error "make clean"
 echo "${YELLOW}Copying templates to cache directory${NORMAL}"
 cp -r template/* -t "$rcc_cache_dir/templates"
 check_error "cp -r template/* -t \"$rcc_cache_dir/templates\""
+# copy templates header files to the cache sub-directory so that the ide 
+# can find it when we open one source file in the ide instead of showing lots of errors. 
+# This is not necessary for the build process but it helps with the ide experience.
+cp -r template/*.hpp -t "$rcc_cache_dir/cache"
+check_error "cp -r template/*.hpp -t \"$rcc_cache_dir/cache\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
