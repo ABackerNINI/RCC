@@ -27,7 +27,7 @@ class compiler_support {
                                  const std::vector<std::string> &above_main,
                                  const std::vector<std::string> &functions,
                                  const std::string &commandline_code,
-                                 const std::string &identifier) const = 0;
+                                 const std::string &identifier) const;
 
     virtual std::string get_compile_command(const std::vector<Path> &sources,
                                             const Path &bin_path,
@@ -48,13 +48,6 @@ class linux_gcc : public compiler_support {
     linux_gcc(const Settings &settings) : compiler_support("g++", settings) {}
     virtual ~linux_gcc() = default;
 
-    virtual std::string gen_code(const Path &template_filename,
-                                 const std::vector<std::string> &includes,
-                                 const std::vector<std::string> &above_main,
-                                 const std::vector<std::string> &functions,
-                                 const std::string &commandline_code,
-                                 const std::string &identifier) const override;
-
     virtual std::string get_compile_command(const std::vector<Path> &sources,
                                             const Path &bin_path,
                                             const std::string &cxxflags,
@@ -66,13 +59,6 @@ class linux_clang : public compiler_support {
   public:
     linux_clang(const Settings &settings) : compiler_support("clang++", settings) {}
     virtual ~linux_clang() = default;
-
-    virtual std::string gen_code(const Path &template_filename,
-                                 const std::vector<std::string> &includes,
-                                 const std::vector<std::string> &above_main,
-                                 const std::vector<std::string> &functions,
-                                 const std::string &commandline_code,
-                                 const std::string &identifier) const override;
 
     virtual std::string get_compile_command(const std::vector<Path> &sources,
                                             const Path &bin_path,

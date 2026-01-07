@@ -45,12 +45,12 @@ std::string compiler_support::gen_additional_includes(const std::vector<std::str
     return includes;
 }
 
-std::string linux_gcc::gen_code(const Path &template_filename,
-                                const std::vector<std::string> &includes,
-                                const std::vector<std::string> &above_main,
-                                const std::vector<std::string> &functions,
-                                const std::string &commandline_code,
-                                const std::string &identifier) const {
+std::string compiler_support::gen_code(const Path &template_filename,
+                                       const std::vector<std::string> &includes,
+                                       const std::vector<std::string> &above_main,
+                                       const std::vector<std::string> &functions,
+                                       const std::string &commandline_code,
+                                       const std::string &identifier) const {
     string temp = template_filename.read_file();
 
     // The template file should be checked during installation
@@ -76,7 +76,9 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + cxxflags;
     }
 
-    compile_cmd += " -I.";
+    if (!settings.get_additional_includes().empty()) {
+        compile_cmd += " -I.";
+    }
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
 
     // g++ will detect PCH files automatically, so we don't need to add them here
@@ -94,26 +96,6 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
     return compile_cmd;
 }
 
-std::string linux_clang::gen_code(const Path &template_filename,
-                                  const std::vector<std::string> &includes,
-                                  const std::vector<std::string> &above_main,
-                                  const std::vector<std::string> &functions,
-                                  const std::string &commandline_code,
-                                  const std::string &identifier) const {
-    string temp = template_filename.read_file();
-
-    // The template file should be checked during installation
-    // so do not check it here
-
-    temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
-    temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));
-    temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
-    temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
-    temp.replace(temp.find("$rcc-id"), 7, "ID: " + identifier);
-
-    return temp;
-}
-
 std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
                                              const Path &bin_path,
                                              const std::string &cxxflags,
@@ -127,7 +109,9 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + cxxflags;
     }
 
-    compile_cmd += " -I.";
+    if (!settings.get_additional_includes().empty()) {
+        compile_cmd += " -I.";
+    }
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
 
     // clang++ needs to specify the .pch file explicitly
