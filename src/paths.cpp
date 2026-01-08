@@ -144,6 +144,8 @@ Paths::Paths() {
 
     this->template_path = sub_templates_dir;
     this->template_path.join("rcc_template.cpp");
+    this->template_header_path = sub_templates_dir;
+    this->template_header_path.join("rcc_template.hpp");
 }
 
 // Check the cache directory of rcc.
@@ -204,6 +206,10 @@ Path Paths::get_sub_templates_dir() const {
 
 Path Paths::get_template_file_path() const {
     return this->template_path;
+}
+
+Path Paths::get_template_header_path() const {
+    return this->template_header_path;
 }
 
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {

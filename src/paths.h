@@ -87,7 +87,12 @@ class Paths {
     Path get_sub_templates_dir() const;
 
     // Get the template cpp file path. User code is written to this file.
+    // Usually ~/.cache/rcc/templates/rcc_template.cpp.
     Path get_template_file_path() const;
+
+    // Get the template header file path. This file contains commonly used includes and some definitions.
+    // Usually ~/.cache/rcc/templates/rcc_template.hpp.
+    Path get_template_header_path() const;
 
     // Get the full path of the output cpp file and binary file for a given piece of code.
     // The filenames are based on the hash of the code.
@@ -106,6 +111,7 @@ class Paths {
     Path sub_cache_dir;
     Path sub_templates_dir;
     Path template_path;
+    Path template_header_path;
 };
 } // namespace rcc
 
