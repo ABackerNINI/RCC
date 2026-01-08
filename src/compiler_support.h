@@ -1,5 +1,5 @@
-#ifndef __COMPILER_SUPPORT_H__
-#define __COMPILER_SUPPORT_H__
+#ifndef __RCC_COMPILER_SUPPORT_H__
+#define __RCC_COMPILER_SUPPORT_H__
 
 #include <string>
 #include <vector>
@@ -85,4 +85,4 @@ compiler_support *new_compiler_support(const std::string &compiler_name, const S
 
 } // namespace rcc
 
-#endif // __COMPILER_SUPPORT_H__
+#endif // __RCC_COMPILER_SUPPORT_H__

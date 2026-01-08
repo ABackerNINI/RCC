@@ -1,5 +1,5 @@
-#ifndef __SETTINGS_H__
-#define __SETTINGS_H__
+#ifndef __RCC_SETTINGS_H__
+#define __RCC_SETTINGS_H__
 
 #include <string>
 #include <vector>
@@ -92,4 +92,4 @@ class Settings {
 
 } // namespace rcc
 
-#endif // __SETTINGS_H__
+#endif // __RCC_SETTINGS_H__

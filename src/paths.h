@@ -1,5 +1,5 @@
-#ifndef __PATHS_H__
-#define __PATHS_H__
+#ifndef __RCC_PATHS_H__
+#define __RCC_PATHS_H__
 
 #include <cstdint>
 
@@ -115,4 +115,4 @@ class Paths {
 };
 } // namespace rcc
 
-#endif // __PATHS_H__
+#endif // __RCC_PATHS_H__
