@@ -159,7 +159,8 @@ IncludeIsMainSourceRegex: ''
 # 缩进case标签
 IndentCaseLabels: false
 IndentGotoLabels: true
-IndentPPDirectives: None
+# 预处理器指令缩进: None, BeforeHash, AfterHash
+IndentPPDirectives: BeforeHash
 # 函数返回类型换行时，缩进函数声明或函数定义的函数名
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave
@@ -257,5 +258,3 @@ UseTab:          Never
 ...
 
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-
-# Possible values: {Never/Empty/Always}
