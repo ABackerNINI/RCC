@@ -26,13 +26,13 @@ DEBUG_DEP  = $(BUILD)/debug.mode $(TARGET)
 RELEASE_DEP = $(BUILD)/release.mode $(TARGET)
 
 ifeq ($(BUILD_PCH), TRUE)
-DEBUG_DEP := _build_pch_debug $(DEBUG_DEP)
-RELEASE_DEP := _build_pch_release $(RELEASE_DEP)
+DEBUG_DEP := $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).debug.gch $(DEBUG_DEP)
+RELEASE_DEP := $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).release.gch $(RELEASE_DEP)
 else ifeq ($(CXX), clang++)
 CXXFLAGS += -Wno-ignored-gch
 endif
 
-.PHONY: default debug release clean clean_pch _build_pch_debug _build_pch_release
+.PHONY: default debug release clean clean_pch
 
 default: debug
 
@@ -49,9 +49,6 @@ clean:
 
 clean_pch:
 	rm -rf "$(PCH_GCH)"
-
-_build_pch_debug: $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).debug.gch
-_build_pch_release: $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).release.gch
 
 # EXECUTABLE DETAILS
 
