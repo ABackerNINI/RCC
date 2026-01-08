@@ -43,7 +43,9 @@ std::string vector_to_string(const std::vector<std::string> &vec,
         result += item + sep;
     }
     if (result.size() > 0) {
-        result.pop_back();
+        for (size_t i = 0; i < sep.size(); i++) {
+            result.pop_back();
+        }
     }
     return result;
 }
