@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function setup(){
+function setup() {
     # Check if output is tty
     if [ -t 1 ]; then
         local ncolors
@@ -20,6 +20,9 @@ function setup(){
             MAGENTA="$(tput setaf 5)"
             CYAN="$(tput setaf 6)"
             WHITE="$(tput setaf 7)"
+
+            # Use them so that the Bash IDE does not complain about unused variables
+            echo "$BOLD $UNDERLINE $STANDOUT $BLACK $RED $GREEN $YELLOW $BLUE $MAGENTA $CYAN $WHITE $NORMAL" >/dev/null
         fi
     fi
 }
@@ -46,10 +49,10 @@ function check_error() {
 
 setup
 
-set -e  # Exit on error
+set -e # Exit on error
 
 function usage() {
-    cat << EOF
+    cat <<EOF
 Usage: $0 [OPTION]...
 
 OPTIONS:
@@ -91,32 +94,35 @@ COMPILER="g++"
 # If not specified, the default is to use the latest standard supported by the compiler.
 CPP_STD=""
 
+# The rcc cache directory
+CACHE_DIR="$HOME/.cache/rcc"
+
 # Parse the options and arguments
 while true; do
     case "$1" in
-        -h|--help)
-            usage
-            ;;
-        -d|--debug)
-            DEBUG=true
-            shift
-            ;;
-        -c|--compiler)
-            COMPILER="$2"
-            shift 2
-            ;;
-        -s|--std)
-            CPP_STD="$2"
-            shift 2
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            echo "Internal Error!" >&2
-            exit 1
-            ;;
+    -h | --help)
+        usage
+        ;;
+    -d | --debug)
+        DEBUG=true
+        shift
+        ;;
+    -c | --compiler)
+        COMPILER="$2"
+        shift 2
+        ;;
+    -s | --std)
+        CPP_STD="$2"
+        shift 2
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *)
+        echo "Internal Error!" >&2
+        exit 1
+        ;;
     esac
 done
 
@@ -128,9 +134,6 @@ done
 # For test_cpp_standard.sh
 chmod +x scripts/*.sh
 
-# The rcc cache directory
-rcc_cache_dir="$HOME/.cache/rcc"
-
 echo "${YELLOW}Using compiler:${NORMAL} ${UNDERLINE}$COMPILER${NORMAL}"
 
 if [ -z "$CPP_STD" ]; then
@@ -140,7 +143,7 @@ if [ -z "$CPP_STD" ]; then
     echo "${YELLOW}Found C++ standard:${NORMAL} ${UNDERLINE}$CPP_STD${NORMAL}"
 fi
 
-echo "${YELLOW}Cache directory:${NORMAL} ${UNDERLINE}$rcc_cache_dir${NORMAL}"
+echo "${YELLOW}Cache directory:${NORMAL} ${UNDERLINE}$CACHE_DIR${NORMAL}"
 echo "${YELLOW}DEBUG:${NORMAL} ${UNDERLINE}$DEBUG${NORMAL}"
 echo ""
 
@@ -151,10 +154,10 @@ echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${U
 # make clean
 # check_error "make clean"
 if [ $DEBUG == true ]; then
-    make debug "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$rcc_cache_dir" BUILD_PCH=FALSE
+    make debug "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make debug"
 else
-    make release "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$rcc_cache_dir" BUILD_PCH=FALSE
+    make release "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make release"
 fi
 
@@ -164,35 +167,35 @@ sudo cp rcc /usr/local/bin/
 check_error "sudo cp rcc /usr/local/bin/"
 
 # Remove and then create rcc cache dir
-if [ -d "$rcc_cache_dir" ]; then
-    echo "${YELLOW}Removing old cache directory \"$rcc_cache_dir\"${NORMAL}"
-    rm -rf "$rcc_cache_dir/cache"/*
-    check_error "rm -r \"$rcc_cache_dir/cache\"/*"
-    rm -rf "$rcc_cache_dir/templates"/*.hpp "$rcc_cache_dir/templates"/*.cpp
-    check_error "rm -rf \"$rcc_cache_dir/templates\"/*.hpp \"$rcc_cache_dir/templates\"/*.cpp"
+if [ -d "$CACHE_DIR" ]; then
+    echo "${YELLOW}Removing old cache directory \"$CACHE_DIR\"${NORMAL}"
+    rm -rf "$CACHE_DIR/cache"/*
+    check_error "rm -r \"$CACHE_DIR/cache\"/*"
+    rm -rf "$CACHE_DIR/templates"/*.hpp "$CACHE_DIR/templates"/*.cpp
+    check_error "rm -rf \"$CACHE_DIR/templates\"/*.hpp \"$CACHE_DIR/templates\"/*.cpp"
 fi
-echo "${YELLOW}Creating cache directory \"$rcc_cache_dir\"${NORMAL}"
-mkdir -p "$rcc_cache_dir/cache"
-check_error "mkdir -p \"$rcc_cache_dir/cache\""
-mkdir -p "$rcc_cache_dir/templates"
-check_error "mkdir -p \"$rcc_cache_dir/templates\""
+echo "${YELLOW}Creating cache directory \"$CACHE_DIR\"${NORMAL}"
+mkdir -p "$CACHE_DIR/cache"
+check_error "mkdir -p \"$CACHE_DIR/cache\""
+mkdir -p "$CACHE_DIR/templates"
+check_error "mkdir -p \"$CACHE_DIR/templates\""
 
 # Copy templates to rcc cache dir
 make -C template clean "CPP_COMPILER=$COMPILER"
 check_error "make clean"
 echo "${YELLOW}Copying templates to cache directory${NORMAL}"
-cp -r --preserve=timestamps template/* -t "$rcc_cache_dir/templates"
-check_error "cp -r template/* -t \"$rcc_cache_dir/templates\""
-# copy templates header files to the cache sub-directory so that the ide 
-# can find it when we open one source file in the ide instead of showing lots of errors. 
+cp -r --preserve=timestamps template/* -t "$CACHE_DIR/templates"
+check_error "cp -r template/* -t \"$CACHE_DIR/templates\""
+# copy templates header files to the cache sub-directory so that the ide
+# can find it when we open one source file in the ide instead of showing lots of errors.
 # This is not necessary for the build process but it helps with the ide experience.
 #! This might interfere with the PCH matching process, so ...
-# cp -r template/*.hpp -t "$rcc_cache_dir/cache"
-# check_error "cp -r template/*.hpp -t \"$rcc_cache_dir/cache\""
+# cp -r template/*.hpp -t "$CACHE_DIR/cache"
+# check_error "cp -r template/*.hpp -t \"$CACHE_DIR/cache\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
-make -C "$rcc_cache_dir/templates" "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD"
+make -C "$CACHE_DIR/templates" "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD"
 check_error "make"
 
 echo ""
