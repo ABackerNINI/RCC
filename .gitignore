@@ -8,3 +8,4 @@ rcc
 *.pch
 test
 p?.txt
+*.bin
