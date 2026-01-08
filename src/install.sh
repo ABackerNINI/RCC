@@ -84,8 +84,8 @@ eval set -- "$TEMP"
 DEBUG=false
 
 # The compiler to use to both compile the rcc and use inside rcc
-# COMPILER="g++"
-COMPILER="clang++"
+COMPILER="g++"
+# COMPILER="clang++"
 
 # The C++ standard to use when compiling the rcc and using inside rcc.
 # If not specified, the default is to use the latest standard supported by the compiler.
@@ -184,8 +184,9 @@ check_error "cp -r template/* -t \"$rcc_cache_dir/templates\""
 # copy templates header files to the cache sub-directory so that the ide 
 # can find it when we open one source file in the ide instead of showing lots of errors. 
 # This is not necessary for the build process but it helps with the ide experience.
-cp -r template/*.hpp -t "$rcc_cache_dir/cache"
-check_error "cp -r template/*.hpp -t \"$rcc_cache_dir/cache\""
+#! This might interfere with the PCH matching process, so ...
+# cp -r template/*.hpp -t "$rcc_cache_dir/cache"
+# check_error "cp -r template/*.hpp -t \"$rcc_cache_dir/cache\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
