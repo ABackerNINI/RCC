@@ -27,6 +27,8 @@ RELEASE_DEP = $(BUILD)/release.mode $(TARGET)
 ifeq ($(BUILD_PCH), TRUE)
 DEBUG_DEP := _build_pch_debug $(DEBUG_DEP)
 RELEASE_DEP := _build_pch_release $(RELEASE_DEP)
+else ifeq ($(CXX), clang++)
+CXXFLAGS += -Wno-ignored-gch
 endif
 
 .PHONY: default debug release clean clean_pch _build_pch_debug _build_pch_release
