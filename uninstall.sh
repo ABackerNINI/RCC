@@ -1,4 +1,4 @@
 #!/bin/bash
 
 rm -rf "$HOME/.cache/rcc"
-sudo rm -rf "/usr/local/bin/rcc"
+sudo rm -f "/usr/local/bin/rcc"
