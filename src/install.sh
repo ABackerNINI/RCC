@@ -146,8 +146,8 @@ echo ""
 
 # Build rcc
 echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CPP_STD${NORMAL}"
-make clean
-check_error "make clean"
+# make clean
+# check_error "make clean"
 if [ $DEBUG == true ]; then
     make debug "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$rcc_cache_dir" BUILD_PCH=FALSE
     check_error "make debug"
