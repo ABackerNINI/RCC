@@ -9,35 +9,37 @@ BD = ./build
 
 # Pre-Compiled Header
 
-GCC_GCH_DIR = rcc_template.hpp.gch
+PCH = rcc_template.hpp
+GCC_GCH_DIR = $(PCH).gch
 
-PCH = ""
+GCH = ""
 
-ifeq ($(CPP_COMPILER), g++)
-	PCH = $(GCC_GCH_DIR)/rcc_template.hpp.gch $(GCC_GCH_DIR)/rcc_template.hpp.stdc++.gch
-else ifeq ($(CPP_COMPILER), clang++)
-	PCH = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
+ifeq ($(CXX), g++)
+	GCH = $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CPP_STD).default.gch \
+		  $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CPP_STD).stdc++.gch
+else ifeq ($(CXX), clang++)
+	GCH = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
 endif
 
 # for g++ PCH
-$(GCC_GCH_DIR)/%.hpp.gch: %.hpp
+$(GCC_GCH_DIR)/%.default.gch: $(PCH)
 	@mkdir -p $(GCC_GCH_DIR)
 	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
-$(GCC_GCH_DIR)/%.hpp.stdc++.gch: %.hpp
+$(GCC_GCH_DIR)/%.stdc++.gch: $(PCH)
 	@mkdir -p $(GCC_GCH_DIR)
 	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
 
 # for clang++ PCH
-%.hpp.pch: %.hpp
+%.hpp.pch: $(PCH)
 	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
-%.hpp.stdc++.pch: %.hpp
+%.hpp.stdc++.pch: $(PCH)
 	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
 
 # Build Executable
 
 TARGET = test
 
-all: $(PCH)
+all: $(GCH)
 
 rebuild: clean all
 

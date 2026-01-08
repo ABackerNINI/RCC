@@ -3,7 +3,6 @@
 CPP_COMPILER  ?= g++
 CPP_STD       ?= c++17
 RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
-
 BUILD_PCH 	  ?= TRUE
 
 CXX      = $(CPP_COMPILER)
@@ -26,8 +25,8 @@ DEBUG_DEP  = $(BUILD)/debug.mode $(TARGET)
 RELEASE_DEP = $(BUILD)/release.mode $(TARGET)
 
 ifeq ($(BUILD_PCH), TRUE)
-DEBUG_DEP := $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).debug.gch $(DEBUG_DEP)
-RELEASE_DEP := $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).release.gch $(RELEASE_DEP)
+DEBUG_DEP   := $(PCH_GCH)/$(PCH).$(CXX).$(CPP_STD).debug.gch $(DEBUG_DEP)
+RELEASE_DEP := $(PCH_GCH)/$(PCH).$(CXX).$(CPP_STD).release.gch $(RELEASE_DEP)
 else ifeq ($(CXX), clang++)
 CXXFLAGS += -Wno-ignored-gch
 endif
@@ -36,7 +35,7 @@ endif
 
 default: debug
 
-debug: CXXFLAGS += -g -DDEBUG=1 
+debug: CXXFLAGS += -g -DDEBUG=1
 debug: LDFLAGS += -g
 debug: $(DEBUG_DEP)
 
@@ -65,10 +64,11 @@ $(BUILD)/%.o: %.cpp
 	@mkdir -p "$(BUILD)"
 	$(CXX) $(CXXFLAGS) -c -o $@ -include $(PCH) $<
 
+# TODO: optimize this
 define build_pch
 	@mkdir -p $(1).gch
-	@echo "Building PCH for $(1) -> $(1).gch/$(notdir $(1)).$(CPP_COMPILER).$(CPP_STD).$(2).gch"
-	$(CXX) $(CXXFLAGS) -x c++-header $(1) -o "$(1).gch/$(notdir $(1)).$(CPP_COMPILER).$(CPP_STD).$(2).gch"
+	@echo "Building PCH for $(1) -> $(1).gch/$(notdir $(1)).$(CXX).$(CPP_STD).$(2).gch"
+	$(CXX) $(CXXFLAGS) -x c++-header $(1) -o "$(1).gch/$(notdir $(1)).$(CXX).$(CPP_STD).$(2).gch"
 	@echo ""
 endef
 
