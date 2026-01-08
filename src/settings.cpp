@@ -80,6 +80,12 @@ int Settings::parse_argv(int argc, char **argv) {
            "Define a function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+    app.add_option_function<string>(
+           "--code",
+           [&](const string &code) { codes.push_back(code); },
+           "Add code explicitly")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
+        ->trigger_on_parse();
 
     try {
         app.parse(argc, argv);
@@ -93,15 +99,19 @@ int Settings::parse_argv(int argc, char **argv) {
     vector<string> remaining = app.remaining(true);
 
     for (auto &s : remaining) {
-        if (s.substr(0, 1) == "-") {
-            if (s.substr(0, 4) == "-std") {
+        if (s.substr(0, 1) == "-" && s.size() >= 2 && std::isalpha(s[1])) { // Option or flag
+            if (s.substr(0, 5) == "-std=") {
                 std = s;
-            } else if (s.substr(0, 2) == "-l" || s == "-math" || s == "-pthread") {
+            } else if (s.substr(0, 2) == "-l") {
                 additional_flags.push_back(s);
             } else {
-                cxxflags.push_back(s);
+                if (codes.empty()) { // If no code has been added yet, add it to cxxflags
+                    cxxflags.push_back(s);
+                } else { // Otherwise add it to additional flags
+                    additional_flags.push_back(s);
+                }
             }
-        } else {
+        } else { // Code
             codes.push_back(s);
         }
     }
