@@ -118,15 +118,16 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
         compile_cmd += " " + cxxflags;
     }
 
+    if (settings.has_included_stdcpp()) {
+        compile_cmd += " -DINCLUDE_BITS_STDCPP_H";
+    }
+
     if (!settings.get_additional_includes().empty()) {
         compile_cmd += " -I.";
     }
     compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
 
-    // g++ will detect PCH files automatically, so we don't need to add them here
-    if (settings.has_included_stdcpp()) {
-        compile_cmd += " -DINCLUDE_BITS_STDCPP_H";
-    }
+    compile_cmd+= " -include " + paths.get_template_header_path().get_path();
 
     compile_cmd += " -o " + bin_path.get_path();
     for (const auto &source : sources) {
