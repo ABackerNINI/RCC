@@ -1,18 +1,16 @@
 #ifndef __RCC_PATHS_H__
 #define __RCC_PATHS_H__
 
-#include <cstdint>
-
 #include <string>
 
 #ifndef RCC_CACHE_DIR
-// Store all temporary files in this directory, including auto-generated .cpp
-// and .bin files.
-#define RCC_CACHE_DIR ""
+    // Store all temporary files in this directory, including auto-generated .cpp
+    // and .bin files.
+    #define RCC_CACHE_DIR ""
 #endif
 
-#define RCC_TEMP_SRC_NAME_PREFIX "rcc_src_"
-#define RCC_TEMP_BIN_NAME_PREFIX "rcc_bin_"
+// #define RCC_TEMP_SRC_NAME_PREFIX "c"
+// #define RCC_TEMP_BIN_NAME_PREFIX "c"
 // #define RCC_LOG_NAME "rcc.log"
 
 #define SUB_DIR_CACHE "cache"
@@ -94,10 +92,6 @@ class Paths {
     // Get the full path of the output cpp file and binary file for a given piece of code.
     // The filenames are based on the hash of the code.
     void get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const;
-
-    // Hash a string using the FNV-1a algorithm. This is used to generate unique filenames
-    // for the source and binary files.
-    static uint64_t fnv1a_64_hash_string(const std::string &str);
 
   private:
     // Private constructor to prevent instantiation.

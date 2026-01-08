@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "paths.h"
+#include "utils.h"
 
 namespace rcc {
 
@@ -208,17 +209,18 @@ Path Paths::get_template_file_path() const {
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
     const uint64_t hash = fnv1a_64_hash_string(code_for_hash);
 
-    string hash_str = std::to_string(hash);
-
-    // Max value of uint64_t is 18446744073709551615, 19 digits,
+    // Max value of uint64_t is 18446744073709551615, 20 digits,
     // so we make the length of hash_str to 20 so that all the filenames of
     // files generated will be the same length
-    hash_str = string(20 - hash_str.length(), '0') + hash_str;
+    // string hash_str = std::to_string(hash);
+    // hash_str = string(20 - hash_str.length(), '0') + hash_str;
+
+    string hash_str = u64_to_string_base64x(hash);
 
     // write temporary c++ code in this file
-    const string out_cpp_name = RCC_TEMP_SRC_NAME_PREFIX + hash_str + ".cpp";
+    const string out_cpp_name = hash_str + ".cpp";
     // compile output file
-    const string out_bin_name = RCC_TEMP_BIN_NAME_PREFIX + hash_str + ".bin";
+    const string out_bin_name = hash_str + ".bin";
 
     // the source code full path
     src_path = cache_dir;
@@ -227,20 +229,5 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     // the executable full path
     bin_path = cache_dir;
     bin_path.join(SUB_DIR_CACHE).join(out_bin_name);
-}
-
-// FNV-1a hash function for strings.
-uint64_t Paths::fnv1a_64_hash_string(const string &str) {
-    const uint64_t FNV_PRIME = 1099511628211ULL; // 2^40 + 2^8 + 0xb3
-    const uint64_t FNV_OFFSET = 14695981039346656037ULL; // 2^64 - 2^32 - 2^16 - 2^8 - 1
-
-    uint64_t hash = FNV_OFFSET;
-
-    for (char c : str) {
-        hash ^= static_cast<uint64_t>(c);
-        hash *= FNV_PRIME;
-    }
-
-    return hash;
 }
 } // namespace rcc

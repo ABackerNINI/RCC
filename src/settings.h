@@ -4,14 +4,16 @@
 #include <string>
 #include <vector>
 
+#include "utils.h"
+
 #ifndef RCC_COMPILER
-// Use this compiler to compile the code.
-#define RCC_COMPILER "g++"
+    // Use this compiler to compile the code.
+    #define RCC_COMPILER "g++"
 #endif
 
 #ifndef RCC_CPP_STD
-// Use this standard to compile the code, at least c++11.
-#define RCC_CPP_STD "c++17"
+    // Use this standard to compile the code, at least c++11.
+    #define RCC_CPP_STD "c++17"
 #endif
 
 namespace rcc {
@@ -53,9 +55,6 @@ class Settings {
     void debug_print() const;
 
   private:
-    // Concatenate a vector of strings into one string with a separator.
-    static std::string vector_to_string(const std::vector<std::string> &vec, const std::string &sep = " ");
-
     // Merge multiple code snippets into one string.
     static std::string merge_codes(const std::vector<std::string> &codes);
 

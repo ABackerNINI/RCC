@@ -11,7 +11,7 @@ CXXFLAGS = -Wall -Wextra -std=$(CPP_STD)     		\
 		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
-LDFLAGS  = -Llibs -lfmt
+LDFLAGS  = -Llibs -lfmt -lsimdutf
 BUILD    = build
 
 PCH 	 = pch.h
@@ -52,7 +52,7 @@ _build_pch_release: $(PCH_GCH)/$(PCH).$(CPP_COMPILER).$(CPP_STD).release.gch
 
 # EXECUTABLE DETAILS
 
-OBJS = rcc.o paths.o compiler_support.o settings.o
+OBJS = rcc.o paths.o compiler_support.o settings.o utils.o
 
 OBJSBD = $(OBJS:%=$(BUILD)/%)
 

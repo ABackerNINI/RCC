@@ -1,20 +1,9 @@
 #include "pch.h"
 
 #include "compiler_support.h"
+#include "utils.h"
 
 namespace rcc {
-
-// Concatenate a vector of strings into one string with a separator.
-static std::string vector_to_string(const std::vector<std::string> &vec, const std::string &sep = " ") {
-    string result = "";
-    for (const auto &item : vec) {
-        result += item + sep;
-    }
-    if (result.size() > 0) {
-        result.pop_back();
-    }
-    return result;
-}
 
 size_t compiler_support::safe_replace(std::string &str, size_t pos, const std::string &from, const std::string &to) {
     if (pos >= str.size()) {

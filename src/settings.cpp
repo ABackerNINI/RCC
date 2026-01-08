@@ -152,29 +152,21 @@ std::string Settings::get_cli_args_as_string() const {
 }
 
 void Settings::debug_print() const {
+    const string cxxflags = get_cxxflags_as_string();
+    const string additional_flags = get_additional_flags_as_string();
+
     gprint("Settings:\n");
     gprintc("compiler: {}\n", compiler);
     gprintc("std: {}\n", std);
-    gprintc("cxxflags: {}\n", get_cxxflags_as_string());
-    gprintc("additional_flags: {}\n", get_additional_flags_as_string());
-    gprintc("additional_includes: {}\n", vector_to_string(additional_includes, ", "));
+    gprintc("cxxflags: {}\n", cxxflags.empty() ? "<NONE>" : cxxflags);
+    gprintc("additional_flags: {}\n", additional_flags.empty() ? "<NONE>" : additional_flags);
+    gprintc("additional_includes: {}\n", vector_to_string(additional_includes, ", ", "<NONE>"));
     gprintc("above_main_count: {}\n", above_main.size());
     gprintc("functions_count: {}\n", functions.size());
     gprintc("code_count: {}\n", codes.size());
-    gprintc("additional_sources: {}\n", vector_to_string(additional_sources, ", "));
+    gprintc("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
     gprintc("args_count: {}\n", args_count);
     gprintc("clean_cache: {}\n", clean_cache);
-}
-
-std::string Settings::vector_to_string(const std::vector<std::string> &vec, const std::string &sep) {
-    string result = "";
-    for (const auto &item : vec) {
-        result += item + sep;
-    }
-    if (result.size() > 0) {
-        result.pop_back();
-    }
-    return result;
 }
 
 } // namespace rcc

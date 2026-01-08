@@ -4,6 +4,7 @@
 #include "debug_fmt.h"
 #include "paths.h"
 #include "settings.h"
+#include "utils.h"
 
 using namespace rcc;
 
@@ -61,15 +62,20 @@ pid_t random_clean_cache() {
         if (pid == 0) { // in child process
             Paths &paths = Paths::get_instance();
             // find and remove src/bin files whose access time is 31 days ago
-            string find_rm_cmd;
-            find_rm_cmd += string("find ") + paths.get_sub_cache_dir().get_path();
-            find_rm_cmd += string(" -type f");
-            find_rm_cmd += string(" \\( -name \"") + RCC_TEMP_SRC_NAME_PREFIX + "*.cpp\"";
-            find_rm_cmd += string(" -o -name \"") + RCC_TEMP_BIN_NAME_PREFIX + "*.bin\" \\)";
-            //! Caution: rm command
-            find_rm_cmd += string(" -atime +30 | xargs rm -f");
+            // string find_rm_cmd;
+            // find_rm_cmd += string("find ") + paths.get_sub_cache_dir().get_path();
+            // find_rm_cmd += string(" -type f");
+            // find_rm_cmd += string(" \\( -name \"*.cpp\" -o -name \"*.bin\" \\)");
+            // find_rm_cmd += string(" -atime +30 | xargs rm -f");
 
-            // print(find_rm_cmd);
+            //! Caution: rm command
+            string find_rm_cmd =
+                fmt::format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
+                            paths.get_sub_cache_dir().get_path());
+
+            gprint("{}: {}\n",
+                   fmt::styled("Removing old cache files", fg(fmt::color::dark_red) | fmt::emphasis::bold),
+                   find_rm_cmd);
 
             if (system(find_rm_cmd.c_str()) != 0) {
                 perror("system:find");
@@ -240,7 +246,7 @@ int rcc_main(int argc, char **argv) {
                                           settings.get_above_main(),
                                           settings.get_functions(),
                                           code,
-                                          std::to_string(Paths::fnv1a_64_hash_string(id)));
+                                          u64_to_string_base64x(fnv1a_64_hash_string(id)));
 
     /*------------------------------------------------------------------------*/
     // * Compile If Needed
