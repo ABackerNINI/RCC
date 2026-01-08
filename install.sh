@@ -168,8 +168,8 @@ if [ -d "$rcc_cache_dir" ]; then
     echo "${YELLOW}Removing old cache directory \"$rcc_cache_dir\"${NORMAL}"
     rm -rf "$rcc_cache_dir/cache"/*
     check_error "rm -r \"$rcc_cache_dir/cache\"/*"
-    rm -rf "$rcc_cache_dir/templates"/*
-    check_error "rm -r \"$rcc_cache_dir/templates\"/*"
+    rm -rf "$rcc_cache_dir/templates"/*.hpp "$rcc_cache_dir/templates"/*.cpp
+    check_error "rm -rf \"$rcc_cache_dir/templates\"/*.hpp \"$rcc_cache_dir/templates\"/*.cpp"
 fi
 echo "${YELLOW}Creating cache directory \"$rcc_cache_dir\"${NORMAL}"
 mkdir -p "$rcc_cache_dir/cache"
@@ -181,7 +181,7 @@ check_error "mkdir -p \"$rcc_cache_dir/templates\""
 make -C template clean "CPP_COMPILER=$COMPILER"
 check_error "make clean"
 echo "${YELLOW}Copying templates to cache directory${NORMAL}"
-cp -r template/* -t "$rcc_cache_dir/templates"
+cp -r --preserve=timestamps template/* -t "$rcc_cache_dir/templates"
 check_error "cp -r template/* -t \"$rcc_cache_dir/templates\""
 # copy templates header files to the cache sub-directory so that the ide 
 # can find it when we open one source file in the ide instead of showing lots of errors. 
