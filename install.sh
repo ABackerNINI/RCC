@@ -151,8 +151,8 @@ echo ""
 cd src || exit 1
 
 mkdir -p build
-echo -e "COMPILER=$COMPILER\nCPP_STD=$CPP_STD\nRCC_CACHE_DIR=$CACHE_DIR" > build/build_config.txt
 if [ -f build/last_build_config.txt ]; then
+    echo -e "COMPILER=$COMPILER\nCPP_STD=$CPP_STD\nRCC_CACHE_DIR=$CACHE_DIR" > build/build_config.txt
     if ! diff -q build/build_config.txt build/last_build_config.txt >/dev/null 2>&1; then
         echo -e "${YELLOW}Build configuration changed, cleaning build${NORMAL}"
         make clean
