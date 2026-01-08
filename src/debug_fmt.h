@@ -22,7 +22,7 @@
     __DBG_PRT_REAPEAT(fmt::print(stderr, fmt::fg(fmt::color::green), "[DEBUG] "); fmt::print(stderr, __VA_ARGS__);)
 
 #define gprintc(...)                                                                                                   \
-    __DBG_PRT_REAPEAT(fmt::print(stderr, fmt::fg(fmt::color::green), " >      "); fmt::print(stderr, __VA_ARGS__);)
+    __DBG_PRT_REAPEAT(fmt::print(stderr, fmt::fg(fmt::color::green), " > "); fmt::print(stderr, __VA_ARGS__);)
 
 #define gstmt(...) __DBG_PRT_REAPEAT(__VA_ARGS__;)
 
