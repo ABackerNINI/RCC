@@ -5,17 +5,43 @@
 
 namespace rcc {
 
-size_t compiler_support::safe_replace(std::string &str, size_t pos, const std::string &from, const std::string &to) {
-    if (pos >= str.size()) {
-        return string::npos;
+class safe_replacer {
+  private:
+    struct pos {
+        size_t p;
+        size_t index;
+    };
+
+  public:
+    static size_t replace(std::string &str, const std::vector<std::pair<std::string, std::string>> &replaces) {
+        // Find all occurrences of the strings to be replaced and store their positions along with their indices in the
+        // replaces vector
+        std::vector<pos> positions;
+        for (size_t i = 0; i < replaces.size(); i++) {
+            size_t p = str.find(replaces[i].first);
+            while (p != string::npos) {
+                positions.push_back({p, i});
+                p = str.find(replaces[i].first, p + replaces[i].first.size());
+            }
+        }
+
+        // If no occurrences were found, return 0
+        if (positions.empty()) {
+            return 0;
+        }
+
+        // Sort positions by position in reverse order so that replacements do not interfere with each other
+        std::sort(positions.begin(), positions.end(), [](const pos &a, const pos &b) { return a.p > b.p; });
+
+        // Replace all occurrences in reverse order
+        for (auto &p : positions) {
+            str.replace(p.p, replaces[p.index].first.size(), replaces[p.index].second);
+        }
+
+        // Return the number of replacements made
+        return positions.size();
     }
-    size_t found = str.find(from, pos);
-    if (found == string::npos) {
-        return string::npos;
-    }
-    str.replace(found, from.size(), to);
-    return found + to.size();
-}
+};
 
 std::string compiler_support::gen_additional_includes(const std::vector<std::string> &additional_includes) const {
     string includes = "";
@@ -56,13 +82,27 @@ std::string compiler_support::gen_code(const Path &template_filename,
     // The template file should be checked during installation
     // so do not check it here
 
-    // TODO: safe replace
+    std::vector<std::pair<std::string, std::string>> replaces;
+    replaces.push_back({"$rcc-inc", "User includes\n" + gen_additional_includes(includes)});
+    replaces.push_back({"$rcc-above-main", "User above main\n" + vector_to_string(above_main, "\n")});
+    replaces.push_back({"$rcc-func", "User functions\n" + vector_to_string(functions, "\n")});
+    replaces.push_back({"$rcc-code", "User codes\n    " + commandline_code});
+    replaces.push_back({"$rcc-id", "ID: " + identifier});
 
-    temp.replace(temp.find("$rcc-inc"), 8, "User includes\n" + gen_additional_includes(includes));
-    temp.replace(temp.find("$rcc-above-main"), 15, "User above main\n" + vector_to_string(above_main, "\n"));
-    temp.replace(temp.find("$rcc-func"), 9, "User functions\n" + vector_to_string(functions, "\n"));
-    temp.replace(temp.find("$rcc-code"), 9, "User codes\n    " + commandline_code);
-    temp.replace(temp.find("$rcc-id"), 7, "ID: " + identifier);
+    size_t num_replaced = safe_replacer::replace(temp, replaces);
+
+    if (num_replaced != replaces.size()) {
+        if (num_replaced < replaces.size()) {
+            print(fmt::bg(fmt::color::red), "WARNING: Template file is missing some placeholders");
+        } else if (num_replaced > replaces.size()) {
+            print(fmt::bg(fmt::color::red), "\nWARNING: Template file has extra placeholders");
+        }
+        print("\nrcc expects the following placeholders:\n");
+        for (const auto &pair : replaces) {
+            print("  {}\n", pair.first);
+        }
+        print("Please check your template file and try again.\n\n");
+    }
 
     return temp;
 }
