@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "compiler_support.h"
+#include "debug_fmt.h"
 #include "paths.h"
 #include "settings.h"
 
@@ -101,10 +102,9 @@ bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &f
         if (code_old == full_code) {
             return true;
         }
-        cdbg << rang::fg::red << rang::style::bold << "WARNING: hash collided but content does not match!"
-             << rang::style::reset << endl;
-        cdbg << "Old code: " << rang::fg::blue << code_old << rang::style::reset << endl;
-        cdbg << "New code: " << rang::fg::green << full_code << rang::style::reset << endl;
+        gprint(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "WARNING: hash collided but content does not match!\n");
+        gprint("{}:\n{}", fmt::styled("Old Code", fmt::fg(fmt::color::red)), code_old);
+        gprint("{}:\n{}", fmt::styled("New Code", fmt::fg(fmt::color::red)), full_code);
     }
     return false;
 }
@@ -124,16 +124,16 @@ bool compile_code(const Settings &settings,
 
     const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags);
 
-    cdbg << compile_cmd << endl;
+    // cdbg << compile_cmd << endl;
+    gprint("{}\n", compile_cmd);
+
+    using namespace fmt;
 
     if (system(compile_cmd) != 0) {
-        print(fmt::emphasis::underline, "\n{}\n", cpp_path.get_path());
-        print(fg(fmt::color::red) | fmt::emphasis::bold, "\nCOMPILATION FAILED!\n");
-        print(fg(fmt::color::saddle_brown) | fmt::emphasis::bold, "COMPILE COMMAND: ").print("{}\n", compile_cmd);
-        print(fg(fmt::color::saddle_brown) | fmt::emphasis::bold, "EXECUTE COMMAND: ").print("{}\n", exec_cmd);
-
-        fmt::print(std::cerr, "{}", 1);
-
+        print(emphasis::underline, "\n{}\n", cpp_path.get_path());
+        print(fg(color::red) | emphasis::bold, "\nCOMPILATION FAILED!\n");
+        print("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
+        print("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
         return false;
     }
     return true;
@@ -174,7 +174,7 @@ int rcc_main(int argc, char **argv) {
     }
 
     // Print the settings
-    dbg_stmt(settings.debug_print());
+    gstmt(settings.debug_print());
 
     // Seed the random number generator
     //? Why time() + getpid()?
@@ -247,8 +247,7 @@ int rcc_main(int argc, char **argv) {
 
     if (check_if_cached(bin_path, cpp_path, full_code)) {
         // Cached, skip the compiling process, run the executable directly
-        cdbg << "Running cached binary" << endl;
-        cdbg << "run: " << exec_cmd << endl;
+        gprint(fg(fmt::color::green), "Running cached binary\n");
     } else {
         // Write c++ code to the cpp file
         cpp_path.write_file(full_code);
@@ -261,9 +260,11 @@ int rcc_main(int argc, char **argv) {
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
-    cdbgx << rang::fg::yellow << rang::style::bold << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>" << rang::style::reset << endl;
+    gprint("EXECUTING: {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
+
+    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     int ret = system(exec_cmd);
-    cdbgx << rang::fg::yellow << rang::style::bold << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << rang::style::reset << endl;
+    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
     return ret;
 }

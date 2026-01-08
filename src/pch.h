@@ -5,6 +5,7 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -15,10 +16,10 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "libs/CLI11.hpp"
-#include "libs/debug.h"
 #include "libs/fmt/args.h"
 #include "libs/fmt/base.h"
 #include "libs/fmt/chrono.h"
@@ -36,37 +37,94 @@
 
 // IWYU pragma: end_keep
 
-class fmt_printer {
-  public:
-    template <typename... T> fmt_printer &print(T &&...args) {
-        fmt::print(std::forward<T>(args)...);
-        return *this;
-    }
-};
+// namespace rcc {
+//
+// class fmt_printer {
+//   public:
+//     template <typename... T> fmt_printer &c(fmt::format_string<T...> fmt, T &&...args) {
+//         fmt::print(fmt, std::forward<T>(args)...);
+//         return *this;
+//     }
+//
+//     template <typename... T> fmt_printer &c(fmt::text_style ts, fmt::format_string<T...> fmt, T &&...args) {
+//         fmt::print(ts, fmt, std::forward<T>(args)...);
+//         return *this;
+//     }
+// };
+//
+// class fmt_printer_ostream {
+//   public:
+//     fmt_printer_ostream(std::ostream &os) : os(os) {}
+//
+//     template <typename... T> fmt_printer_ostream &c(fmt::format_string<T...> fmt, T &&...args) {
+//         fmt::print(os, fmt, std::forward<T>(args)...);
+//         return *this;
+//     }
+//
+//     template <typename... T> fmt_printer_ostream &c(fmt::text_style ts, fmt::format_string<T...> fmt, T &&...args) {
+//         fmt::print(os, ts, fmt, std::forward<T>(args)...);
+//         return *this;
+//     }
+//
+//   private:
+//     std::ostream &os;
+// };
+//
+// class fmt_printer_file {
+//   public:
+//     fmt_printer_file(FILE *f) : f(f) {}
+//
+//     template <typename... T> fmt_printer_file &c(fmt::format_string<T...> fmt, T &&...args) {
+//         fmt::print(f, fmt, std::forward<T>(args)...);
+//         return *this;
+//     }
+//
+//     template <typename... T> fmt_printer_file &c(fmt::text_style ts, fmt::format_string<T...> fmt, T &&...args) {
+//         fmt::print(f, ts, fmt, std::forward<T>(args)...);
+//         return *this;
+//     }
+//
+//   private:
+//     FILE *f;
+// };
+//
+// template <typename... T> fmt_printer print(fmt::format_string<T...> fmt, T &&...args) {
+//     fmt::print(fmt, std::forward<T>(args)...);
+//     return fmt_printer();
+// }
+//
+// template <typename... T> fmt_printer print(fmt::text_style ts, fmt::format_string<T...> fmt, T &&...args) {
+//     fmt::print(ts, fmt, std::forward<T>(args)...);
+//     return fmt_printer();
+// }
+//
+// template <typename... T> fmt_printer_ostream print(std::ostream &os, fmt::format_string<T...> fmt, T &&...args) {
+//     fmt::print(os, fmt, std::forward<T>(args)...);
+//     return fmt_printer_ostream(os);
+// }
+//
+// template <typename... T>
+// fmt_printer_ostream print(std::ostream &os, fmt::text_style ts, fmt::format_string<T...> fmt, T &&...args) {
+//     fmt::print(os, ts, fmt, std::forward<T>(args)...);
+//     return fmt_printer_ostream(os);
+// }
+//
+// template <typename... T> fmt_printer_file print(FILE *&f, fmt::format_string<T...> fmt, T &&...args) {
+//     fmt::print(f, fmt, std::forward<T>(args)...);
+//     return fmt_printer_file(f);
+// }
+//
+// template <typename... T>
+// fmt_printer_file print(FILE *&f, fmt::text_style ts, fmt::format_string<T...> fmt, T &&...args) {
+//     fmt::print(f, ts, fmt, std::forward<T>(args)...);
+//     return fmt_printer_file(f);
+// }
+//
+// } // namespace rcc
 
-class fmt_printer2 {
-  public:
-    fmt_printer2(std::ostream &os) : os(os) {}
+// #define print fmt::print
 
-    template <typename... T> fmt_printer2 &print(T &&...args) {
-        fmt::print(os, std::forward<T>(args)...);
-        return *this;
-    }
-
-  private:
-    std::ostream &os;
-};
-
-template <typename... T> fmt_printer print(T &&...args) {
-    fmt::print(std::forward<T>(args)...);
-    return fmt_printer();
-}
-
-template <typename... T> fmt_printer2 print(std::ostream &os, T &&...args) {
-    fmt::print(os, std::forward<T>(args)...);
-    return fmt_printer2(os);
-}
-
+using fmt::print;
 using std::cerr;
 using std::cin;
 using std::cout;

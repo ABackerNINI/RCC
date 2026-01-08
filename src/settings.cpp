@@ -1,8 +1,7 @@
 #include "pch.h"
 
+#include "debug_fmt.h"
 #include "settings.h"
-
-using namespace std;
 
 namespace rcc {
 
@@ -86,7 +85,9 @@ int Settings::parse_argv(int argc, char **argv) {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
         std::cout << (e.get_exit_code() == 0 ? rang::fg::blue : rang::fg::red);
-        return app.exit(e);
+        int ret = app.exit(e);
+        std::cout << rang::fg::reset;
+        return ret;
     }
 
     vector<string> remaining = app.remaining(true);
@@ -151,19 +152,18 @@ std::string Settings::get_cli_args_as_string() const {
 }
 
 void Settings::debug_print() const {
-    cdbg << "Settings:" << endl;
-    cdbgc << "compiler: " << compiler << endl;
-    cdbgc << "std: " << std << endl;
-    cdbgc << "cxxflags: " << get_cxxflags_as_string() << endl;
-    cdbgc << "additional_flags: " << get_additional_flags_as_string() << endl;
-    cdbgc << "additional_includes: " << vector_to_string(additional_includes) << endl;
-    cdbgc << "above_main_count: " << above_main.size() << endl;
-    cdbgc << "functions_count: " << functions.size() << endl;
-    cdbgc << "code_count: " << codes.size() << endl;
-    cdbgc << "additional_sources: " << vector_to_string(additional_sources) << endl;
-    cdbgc << "args_count: " << args_count << endl;
-
-    cdbgc << "clean_cache: " << clean_cache << endl;
+    gprint("Settings:\n");
+    gprintc("compiler: {}\n", compiler);
+    gprintc("std: {}\n", std);
+    gprintc("cxxflags: {}\n", get_cxxflags_as_string());
+    gprintc("additional_flags: {}\n", get_additional_flags_as_string());
+    gprintc("additional_includes: {}\n", vector_to_string(additional_includes, ", "));
+    gprintc("above_main_count: {}\n", above_main.size());
+    gprintc("functions_count: {}\n", functions.size());
+    gprintc("code_count: {}\n", codes.size());
+    gprintc("additional_sources: {}\n", vector_to_string(additional_sources, ", "));
+    gprintc("args_count: {}\n", args_count);
+    gprintc("clean_cache: {}\n", clean_cache);
 }
 
 std::string Settings::vector_to_string(const std::vector<std::string> &vec, const std::string &sep) {
