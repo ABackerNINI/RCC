@@ -76,6 +76,7 @@ EOF
 TEMP=$(getopt -o hdc:s: --long help,debug,compiler:,std: -n "$0" -- "$@")
 
 # Check for errors in argument parsing. If getopt returns a non-zero status, it means there was an error.
+# shellcheck disable=SC2181
 if [[ $? -ne 0 ]]; then
     echo "Error: there is an error in the argument parsing." >&2
     usage
@@ -149,10 +150,18 @@ echo ""
 
 cd src || exit 1
 
+mkdir -p build
+echo -e "COMPILER=$COMPILER\nCPP_STD=$CPP_STD\nRCC_CACHE_DIR=$CACHE_DIR" > build/build_config.txt
+if [ -f build/last_build_config.txt ]; then
+    if ! diff -q build/build_config.txt build/last_build_config.txt >/dev/null 2>&1; then
+        echo -e "${YELLOW}Build configuration changed, cleaning build${NORMAL}"
+        make clean
+        check_error "make clean"
+    fi
+fi
+
 # Build rcc
 echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CPP_STD${NORMAL}"
-# make clean
-# check_error "make clean"
 if [ $DEBUG == true ]; then
     make debug "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make debug"
@@ -197,6 +206,8 @@ check_error "cp -r template/* -t \"$CACHE_DIR/templates\""
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
 make -C "$CACHE_DIR/templates" "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD"
 check_error "make"
+
+echo -e "COMPILER=$COMPILER\nCPP_STD=$CPP_STD\nRCC_CACHE_DIR=$CACHE_DIR" > build/last_build_config.txt
 
 echo ""
 echo "${GREEN}${UNDERLINE}INSTALLATION COMPLETE!${NORMAL}"
