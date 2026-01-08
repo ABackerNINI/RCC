@@ -7,11 +7,11 @@ RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
 BUILD_PCH 	  ?= TRUE
 
 CXX      = $(CPP_COMPILER)
-CXXFLAGS = -Wall -Wextra -std=$(CPP_STD)     		\
+CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -I.. 		\
 		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
-LDFLAGS  = -Llibs -lfmt
+LDFLAGS  = -L../libs -lfmt
 BUILD    = build
 
 PCH 	 = pch.h

@@ -144,6 +144,8 @@ echo "${YELLOW}Cache directory:${NORMAL} ${UNDERLINE}$rcc_cache_dir${NORMAL}"
 echo "${YELLOW}DEBUG:${NORMAL} ${UNDERLINE}$DEBUG${NORMAL}"
 echo ""
 
+cd src || exit 1
+
 # Build rcc
 echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CPP_STD${NORMAL}"
 # make clean
