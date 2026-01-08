@@ -27,7 +27,7 @@ RCC will place the c++ codes inside a main function, which is a pre-defined temp
 
 ```shell
 git clone https://github.com/ABackerNINI/RCC.git
-cd RCC/src/
+cd RCC/
 chmod +x ./install.sh
 ./install.sh
 ```
