@@ -11,7 +11,7 @@ CXXFLAGS = -Wall -Wextra -std=$(CPP_STD)     		\
 		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
-LDFLAGS  = -Llibs -lfmt -lsimdutf
+LDFLAGS  = -Llibs -lfmt
 BUILD    = build
 
 PCH 	 = pch.h
