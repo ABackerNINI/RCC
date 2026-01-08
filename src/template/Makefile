@@ -7,20 +7,24 @@ CXX = $(CPP_COMPILER)
 CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -Wno-unused-parameter
 BD = ./build
 
-# Compile to objects
-
-$(BD)/%.o: %.cpp
-	@$(if $(wildcard $(BD)),,mkdir -p $(BD))
-	$(CXX) -c -o $@ $< $(CXXFLAGS)
-
 # Pre-Compiled Header
 
-gcc_gch_dir = rcc_template.hpp.gch
+GCC_GCH_DIR = rcc_template.hpp.gch
+
+PCH = ""
+
+ifeq ($(CPP_COMPILER), g++)
+	PCH = $(GCC_GCH_DIR)/rcc_template.hpp.gch $(GCC_GCH_DIR)/rcc_template.hpp.stdc++.gch
+else ifeq ($(CPP_COMPILER), clang++)
+	PCH = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
+endif
 
 # for g++ PCH
-$(gcc_gch_dir)/%.hpp.gch: %.hpp
+$(GCC_GCH_DIR)/%.hpp.gch: %.hpp
+	@mkdir -p $(GCC_GCH_DIR)
 	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
-$(gcc_gch_dir)/%.hpp.stdc++.gch: %.hpp
+$(GCC_GCH_DIR)/%.hpp.stdc++.gch: %.hpp
+	@mkdir -p $(GCC_GCH_DIR)
 	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
 
 # for clang++ PCH
@@ -31,30 +35,25 @@ $(gcc_gch_dir)/%.hpp.stdc++.gch: %.hpp
 
 # Build Executable
 
-pch = ""
+TARGET = test
 
-ifeq ($(CPP_COMPILER), g++)
-	pch = create_gch_dir_for_gcc $(gcc_gch_dir)/rcc_template.hpp.gch $(gcc_gch_dir)/rcc_template.hpp.stdc++.gch
-else ifeq ($(CPP_COMPILER), clang++)
-	pch = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
-endif
-
-bin = test
-
-all: $(pch)
+all: $(PCH)
 
 rebuild: clean all
 
-create_gch_dir_for_gcc:
-	mkdir -p $(gcc_gch_dir)
-
 # Executable 1
 
-obj = test.o
-objbd = $(obj:%=$(BD)/%)
+OBJ = test.o
+OBJBD = $(OBJ:%=$(BD)/%)
 
-$(bin): $(pch) $(objbd)
-	$(CXX) $(CXXFLAGS) -g -I. -o $(bin) $(objbd)
+$(TARGET): $(PCH) $(OBJBD)
+	$(CXX) $(CXXFLAGS) -g -I. -o $(TARGET) $(OBJBD)
+
+# Compile to objects
+
+$(BD)/%.o: %.cpp
+	@$(if $(wildcard $(BD)),,mkdir -p $(BD))
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 # Dependencies
 
@@ -64,8 +63,8 @@ test.o: rcc_template.hpp test.cpp
 
 clean:
 	rm -f *.gch *.pch
-	rm -f "$(bin)" $(objbd)
-	rm -fd "$(gcc_gch_dir)" "$(BD)"
+	rm -f "$(TARGET)" $(OBJBD)
+	rm -fd "$(GCC_GCH_DIR)" "$(BD)"
 
 # PHONY
 

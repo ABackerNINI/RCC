@@ -11,7 +11,8 @@ CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -I.. 		\
 		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
-LDFLAGS  = -L../libs -lfmt
+LDFLAGS  = 
+LDLIBS   = -L../libs -lfmt
 BUILD    = build
 
 PCH 	 = pch.h
@@ -35,10 +36,12 @@ endif
 
 default: debug
 
-debug: CXXFLAGS += -g -DDEBUG=1
+debug: CXXFLAGS += -g -DDEBUG=1 
+debug: LDFLAGS += -g
 debug: $(DEBUG_DEP)
 
 release: CXXFLAGS += -O3# -DNDEBUG=1
+release: LDFLAGS += -O3
 release: $(RELEASE_DEP)
 
 clean:
@@ -57,7 +60,7 @@ OBJS = rcc.o paths.o compiler_support.o settings.o utils.o
 OBJSBD = $(OBJS:%=$(BUILD)/%)
 
 $(TARGET): $(OBJSBD)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 # COMPILE TO OBJECTS
 
@@ -66,9 +69,10 @@ $(BUILD)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ -include $(PCH) $<
 
 define build_pch
-	@mkdir -p $(PCH_GCH)
-	@echo "Building PCH for $(1)"
-	$(CXX) $(CXXFLAGS) -x c++-header $(1) -o "$(PCH_GCH)/$(notdir $(1)).$(CPP_COMPILER).$(CPP_STD).$(2).gch"
+	@mkdir -p $(1).gch
+	@echo "Building PCH for $(1) -> $(1).gch/$(notdir $(1)).$(CPP_COMPILER).$(CPP_STD).$(2).gch"
+	$(CXX) $(CXXFLAGS) -x c++-header $(1) -o "$(1).gch/$(notdir $(1)).$(CPP_COMPILER).$(CPP_STD).$(2).gch"
+	@echo ""
 endef
 
 $(PCH_GCH)/%.debug.gch: $(PCH)
