@@ -5,8 +5,7 @@
 
 #include "libs/ghc/fs_std_fwd.hpp" // IWYU pragma: keep
 
-// Represent a path in the filesystem. Maybe use std::filesystem in C++17?
-//* Currently, this supports only Linux.
+// Wrapper class for fs::path with some additional utility functions
 class Path {
   public:
     Path() : path_() {}
@@ -79,6 +78,10 @@ class Path {
     bool is_absolute() const { return path_.is_absolute(); }
     bool is_relative() const { return path_.is_relative(); }
 
+    /*==========================================================================*/
+    /* ADDITIONAL METHODS */
+    /*==========================================================================*/
+
     bool exists() const { return fs::exists(path_); }
     bool is_dir() const { return fs::is_directory(path_); }
     bool is_file() const { return fs::is_regular_file(path_); }
@@ -86,11 +89,11 @@ class Path {
 
     void remove() const { fs::remove(path_); }
     void remove_all() const { fs::remove_all(path_); }
+    void copy(const Path &new_path) const { fs::copy(path_, new_path.path_); }
     void rename(const Path &new_path) {
         fs::rename(path_, new_path.path_);
         path_ = new_path.path_;
     }
-    void copy(const Path &new_path) const { fs::copy(path_, new_path.path_); }
 
     // Return the path with quotes around it if it contains spaces.
     std::string quote_if_needed() const { return check_whitespaces(path_.string()); }
@@ -106,7 +109,6 @@ class Path {
     static std::string check_whitespaces(const std::string &path);
 
   private:
-    // std::string path_;
     fs::path path_;
 };
 
