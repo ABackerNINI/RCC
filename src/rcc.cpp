@@ -71,7 +71,7 @@ pid_t random_clean_cache() {
             //! Caution: rm command
             string find_rm_cmd =
                 fmt::format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
-                            paths.get_sub_cache_dir().get_path());
+                            paths.get_sub_cache_dir().quote_if_needed());
 
             gprint("{}: {}\n",
                    fmt::styled("Removing old cache files", fg(fmt::color::dark_red) | fmt::emphasis::bold),
@@ -95,7 +95,7 @@ pid_t random_clean_cache() {
 // Clean up all cached sources and binaries.
 int clean_cache() {
     //! Caution: rm command
-    const string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().get_path();
+    const string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().quote_if_needed();
     string rm_cmd = "rm -f " + sub_cache_dir + "/*.cpp " + sub_cache_dir + "/*.bin";
     return system(rm_cmd.c_str());
 }
@@ -136,7 +136,7 @@ bool compile_code(const Settings &settings,
     using namespace fmt;
 
     if (system(compile_cmd) != 0) {
-        print(emphasis::underline, "\n{}\n", cpp_path.get_path());
+        print(emphasis::underline, "\n{}\n", cpp_path.quote_if_needed());
         print(fg(color::red) | emphasis::bold, "\nCOMPILATION FAILED!\n");
         print("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
         print("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
@@ -149,6 +149,8 @@ bool compile_code(const Settings &settings,
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
     // TODO: add version info
+    // TODO: add option, --permanent, make it permanent, give it a name, save as json file?
+    // TODO: fix bug: rcc 'for(int i=0;i<10;i++) { if(system("git push")==0) {break;} sleep(1); }'
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, --compile-only, compile only, return binary's name, run later
     // TODO: add option --dry-run, show what would be done without actually doing it
@@ -227,7 +229,7 @@ int rcc_main(int argc, char **argv) {
 
     // run the executable from cwd
     const string command_line_args = settings.get_cli_args_as_string();
-    const string exec_cmd = bin_path.get_path() + (command_line_args.empty() ? "" : " " + command_line_args);
+    const string exec_cmd = bin_path.quote_if_needed() + (command_line_args.empty() ? "" : " " + command_line_args);
 
     // the compiler support
     auto cs = std::shared_ptr<compiler_support>(new_compiler_support(compiler, settings));
@@ -266,7 +268,8 @@ int rcc_main(int argc, char **argv) {
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
-    gprint("EXECUTING: {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
+    gprint("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+    gprint("EXECUTING : {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
 
     gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     int ret = system(exec_cmd);

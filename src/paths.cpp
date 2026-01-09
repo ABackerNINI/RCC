@@ -22,10 +22,8 @@ Paths::Paths() {
 
     validate_cache_dir();
 
-    this->template_path = sub_templates_dir;
-    this->template_path.join("rcc_template.cpp");
-    this->template_header_path = sub_templates_dir;
-    this->template_header_path.join("rcc_template.hpp");
+    this->template_path = sub_templates_dir / "rcc_template.cpp";
+    this->template_header_path = sub_templates_dir / "rcc_template.hpp";
 }
 
 // Check the cache directory of rcc.
@@ -109,11 +107,9 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     const string out_bin_name = hash_str + ".bin";
 
     // the source code full path
-    src_path = cache_dir;
-    src_path.join(SUB_DIR_CACHE).join(out_cpp_name);
+    src_path = cache_dir / SUB_DIR_CACHE / out_cpp_name;
 
     // the executable full path
-    bin_path = cache_dir;
-    bin_path.join(SUB_DIR_CACHE).join(out_bin_name);
+    bin_path = cache_dir / SUB_DIR_CACHE / out_bin_name;
 }
 } // namespace rcc

@@ -67,7 +67,8 @@ int Settings::parse_argv(int argc, char **argv) {
            [&](const string &fname) { additional_sources.push_back(fname); },
            "Compile with additional source file")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
-        ->trigger_on_parse();
+        ->trigger_on_parse()
+        ->check(CLI::ExistingFile);
     app.add_option_function<string>(
            "--put-above-main",
            [&](const string &code) { above_main.push_back(code); },

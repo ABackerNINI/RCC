@@ -6,7 +6,8 @@ RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
 BUILD_PCH 	  ?= TRUE
 
 CXX      = $(CPP_COMPILER)
-CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -I.. 		\
+CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) 			\
+		   -I.. -I../libs/							\
 		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
@@ -51,7 +52,7 @@ clean_pch:
 
 # EXECUTABLE DETAILS
 
-OBJS = rcc.o paths.o compiler_support.o settings.o utils.o
+OBJS = rcc.o paths.o compiler_support.o settings.o utils.o path.o
 
 OBJSBD = $(OBJS:%=$(BUILD)/%)
 

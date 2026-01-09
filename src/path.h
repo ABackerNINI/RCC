@@ -3,50 +3,97 @@
 
 #include <string>
 
-#include "libs/ghc/fs_std_fwd.hpp"
+#include "libs/ghc/fs_std_fwd.hpp" // IWYU pragma: keep
 
 // Represent a path in the filesystem. Maybe use std::filesystem in C++17?
 //* Currently, this supports only Linux.
 class Path {
   public:
-    Path();
-    Path(const char *path);
-    Path(const std::string &path);
+    Path() : path_() {}
+    Path(const char *path) : path_(path) {}
+    Path(const std::string &path) : path_(path) {}
+    Path(const fs::path &path) : path_(path) {}
 
-    // Join a path with another path.
-    Path &join(const std::string &other);
+    Path operator/(const Path &other) const { return Path(path_ / other.path_); }
+    Path &operator/=(const Path &other) {
+        path_ /= other.path_;
+        return *this;
+    }
 
-    // Join a path with another path.
-    Path &join(const char *other);
+    void clear() { path_.clear(); }
 
-    // Join a path with another path.
-    Path &join(const Path &other);
+    Path &make_preferred() {
+        path_.make_preferred();
+        return *this;
+    }
 
-    Path operator/(const std::string &other) const;
-    Path operator+(const std::string &other) const;
-    Path operator/(const Path &other) const;
-    Path operator+(const Path &other) const;
+    Path &remove_filename() {
+        path_.remove_filename();
+        return *this;
+    }
 
-    Path parent() const;
-    std::string filename() const;
-    std::string extension() const;
-    std::string stem() const;
-    bool is_absolute() const;
+    Path &replace_filename(const Path &replacement) {
+        path_.replace_filename(replacement.path_);
+        return *this;
+    }
 
-    // Get the path as a string.
-    const std::string &string() const;
+    Path &replace_extension() {
+        path_.replace_extension();
+        return *this;
+    }
 
-    // Get the path as a string, without any quotations or trailing slashes.
-    std::string get_plain_path() const;
+    void swap(Path &other) { path_.swap(other.path_); }
 
-    // Check if the path exists.
-    bool exists() const;
+    const char *c_str() const { return path_.c_str(); }
+    std::string native() const { return path_.native(); }
+    operator std::string() const { return path_; }
+    std::string string() const { return path_.string(); }
+    std::string generic_string() const { return path_.generic_string(); }
 
-    // Check if the path is a directory.
-    bool is_dir() const;
+    int compare(const Path &other) const { return path_.compare(other.path_); }
 
-    // Check if the path is a file.
-    bool is_file() const;
+    Path lexically_normal() { return path_.lexically_normal(); }
+    Path lexically_relative(const Path &base) const { return path_.lexically_relative(base.path_); }
+    Path lexically_proximate(const Path &base) const { return path_.lexically_proximate(base.path_); }
+
+    Path root_name() const { return path_.root_name(); }
+    Path root_directory() const { return path_.root_directory(); }
+    Path root_path() const { return path_.root_path(); }
+    Path relative_path() const { return path_.relative_path(); }
+    Path parent_path() const { return path_.parent_path(); }
+    std::string filename() const { return path_.filename().string(); }
+    std::string stem() const { return path_.stem().string(); }
+    std::string extension() const { return path_.extension().string(); }
+
+    bool empty() const { return path_.empty(); }
+
+    bool has_root_path() const { return path_.has_root_path(); }
+    bool has_root_name() const { return path_.has_root_name(); }
+    bool has_root_directory() const { return path_.has_root_directory(); }
+    bool has_relative_path() const { return path_.has_relative_path(); }
+    bool has_parent_path() const { return path_.has_parent_path(); }
+    bool has_filename() const { return path_.has_filename(); }
+    bool has_stem() const { return path_.has_stem(); }
+    bool has_extension() const { return path_.has_extension(); }
+
+    bool is_absolute() const { return path_.is_absolute(); }
+    bool is_relative() const { return path_.is_relative(); }
+
+    bool exists() const { return fs::exists(path_); }
+    bool is_dir() const { return fs::is_directory(path_); }
+    bool is_file() const { return fs::is_regular_file(path_); }
+    std::size_t file_size() const { return fs::file_size(path_); }
+
+    void remove() const { fs::remove(path_); }
+    void remove_all() const { fs::remove_all(path_); }
+    void rename(const Path &new_path) {
+        fs::rename(path_, new_path.path_);
+        path_ = new_path.path_;
+    }
+    void copy(const Path &new_path) const { fs::copy(path_, new_path.path_); }
+
+    // Return the path with quotes around it if it contains spaces.
+    std::string quote_if_needed() const { return check_whitespaces(path_.string()); }
 
     // Read the file at the path. Return the contents as a string.
     std::string read_file() const;
@@ -54,17 +101,13 @@ class Path {
     // Write the given content to the file at the path.
     void write_file(const std::string &content) const;
 
-    static std::string normalize(const std::string &path);
-
   private:
     // Return the path with quotes around it if it contains spaces.
     static std::string check_whitespaces(const std::string &path);
 
   private:
-    std::string path_;
+    // std::string path_;
+    fs::path path_;
 };
-
-std::string operator+(const Path &lhs, const std::string &rhs);
-std::string operator+(const std::string &lhs, const Path &rhs);
 
 #endif // __RCC_PATH_H__

@@ -125,13 +125,13 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
     if (!settings.get_additional_includes().empty()) {
         compile_cmd += " -I.";
     }
-    compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
+    compile_cmd += " -I" + paths.get_sub_templates_dir().quote_if_needed();
 
-    compile_cmd+= " -include " + paths.get_template_header_path().get_path();
+    compile_cmd += " -include " + paths.get_template_header_path().quote_if_needed();
 
-    compile_cmd += " -o " + bin_path.get_path();
+    compile_cmd += " -o " + bin_path.quote_if_needed();
     for (const auto &source : sources) {
-        compile_cmd += " " + source.get_path();
+        compile_cmd += " " + source.quote_if_needed();
     }
     if (additional_flags != "") {
         compile_cmd += " " + additional_flags;
@@ -155,21 +155,21 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
     if (!settings.get_additional_includes().empty()) {
         compile_cmd += " -I.";
     }
-    compile_cmd += " -I" + paths.get_sub_templates_dir().get_path();
+    compile_cmd += " -I" + paths.get_sub_templates_dir().quote_if_needed();
 
     // clang++ needs to specify the .pch file explicitly
     if (settings.has_included_stdcpp()) {
-        pch_path.join("rcc_template.hpp.stdc++.pch");
+        pch_path /= "rcc_template.hpp.stdc++.pch";
         compile_cmd += " -DINCLUDE_BITS_STDCPP_H";
-        compile_cmd += " -include-pch " + pch_path.get_path();
+        compile_cmd += " -include-pch " + pch_path.quote_if_needed();
     } else {
-        pch_path.join("rcc_template.hpp.pch");
-        compile_cmd += " -include-pch " + pch_path.get_path();
+        pch_path /= "rcc_template.hpp.pch";
+        compile_cmd += " -include-pch " + pch_path.quote_if_needed();
     }
 
-    compile_cmd += " -o " + bin_path.get_path();
+    compile_cmd += " -o " + bin_path.quote_if_needed();
     for (const auto &source : sources) {
-        compile_cmd += " " + source.get_path();
+        compile_cmd += " " + source.quote_if_needed();
     }
     if (additional_flags != "") {
         compile_cmd += " " + additional_flags;
