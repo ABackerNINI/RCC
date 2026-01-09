@@ -122,91 +122,44 @@ bool compile_code(const Settings &settings,
                   const string &cxxflags,
                   const string &additional_flags,
                   const string &exec_cmd,
-                  std::shared_ptr<compiler_support> cs) {
+                  std::shared_ptr<compiler_support> cs,
+                  bool silent = false) {
     vector<Path> sources = {cpp_path};
     for (auto &src : settings.get_additional_sources()) {
         sources.emplace_back(src);
     }
 
-    const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags);
+    const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags) +
+                               (silent ? " >/dev/null 2>&1" : "");
 
-    // cdbg << compile_cmd << endl;
     gprint("{}\n", compile_cmd);
 
     using namespace fmt;
 
     if (system(compile_cmd) != 0) {
-        print(emphasis::underline, "\n{}\n", cpp_path.quote_if_needed());
-        print(fg(color::red) | emphasis::bold, "\nCOMPILATION FAILED!\n");
-        print("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
-        print("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
+        if (!silent) {
+            // print(emphasis::underline, "\n{}\n", cpp_path.quote_if_needed());
+            print("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+            print(fg(color::red) | emphasis::bold, "\nCOMPILATION FAILED!\n");
+            print("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
+            print("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
+        }
         return false;
     }
     return true;
 }
 
-// The main function of rcc.
-// Convenient for testing.
-int rcc_main(int argc, char **argv) {
-    // TODO: add version info
-    // TODO: add option, --permanent, make it permanent, give it a name, save as json file?
-    // TODO: fix bug: rcc 'for(int i=0;i<10;i++) { if(system("git push")==0) {break;} sleep(1); }'
-    // TODO: add option, --debug, show debug messages
-    // TODO: add option -c, --compile-only, compile only, return binary's name, run later
-    // TODO: add option --dry-run, show what would be done without actually doing it
-    // TODO: rcc_print, rcc_print_pretty: print c++ code only
-    // TODO: add option --pretty
-    // TODO: add option cat, cat last generated code
-    // TODO: add option --print only
-    // TODO: add support for Windows
-    // TODO: make install_local: install it at the current directory
-    // TODO: auto detect compiler
-    // TODO: check template files during make install
-    // TODO: store in .local, reproduce install if .cache/rcc files been removed
-    // TODO: add a readme in .cache/rcc
-    // TODO: add version and help messages
-    // TODO: boost with multi-thread
-    //? TODO: add option --stdin, read input from stdin instead of arguments
+enum class TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
 
-    // Reset colors at exit to avoid terminal issues after program termination
-    std::atexit([]() { std::cout << rang::style::reset; });
+struct TryResult {
+    TryStatus status;
+    int return_code;
+};
 
-    // Handle signals gracefully
-    register_signal_handler();
-
-    // Parse arguments and set up settings
-    Settings settings;
-    int result;
-    if ((result = settings.parse_argv(argc, argv)) != 0) {
-        return result;
-    }
-
-    // Print the settings
-    gstmt(settings.debug_print());
-
-    // Seed the random number generator
-    //? Why time() + getpid()?
-    //* If we only use time() as the seed, rcc may run in one second multiple
-    //* times, and get the same seed.
-    srand((unsigned int)time(NULL) + (unsigned int)getpid());
-
-    // Clean old cached files
-    if (settings.get_clean_cache_flag()) { // clean cache manually
-        clean_cache();
-    } else { // clean cache automatically, but not too often
-        random_clean_cache();
-    }
-
-    // No code to compile, just return
-    if (!settings.has_code()) {
-        return 0;
-    }
-
+// Silent mode: no output of compiler errors, and no output after the compilation failed.
+TryResult try_code(Settings &settings, const string &code, bool silent = false) {
     // rcc paths
     Paths &paths = Paths::get_instance();
-
-    // command line c++ code
-    const string code = settings.get_codes_as_string();
 
     // the compiler
     const string compiler = settings.get_compiler();
@@ -260,8 +213,8 @@ int rcc_main(int argc, char **argv) {
         // Write c++ code to the cpp file
         cpp_path.write_file(full_code);
 
-        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, exec_cmd, cs)) {
-            return 1; // Compile failed
+        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, exec_cmd, cs, silent)) {
+            return {TryStatus::COMPILE_FAILED, 1}; // Compile failed
         }
     }
 
@@ -275,7 +228,100 @@ int rcc_main(int argc, char **argv) {
     int ret = system(exec_cmd);
     gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
-    return ret;
+    return {TryStatus::SUCCESS, ret};
+}
+
+// The main function of rcc.
+// Convenient for testing.
+int rcc_main(int argc, char **argv) {
+    // TODO: add version info
+    // TODO: add option, --permanent, make it permanent, give it a name, save as json file?
+    // TODO: add option, --debug, show debug messages
+    // TODO: add option -c, --compile-only, compile only, return binary's name, run later
+    // TODO: add option --dry-run, show what would be done without actually doing it
+    // TODO: rcc_print, rcc_print_pretty: print c++ code only
+    // TODO: add option --pretty
+    // TODO: add option cat, cat last generated code
+    // TODO: add option --print only
+    // TODO: add support for Windows
+    // TODO: make install_local: install it at the current directory
+    // TODO: auto detect compiler
+    // TODO: check template files during make install
+    // TODO: store in .local, reproduce install if .cache/rcc files been removed
+    // TODO: add a readme in .cache/rcc
+    // TODO: add version and help messages
+    // TODO: boost with multi-thread
+    //? TODO: add option --stdin, read input from stdin instead of arguments
+
+    // Reset colors at exit to avoid terminal issues after program termination
+    std::atexit([]() { std::cout << rang::style::reset; });
+
+    // Handle signals gracefully
+    register_signal_handler();
+
+    // Parse arguments and set up settings
+    Settings settings;
+    int result;
+    if ((result = settings.parse_argv(argc, argv)) != 0) {
+        return result;
+    }
+
+    // Print the settings
+    gstmt(settings.debug_print());
+
+    // Seed the random number generator
+    //? Why time() + getpid()?
+    //* If we only use time() as the seed, rcc may run in one second multiple
+    //* times, and get the same seed.
+    srand((unsigned int)time(NULL) + (unsigned int)getpid());
+
+    // Clean old cached files
+    if (settings.get_clean_cache_flag()) { // clean cache manually
+        clean_cache();
+    } else { // clean cache automatically, but not too often
+        random_clean_cache();
+    }
+
+    // No code to compile, just return
+    if (!settings.has_code()) {
+        return 0;
+    }
+
+    auto &codes = settings.get_codes();
+
+    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
+    // 'cout << ... << endl;' and try to compile and run it.
+    // This is for convenience, e.g. rcc '2+3*5'.
+    if (codes.size() > 0) {
+        auto &last_code = codes.back();
+        if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
+            string code;
+
+            for (size_t i = 0; i < codes.size() - 1; i++) {
+                code.append(codes[i]);
+            }
+            code.append("cout << (" + last_code + ") << endl;");
+
+            gprint(fg(fmt::color::dodger_blue) | fmt::emphasis::bold,
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+            gprint("Tring to wrap code with 'cout << ... << endl;'\n");
+            auto try_result = try_code(settings, code, true); // silent mode
+            gprint(fg(fmt::color::dodger_blue) | fmt::emphasis::bold,
+                   "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+            if (try_result.status == TryStatus::SUCCESS) {
+                return try_result.return_code;
+            }
+        }
+    }
+
+    // command line c++ code
+    const string code = settings.get_codes_as_string();
+
+    // Try to compile and run the unwrapped code
+    auto try_result = try_code(settings, code);
+
+    // TODO: optimize the return code
+    return try_result.return_code;
 }
 
 int main(int argc, char **argv) {

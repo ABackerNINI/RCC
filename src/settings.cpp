@@ -5,30 +5,13 @@
 
 namespace rcc {
 
-static int locate_args(int argc, char **argv) {
+int Settings::locate_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--") == 0) {
             return i;
         }
     }
     return argc;
-}
-
-// Merge all user codes together into a string.
-string Settings::merge_codes(const std::vector<std::string> &codes) {
-    string s;
-    s.reserve(256);
-    // If there is only one argument and it doesn't end with ';', wrap it in
-    // 'cout << ... << endl;' directly. This is for convenience, e.g. rcc '2+3*5'.
-    if (codes.size() == 1 && codes[0].length() > 0 && codes[0][codes[0].length() - 1] != ';') {
-        s += "cout << " + codes[0] + " << endl;";
-    } else {
-        // Otherwise, merge all arguments together without any modification.
-        for (auto &code : codes) {
-            s.append(code);
-        }
-    }
-    return s;
 }
 
 int Settings::parse_argv(int argc, char **argv) {

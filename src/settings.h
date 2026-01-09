@@ -40,7 +40,7 @@ class Settings {
     std::string get_additional_includes_as_string() const { return vector_to_string(additional_includes); }
     std::string get_above_main_as_string() const { return vector_to_string(above_main, "\n"); }
     std::string get_functions_as_string() const { return vector_to_string(functions, "\n"); }
-    std::string get_codes_as_string() const { return merge_codes(codes); }
+    std::string get_codes_as_string() const { return vector_to_string(codes, ""); }
     std::string get_additional_sources_as_string() const { return vector_to_string(additional_sources); }
 
     // Check if at least one code snippet is present.
@@ -55,8 +55,8 @@ class Settings {
     void debug_print() const;
 
   private:
-    // Merge multiple code snippets into one string.
-    static std::string merge_codes(const std::vector<std::string> &codes);
+    // Locate the position of the "--" argument in the command line.
+    static int locate_args(int argc, char **argv);
 
   private:
     std::string compiler = RCC_COMPILER; // the compiler to use
