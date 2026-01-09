@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "path.h"
+
 #ifndef RCC_CACHE_DIR
     // Store all temporary files in this directory, including auto-generated .cpp
     // and .bin files.
@@ -17,52 +19,6 @@
 #define SUB_DIR_TEMPLATES "templates"
 
 namespace rcc {
-
-// Represent a path in the filesystem. Maybe use std::filesystem in C++17?
-//* Currently, this supports only Linux.
-class Path {
-  public:
-    Path(const std::string &path);
-    Path(const char *path);
-    Path();
-
-    // Join a path with another path.
-    Path &join(const std::string &other);
-
-    // Join a path with another path.
-    Path &join(const char *other);
-
-    // Join a path with another path.
-    Path &join(const Path &other);
-
-    // Get the path as a string.
-    const std::string &get_path() const;
-
-    // Get the path as a string, without any quotations or trailing slashes.
-    std::string get_plain_path() const;
-
-    // Check if the path exists.
-    bool exists() const;
-
-    // Check if the path is a directory.
-    bool is_dir() const;
-
-    // Check if the path is a file.
-    bool is_file() const;
-
-    // Read the file at the path. Return the contents as a string.
-    std::string read_file() const;
-
-    // Write the given content to the file at the path.
-    void write_file(const std::string &content) const;
-
-  private:
-    // Return the path with quotes around it if it contains spaces.
-    static std::string check_whitespaces(const std::string &path);
-
-  private:
-    std::string path;
-};
 
 // Paths that are used by rcc.
 // This class is a singleton.
