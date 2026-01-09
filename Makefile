@@ -18,12 +18,13 @@ HDRS = $(wildcard $(SRC_DIR)/*.h)
 
 PARAMS = $(RCC_CACHE_DIR)
 PARAMS_SIGNATURE = $(shell echo "$(PARAMS)" | md5sum | cut -c1-12)
-BUILD_DIR = build/$(CONFIG)/$(CXX).$(CPP_STD).$(PARAMS_SIGNATURE)
+BUILD = build
+BUILD_DIR = $(BUILD)/$(CONFIG)/$(CXX).$(CPP_STD).$(PARAMS_SIGNATURE)
 BIN_DIR = bin
 
 CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) 			\
 		   -I. -I./libs/							\
-		   -DRCC_COMPILER=\"$(CXX)\"		\
+		   -DRCC_COMPILER=\"$(CXX)\"				\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
 LDFLAGS  = -L./libs -lfmt
@@ -47,9 +48,9 @@ DEPS = $(OBJS:.o=.d)
 
 # MAIN TARGET
 
-$(BIN_DIR)/$(BINARY): $(OBJS)
+$(BIN_DIR)/$(BINARY): $(OBJS) $(BUILD)/$(CONFIG).mode
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
 	$(call check_build_params)
 	$(call save_build_params,$(BUILD_DIR)/build_params.txt)
 
@@ -58,6 +59,11 @@ $(BIN_DIR)/$(BINARY): $(OBJS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(BUILD)/$(CONFIG).mode:
+	@mkdir -p $(dir $@)
+	@rm -f $(BUILD)/*.mode
+	@touch $@
 
 # INCLUDE DEPENDENCIES
 
