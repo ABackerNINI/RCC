@@ -1,95 +1,113 @@
-# 项目配置
 PROJECT = rcc
+
+# OPTIONS
+
+CONFIG 		  ?= debug
 
 CXX 		  ?= g++
 CPP_STD       ?= c++17
 RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
 
-# 源文件
+# SOURCES
+
 SRC_DIR = src
 SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 HDRS = $(wildcard $(SRC_DIR)/*.h)
 
-# 配置管理
-CONFIG ?= debug
+# CONFIGURATIONS
+
 PARAMS = $(RCC_CACHE_DIR)
 PARAMS_SIGNATURE = $(shell echo "$(PARAMS)" | md5sum | cut -c1-12)
 BUILD_DIR = build/$(CONFIG)/$(CXX).$(CPP_STD).$(PARAMS_SIGNATURE)
 BIN_DIR = bin
 
-CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -I. 		\
-		   -DRCC_COMPILER=\"$(CPP_COMPILER)\"		\
+CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) 			\
+		   -I. -I./libs/							\
+		   -DRCC_COMPILER=\"$(CXX)\"		\
 		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
 		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
 LDFLAGS  = -L./libs -lfmt
 
 BINARY = $(PROJECT)
 
-# 配置特定的变量
 ifeq ($(CONFIG),debug)
     CXXFLAGS += -g -O0 -DDEBUG
 else ifeq ($(CONFIG),release)
-    CXXFLAGS += -O3 -DNDEBUG -march=native
+    CXXFLAGS += -flto=4 -O3 -march=native -DNDEBUG
 else ifeq ($(CONFIG),test)
     CXXFLAGS += -g -O0 -DTEST -Igoogletest/include
     BINARY = $(PROJECT)_test
     LDFLAGS += -Lgoogletest/lib -lgtest -lgtest_main -lpthread
 endif
 
-define check_build_params
-	@if [ -f $(BUILD_DIR)/build_params.txt ]; then \
-		echo "CONFIG=$(CONFIG)\nCXX=$(CXX)\nCPP_STD=$(CPP_STD)\nRCC_CACHE_DIR=$(RCC_CACHE_DIR)" > $(BUILD_DIR)/temp.txt; \
-		if ! diff -q build/build_params.txt build/temp.txt >/dev/null 2>&1; then \
-			echo "ERROR: Build params mismatch, maybe due to hash collision, or Makefile changes, try 'make clean' first"; \
-			exit 1; \
-		fi \
-	fi
-endef
+# OBJECTS
 
-define save_build_params
-	@echo "CONFIG=$(CONFIG)\nCXX=$(CXX)\nCPP_STD=$(CPP_STD)\nRCC_CACHE_DIR=$(RCC_CACHE_DIR)" > $(BUILD_DIR)/build_params.txt
-endef
-
-# 对象文件
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
-# 主目标
+# MAIN TARGET
+
 $(BIN_DIR)/$(BINARY): $(OBJS)
-	$(call check_build_params)
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
-	$(call save_build_params)
+	$(call check_build_params)
+	$(call save_build_params,$(BUILD_DIR)/build_params.txt)
 
-# 编译规则
+# COMPILE RULE
+
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
-# 包含依赖
+# INCLUDE DEPENDENCIES
+
 -include $(DEPS)
 
-# 快捷目标
+# PHONY TARGETS
+
 .PHONY: debug release test clean all
 
 debug:
-	$(MAKE) CONFIG=debug
+	@$(MAKE) CONFIG=debug --no-print-directory
 
 release:
-	$(MAKE) CONFIG=release
+	@$(MAKE) CONFIG=release --no-print-directory
 
 test:
-	$(MAKE) CONFIG=test
+	@$(MAKE) CONFIG=test --no-print-directory
 
 all: debug release
 
 clean:
 	rm -rf build/ bin/
 
-# 运行目标
-run: $(BIN_DIR)/$(BINARY)
-	./$<
+# BUILD PARAMS
 
-# 测试运行
-test-run: test
-	./bin/$(PROJECT)_test
+RED = \033[0;31m
+RESET = \033[0m
+
+define save_build_params
+	@echo "PROJECT=$(PROJECT)" > "$(1)"
+	@echo "CONFIG=$(CONFIG)" >> "$(1)"
+	@echo "CXX=$(CXX)" >> "$(1)"
+	@echo "CPP_STD=$(CPP_STD)" >> "$(1)"
+	@echo "CXXFLAGS=$(CXXFLAGS)" >> "$(1)"
+	@echo "RCC_CACHE_DIR=$(RCC_CACHE_DIR)" >> "$(1)"
+endef
+
+define check_build_params
+	$(call save_build_params,$(BUILD_DIR)/temp.txt)
+
+	@if [ -f $(BUILD_DIR)/build_params.txt ]; then \
+		if ! diff -q "$(BUILD_DIR)/build_params.txt" "$(BUILD_DIR)/temp.txt" >/dev/null 2>&1 ; then \
+			echo ""; \
+			printf "$(RED)"; \
+			echo "WARNING: Build params mismatch, most likely due to Makefile changes, or barely hash collision, try 'make clean' first."; \
+			printf "$(RESET)"; \
+			echo ""; \
+			echo "Diff of build params:"; \
+			diff --ignore-space-change --color --minimal "$(BUILD_DIR)/build_params.txt" "$(BUILD_DIR)/temp.txt"; \
+			echo ""; \
+		fi \
+	fi
+endef

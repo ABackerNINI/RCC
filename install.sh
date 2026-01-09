@@ -47,9 +47,9 @@ function check_error() {
 
 ################################################################################
 
-setup
-
 set -e # Exit on error
+
+setup
 
 function usage() {
     cat <<EOF
@@ -148,18 +148,6 @@ echo "${YELLOW}Cache directory:${NORMAL} ${UNDERLINE}$CACHE_DIR${NORMAL}"
 echo "${YELLOW}DEBUG:${NORMAL} ${UNDERLINE}$DEBUG${NORMAL}"
 echo ""
 
-cd src || exit 1
-
-mkdir -p build
-if [ -f build/last_build_config.txt ]; then
-    echo -e "COMPILER=$COMPILER\nCPP_STD=$CPP_STD\nRCC_CACHE_DIR=$CACHE_DIR" > build/build_config.txt
-    if ! diff -q build/build_config.txt build/last_build_config.txt >/dev/null 2>&1; then
-        echo -e "${YELLOW}Build configuration changed, cleaning build${NORMAL}"
-        make clean
-        check_error "make clean"
-    fi
-fi
-
 # Build rcc
 echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CPP_STD${NORMAL}"
 if [ $DEBUG == true ]; then
@@ -172,7 +160,7 @@ fi
 
 # Copy rcc to path
 echo "${YELLOW}Installing rcc to /usr/local/bin/${NORMAL}"
-sudo cp rcc /usr/local/bin/
+sudo cp bin/rcc /usr/local/bin/
 check_error "sudo cp rcc /usr/local/bin/"
 
 # Remove and then create rcc cache dir
@@ -190,24 +178,22 @@ mkdir -p "$CACHE_DIR/templates"
 check_error "mkdir -p \"$CACHE_DIR/templates\""
 
 # Copy templates to rcc cache dir
-make -C template clean "CPP_COMPILER=$COMPILER"
+make -C src/template clean "CPP_COMPILER=$COMPILER"
 check_error "make clean"
 echo "${YELLOW}Copying templates to cache directory${NORMAL}"
-cp -r --preserve=timestamps template/* -t "$CACHE_DIR/templates"
-check_error "cp -r template/* -t \"$CACHE_DIR/templates\""
+cp -r --preserve=timestamps src/template/* -t "$CACHE_DIR/templates"
+check_error "cp -r src/template/* -t \"$CACHE_DIR/templates\""
 # copy templates header files to the cache sub-directory so that the ide
 # can find it when we open one source file in the ide instead of showing lots of errors.
 # This is not necessary for the build process but it helps with the ide experience.
 #! This might interfere with the PCH matching process, so ...
-# cp -r template/*.hpp -t "$CACHE_DIR/cache"
-# check_error "cp -r template/*.hpp -t \"$CACHE_DIR/cache\""
+# cp -r src/template/*.hpp -t "$CACHE_DIR/cache"
+# check_error "cp -r src/template/*.hpp -t \"$CACHE_DIR/cache\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
 make -C "$CACHE_DIR/templates" "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD"
 check_error "make"
-
-echo -e "COMPILER=$COMPILER\nCPP_STD=$CPP_STD\nRCC_CACHE_DIR=$CACHE_DIR" > build/last_build_config.txt
 
 echo ""
 echo "${GREEN}${UNDERLINE}INSTALLATION COMPLETE!${NORMAL}"
