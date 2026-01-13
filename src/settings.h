@@ -23,6 +23,10 @@ class Settings {
     // Parse the command line arguments and initialize the settings.
     int parse_argv(int argc, char **argv);
 
+    const std::string &get_permanent() const { return permanent; }
+    const std::string &get_run_permanent() const { return run_permanent; }
+
+    // TODO: fix const std::string -> const std::string &
     const std::string get_compiler() const { return compiler; }
     const std::string get_std() const { return std; }
     bool get_clean_cache_flag() const { return clean_cache; }
@@ -59,6 +63,8 @@ class Settings {
     static int locate_args(int argc, char **argv);
 
   private:
+    std::string permanent;
+    std::string run_permanent;
     std::string compiler = RCC_COMPILER; // the compiler to use
     std::string std = RCC_CPP_STD; // the c++ standard to use, relates to "-std"
     // the c++ flags to use, default to a set of common flags.

@@ -176,6 +176,8 @@ mkdir -p "$CACHE_DIR/cache"
 check_error "mkdir -p \"$CACHE_DIR/cache\""
 mkdir -p "$CACHE_DIR/templates"
 check_error "mkdir -p \"$CACHE_DIR/templates\""
+mkdir -p "$CACHE_DIR/permanent"
+check_error "mkdir -p \"$CACHE_DIR/permanent\""
 
 # Copy templates to rcc cache dir
 make -C src/template clean "CPP_COMPILER=$COMPILER"

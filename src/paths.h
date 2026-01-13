@@ -17,6 +17,7 @@
 
 #define SUB_DIR_CACHE "cache"
 #define SUB_DIR_TEMPLATES "templates"
+#define SUB_DIR_PERMANENT "permanent"
 
 namespace rcc {
 
@@ -54,6 +55,8 @@ class Paths {
     // The filenames are based on the hash of the code.
     void get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const;
 
+    void get_src_bin_full_path_permanent(const std::string name, Path &src_path, Path &bin_path) const;
+
   private:
     // Private constructor to prevent instantiation.
     Paths();
@@ -66,6 +69,7 @@ class Paths {
     Path cache_dir;
     Path sub_cache_dir;
     Path sub_templates_dir;
+    Path sub_permanent_dir;
     Path template_path;
     Path template_header_path;
 };

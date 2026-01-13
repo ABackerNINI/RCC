@@ -20,8 +20,10 @@ Paths::Paths() {
 
     this->cwd = std::string(cwd);
 
+    // TODO: rename to validate_installation()
     validate_cache_dir();
 
+    // TODO: move into validate_installation()
     this->template_path = sub_templates_dir / "rcc_template.cpp";
     this->template_header_path = sub_templates_dir / "rcc_template.hpp";
 }
@@ -42,6 +44,9 @@ void Paths::validate_cache_dir() {
 
     const string sub_cache_dir = cache_dir + "/" + SUB_DIR_CACHE;
     const string sub_templates_dir = cache_dir + "/" + SUB_DIR_TEMPLATES;
+    const string sub_permanent_dir = cache_dir + "/" + SUB_DIR_PERMANENT;
+
+    // TODO: reduce duplicated code
 
     // Check if the cache directory exists, if not, exit
     if (access(cache_dir.c_str(), F_OK) != 0) {
@@ -50,14 +55,14 @@ void Paths::validate_cache_dir() {
         exit(1);
     }
 
-    // Check if the templates directory exists, if not, exit
+    // Check if the templates sub-directory exists, if not, exit
     if (access(sub_templates_dir.c_str(), F_OK) != 0) {
         cerr << "Templates directory does not exist: " << cache_dir + "/" + SUB_DIR_TEMPLATES << endl;
         cerr << "Please reinstall rcc." << endl;
         exit(1);
     }
 
-    // Check if the sub cache directory exists, if not, create it
+    // Check if the cache sub-directory exists, if not, create it
     if (access(sub_cache_dir.c_str(), F_OK) != 0) {
         if (mkdir(sub_cache_dir.c_str(), 0755) != 0) {
             cerr << "Failed to create cache directory: " << sub_cache_dir << endl;
@@ -65,9 +70,18 @@ void Paths::validate_cache_dir() {
         }
     }
 
+    // Check if the permanent sub-directory exists, if not, create it
+    if (access(sub_permanent_dir.c_str(), F_OK) != 0) {
+        if (mkdir(sub_permanent_dir.c_str(), 0755) != 0) {
+            cerr << "Failed to create cache directory: " << sub_permanent_dir << endl;
+            exit(1);
+        }
+    }
+
     this->cache_dir = cache_dir;
     this->sub_cache_dir = sub_cache_dir;
     this->sub_templates_dir = sub_templates_dir;
+    this->sub_permanent_dir = sub_permanent_dir;
 }
 
 Path Paths::get_cache_dir() const {
@@ -112,4 +126,10 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     // the executable full path
     bin_path = cache_dir / SUB_DIR_CACHE / out_bin_name;
 }
+
+void Paths::get_src_bin_full_path_permanent(const std::string name, Path &src_path, Path &bin_path) const {
+    src_path = cache_dir / sub_permanent_dir / (name + ".cpp");
+    bin_path = cache_dir / sub_permanent_dir / (name + ".bin");
+}
+
 } // namespace rcc

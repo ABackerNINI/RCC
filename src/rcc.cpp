@@ -149,6 +149,37 @@ bool compile_code(const Settings &settings,
     return true;
 }
 
+int run_permanent(const Settings &settings, const std::string &name) {
+    // rcc paths
+    Paths &paths = Paths::get_instance();
+
+    Path cpp_path, bin_path;
+    paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path);
+
+    if (!bin_path.exists()) {
+        // TODO: suggest similar names
+        print(stderr, "Error: permanent '{}' does not exist\n", name);
+        return 1;
+    }
+
+    // TODO: reduce code duplication with try_code()
+
+    const string command_line_args = settings.get_cli_args_as_string();
+    const string exec_cmd = bin_path.quote_if_needed() + (command_line_args.empty() ? "" : " " + command_line_args);
+
+    /*------------------------------------------------------------------------*/
+    // * Run the Executable
+
+    gprint("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+    gprint("EXECUTING : {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
+
+    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    int ret = system(exec_cmd);
+    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+
+    return ret;
+}
+
 enum class TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
 
 struct TryResult {
@@ -171,14 +202,19 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
     const string functions = settings.get_functions_as_string();
     const string additional_sources = settings.get_additional_sources_as_string();
 
-    // The string to hash, which determines the output file name.
-    // It is used to determine if we need to recompile the code or not.
-    const string to_hash = code + "a" + compiler + "b" + cxxflags + "a" + additional_flags + "c" + additional_includes +
-                           "k" + above_main + "e" + functions + "r" + additional_sources;
-
     // the output cpp code and executable file's full paths
     Path cpp_path, bin_path;
-    paths.get_src_bin_full_path(to_hash, cpp_path, bin_path);
+
+    if (settings.get_permanent().empty()) {
+        // The string to hash, which determines the output file name.
+        // It is used to determine if we need to recompile the code or not.
+        const string to_hash = code + "a" + compiler + "b" + cxxflags + "a" + additional_flags + "c" +
+                               additional_includes + "k" + above_main + "e" + functions + "r" + additional_sources;
+
+        paths.get_src_bin_full_path(to_hash, cpp_path, bin_path);
+    } else {
+        paths.get_src_bin_full_path_permanent(settings.get_permanent(), cpp_path, bin_path);
+    }
 
     // run the executable from cwd
     const string command_line_args = settings.get_cli_args_as_string();
@@ -218,6 +254,11 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
         }
     }
 
+    // If --permanent is set, just compile the code, don't run it
+    if (!settings.get_permanent().empty()) {
+        return {TryStatus::SUCCESS, 0};
+    }
+
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
@@ -235,7 +276,8 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
     // TODO: add version info
-    // TODO: add option, --permanent, make it permanent, give it a name, save as json file?
+    // TODO: add option, --permanent NAME, make it permanent, give it a name, save as json file, or source and binary?
+    // TODO: add option, --run-permanent NAME, run the permanent one
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, --compile-only, compile only, return binary's name, run later
     // TODO: add option --dry-run, show what would be done without actually doing it
@@ -280,6 +322,11 @@ int rcc_main(int argc, char **argv) {
         clean_cache();
     } else { // clean cache automatically, but not too often
         random_clean_cache();
+    }
+
+    // If --run-permanent is set, just run the program
+    if (!settings.get_run_permanent().empty()) {
+        return run_permanent(settings, settings.get_run_permanent());
     }
 
     // No code to compile, just return

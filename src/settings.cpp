@@ -24,9 +24,17 @@ int Settings::parse_argv(int argc, char **argv) {
     }
 
     CLI::App app{"RCC - Run C/C++ codes in terminal"};
+
     app.allow_non_standard_option_names();
     app.allow_extras();
-    app.add_flag("--clean-cache", clean_cache, "Clean cached source and binary files");
+
+    // TODO: opt code for vector options, and option_text
+    // TODO: BinPackArguments false -> true
+
+    app.add_flag("--clean-cache",
+                 clean_cache,
+                 "Clean cached source and binary files. Permanent code will not be affected.");
+
     app.add_option_function<string>(
            "--include",
            [&](const string &inc) {
@@ -70,6 +78,12 @@ int Settings::parse_argv(int argc, char **argv) {
            "Add code explicitly")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+
+    app.add_option("--permanent", permanent, "Make the code permanent")->option_text("NAME");
+    app.add_option("--run-permanent", run_permanent, "Run a permanent code")
+        ->excludes("--permanent")
+        ->option_text("NAME");
+    // TODO: add option --desc, --list-permanent
 
     try {
         app.parse(argc, argv);
