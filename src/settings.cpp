@@ -82,7 +82,8 @@ int Settings::parse_argv(int argc, char **argv) {
     /*==========================================================================*/
     // Permanent code options
 
-    // TODO: add option --remove-permanent, -f, --force
+    // TODO: add option -f, --force
+    // TODO: add option --remove-invalid-permanents
 
     app.add_option("--permanent", permanent, "Make the code permanent")->option_text("NAME");
     app.add_option("--run-permanent", run_permanent, "Run a permanent code")

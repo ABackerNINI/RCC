@@ -174,6 +174,41 @@ int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path
     return ret;
 }
 
+// Suggest a similar permanent, return empty string if not match found.
+std::string suggest_similar_permanent(const std::string &name) {
+    if (name.size() <= 1) {
+        return "";
+    }
+
+    Paths &paths = Paths::get_instance();
+
+    std::string suggestion;
+
+    try {
+        auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".bin"});
+        gprint("Found {} files\n", files.size());
+
+        // Find the closest match
+        size_t min_distance = INT32_MAX;
+        for (auto &file : files) {
+            size_t distance = edit_distance(name, file.stem());
+            if ((distance <= name.size() / 2 && distance <= file.stem().string().size() / 2) &&
+                distance < min_distance) {
+                min_distance = distance;
+                suggestion = file.stem();
+            }
+        }
+    } catch (const fs::filesystem_error &e) {
+        gprint("Filesystem error: {}\n", e.what());
+        return "";
+    } catch (const std::exception &e) {
+        gprint("Error: {}\n", e.what());
+        return "";
+    }
+
+    return suggestion;
+}
+
 // Run a permanent executable, return the return code of the executable or 1 if the executable does not exist.
 int run_permanent(const Settings &settings, const std::string &name) {
     // rcc paths
@@ -183,8 +218,28 @@ int run_permanent(const Settings &settings, const std::string &name) {
     paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path, desc_path);
 
     if (!bin_path.exists()) {
-        // TODO: suggest similar names
-        print(stderr, "Error: permanent '{}' does not exist\n", name);
+        // If the binary does not exist but the source or description file exist, it's an invalid permanent.
+        // So we don't need to suggest anything.
+        if (cpp_path.exists() || desc_path.exists()) {
+            print(stderr,
+                  "Error: the binary of permanent '{}' does not exist. It's likely due to a compilation failure "
+                  "earlier.\n",
+                  fmt::styled(name, fg(fmt::terminal_color::red) | fmt::emphasis::bold));
+            return 1;
+        }
+
+        // Try to suggest similar names
+        const std::string suggestion = suggest_similar_permanent(name);
+        print(stderr,
+              "Error: permanent '{}' does not exist",
+              fmt::styled(name, fg(fmt::terminal_color::red) | fmt::emphasis::bold));
+        if (!suggestion.empty()) {
+            print(", did you mean '{}'?\n",
+                  fmt::styled(suggestion, fg(fmt::terminal_color::green) | fmt::emphasis::bold));
+        } else {
+            print(".\n");
+        }
+
         return 1;
     }
 

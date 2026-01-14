@@ -25,6 +25,12 @@ std::string vector_to_string(const std::vector<std::string> &vec,
 // Find all files with the given extensions in the given directory and all subdirectories.
 std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions);
 
+// Calculate the edit distance between two strings, C style.
+size_t edit_distance(const char *s1, size_t len1, const char *s2, size_t len2);
+
+// Calculate the edit distance between two strings, C++ style.
+size_t edit_distance(const std::string &s1, const std::string &s2);
+
 } // namespace rcc
 
 #endif // __RCC_UTILS_H__
