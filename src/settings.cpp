@@ -98,22 +98,42 @@ int Settings::parse_argv(int argc, char **argv) {
         ->excludes("--list-permanent")
         ->option_text("NAME");
 
-    CLI::App *run = app.add_subcommand("run", "Run a permanent code")->allow_extras(false)->fallthrough(false);
+    // Add create subcommand
+    CLI::App *create = app.add_subcommand("create", "Create a permanent code, same as --permanent");
+
+    create->add_option("NAME", permanent, "Name of the permanent code to create")->required();
+
+    // Add run subcommand
+    CLI::App *run = app.add_subcommand("run", "Run a permanent code, same as --run-permanent")
+                        ->allow_extras(false)
+                        ->fallthrough(false);
 
     run->add_option("NAME", run_permanent, "Name of the permanent code to run")->required();
 
-    CLI::App *list = app.add_subcommand("list", "List all permanents")
+    // Add list subcommand
+    CLI::App *list = app.add_subcommand("list", "List all permanents, same as --list-permanent")
                          ->parse_complete_callback([&]() { flag_list_permanent = true; })
                          ->allow_extras(false)
                          ->fallthrough(false);
 
     (void)list;
 
-    CLI::App *rm = app.add_subcommand("rm", "Remove permanent(s) and exit")->allow_extras(false)->fallthrough(false);
+    // Add rm subcommand
+    CLI::App *rm = app.add_subcommand("rm", "Remove permanent(s) and exit, same as --remove-permanent")
+                       ->allow_extras(false)
+                       ->fallthrough(false);
 
     rm->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
 
+    // Add remove subcommand
+    CLI::App *remove = app.add_subcommand("remove", "Remove permanent(s) and exit, same as --remove-permanent")
+                           ->allow_extras(false)
+                           ->fallthrough(false);
+
+    remove->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
+
     // TODO: add option --rename-permanent, add rn subcommand = rename permanent
+    // TODO: add option --update-permanent, add update subcommand
 
     try {
         app.parse(argc, argv);
