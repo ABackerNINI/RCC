@@ -477,6 +477,10 @@ int rcc_main(int argc, char **argv) {
 
     // No code to compile, just return
     if (!settings.has_code()) {
+        if (!settings.get_permanent().empty()) {
+            print(stderr, "Error: No code to compile as permanent program.\n");
+            return 1;
+        }
         return 0;
     }
 
