@@ -91,7 +91,7 @@ int Settings::parse_argv(int argc, char **argv) {
     app.add_option("--desc", permanent_desc, "Description for the permanent code")->needs("--permanent");
     app.add_flag("--list-permanent", flag_list_permanent, "List all permanents and exit");
     // TODO: excludes all other permanent options, using CLI option groups?
-    app.add_option("--remove-permanent", remove_permanent, "Remove permanent(s)")
+    app.add_option("--remove-permanent", remove_permanent, "Remove permanent(s) and exit")
         ->excludes("--permanent")
         ->excludes("--run-permanent")
         ->excludes("--list-permanent")

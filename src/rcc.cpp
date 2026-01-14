@@ -182,24 +182,32 @@ int run_permanent(const Settings &settings, const std::string &name) {
     return ret;
 }
 
-void list_permanent() {
+int list_permanent() {
     // rcc paths
     Paths &paths = Paths::get_instance();
 
-    // TODO: catch filesystem exceptions
+    try {
+        auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".desc"});
+        gprint("Found {} files\n", files.size());
 
-    auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".desc"});
-    gprint("Found {} files\n", files.size());
+        for (const auto &file : files) {
+            std::string content = Path(file).read_file();
 
-    // TODO: show in red if the binary doesn't exist (compilation failed or has been deleted)
-    for (const auto &file : files) {
-        std::string content = Path(file).read_file();
-
-        Path cpp_path, bin_path, desc_path;
-        paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
-        auto color = bin_path.exists() ? fmt::terminal_color::green : fmt::terminal_color::red;
-        print("{}: {}\n", fmt::styled(file.stem(), fg(color)), content);
+            Path cpp_path, bin_path, desc_path;
+            paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
+            // Show in red if the binary doesn't exist (compilation failed or has been deleted)
+            auto color = bin_path.exists() ? fmt::terminal_color::green : fmt::terminal_color::red;
+            print("{}: {}\n", fmt::styled(file.stem(), fg(color)), content);
+        }
+    } catch (const fs::filesystem_error &e) {
+        print(stderr, "Filesystem error: {}\n", e.what());
+        return 1;
+    } catch (const std::exception &e) {
+        print(stderr, "Error: {}\n", e.what());
+        return 1;
     }
+
+    return 0;
 }
 
 int remove_permanents(const Settings &settings) {
@@ -342,6 +350,9 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
 // The main function of rcc.
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
+    // TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
+    // TODO: add -q, --quiet, or --silent flag to suppress output
+    // TODO: add the fmt, ghc libraries
     // TODO: no color for non-tty
     // TODO: add version info
     // TODO: add option, --permanent NAME, make it permanent, give it a name, save as json file, or source and binary?
@@ -394,8 +405,7 @@ int rcc_main(int argc, char **argv) {
 
     // If --list-permanent is set, list all permanent programs
     if (settings.get_flag_list_permanent()) {
-        list_permanent();
-        return 0;
+        return list_permanent();
     }
 
     // If --remove-permanent is set, remove the specified permanents
