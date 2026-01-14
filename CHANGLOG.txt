@@ -1,0 +1,17 @@
+version 0.3.0: [WORKING]
+    1. create and run permanent code
+    2. support for zsh autocompletion
+    3. ...
+
+version 0.2.0:
+    1. add support for clang++
+    2. add color output
+    3. add lots of flags and options
+    4. add support for bits/stdc++.h
+    5. try to wrap code in cout statement
+
+version 0.1.0:
+    1. run C/C++ code given by arguments
+    2. cache compiled executable files
+    3. show syntax errors
+    4. simple and fast enough with Pre-Compiled Header
