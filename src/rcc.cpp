@@ -194,7 +194,11 @@ void list_permanent() {
     // TODO: show in red if the binary doesn't exist (compilation failed or has been deleted)
     for (const auto &file : files) {
         std::string content = Path(file).read_file();
-        print("{}: {}\n", fmt::styled(file.stem(), fg(fmt::terminal_color::green)), content);
+
+        Path cpp_path, bin_path, desc_path;
+        paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
+        auto color = bin_path.exists() ? fmt::terminal_color::green : fmt::terminal_color::red;
+        print("{}: {}\n", fmt::styled(file.stem(), fg(color)), content);
     }
 }
 
@@ -338,6 +342,7 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
 // The main function of rcc.
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
+    // TODO: no color for non-tty
     // TODO: add version info
     // TODO: add option, --permanent NAME, make it permanent, give it a name, save as json file, or source and binary?
     // TODO: add option, --run-permanent NAME, run the permanent one
