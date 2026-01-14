@@ -248,7 +248,7 @@ int run_permanent(const Settings &settings, const std::string &name) {
 }
 
 // List all permanent executables, return 1 on error.
-int list_permanent() {
+int list_permanent(const Settings &settings) {
     // rcc paths
     Paths &paths = Paths::get_instance();
 
@@ -257,13 +257,18 @@ int list_permanent() {
         gprint("Found {} files\n", files.size());
 
         for (const auto &file : files) {
-            std::string content = Path(file).read_file();
+            std::string desc = Path(file).read_file();
 
-            Path cpp_path, bin_path, desc_path;
-            paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
-            // Show in red if the binary doesn't exist (compilation failed or has been deleted)
-            auto color = bin_path.exists() ? fmt::terminal_color::green : fmt::terminal_color::red;
-            print("{}: {}\n", fmt::styled(file.stem(), fg(color)), content);
+            if (settings.get_flag_fetch_autocompletion_zsh()) {
+                // No color, no space between name and description
+                print("{}:{}\n", file.stem(), desc);
+            } else {
+                Path cpp_path, bin_path, desc_path;
+                paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
+                // Show in red if the binary doesn't exist (compilation failed or has been deleted)
+                auto color = bin_path.exists() ? fmt::terminal_color::green : fmt::terminal_color::red;
+                print("{}: {}\n", fmt::styled(file.stem(), fg(color)), desc);
+            }
         }
     } catch (const fs::filesystem_error &e) {
         print(stderr, "Filesystem error: {}\n", e.what());
@@ -462,7 +467,7 @@ int rcc_main(int argc, char **argv) {
 
     // If --list-permanent is set, list all permanent programs
     if (settings.get_flag_list_permanent()) {
-        return list_permanent();
+        return list_permanent(settings);
     }
 
     // If --remove-permanent is set, remove the specified permanents

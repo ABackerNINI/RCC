@@ -1,0 +1,58 @@
+#compdef rcc
+
+_rcc_complete_permanents() {
+    local -a permanents=(${(f)"$(rcc list --fetch-autocompletion-zsh)"})
+    _describe 'permanent' permanents
+}
+
+_rcc() {
+    local context state state_descr line
+    typeset -A opt_args
+
+    # -A Allow autocompletion after '='
+    # -C Allow autocompletion of options
+    # -S Allow stacked options like '-xvf' 
+    # -s Allow single character options
+    # '*' Allow multiple options
+    _arguments -ACSs \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-v --version)'{-v,--version}'[Show version]' \
+        '--clean-cache[Clean cached source and binary files]' \
+        '*--include[Include additional header]:header:_files -g "*.{h,hh,hpp,hxx,h++,inl,tcc,tpp,txx,cuh,clh}"' \
+        '--include-all[Include the bits/stdc++.h header, this will increase compile time]' \
+        '*--compile-with[Compile with additional source file]:source:_files -g "*.{cpp,cxx,cc,C,c++,cp,ii,ixx,cppm,cu,cl}"' \
+        '*--put-above-main[Any code that should be put above the main function]:code' \
+        '*--function[Define a function]:code' \
+        '*--code[Add code explicitly]:code' \
+        '--permanent[Make the code permanent]:name' \
+        '--run-permanent[Run a permanent code]:existing_permanent_name:->permanent-name' \
+        '--desc[Description for the permanent code]' \
+        '--list-permanent[List all permanents and exit]' \
+        '--remove-permanent[Remove permanent(s)]:existing_permanent_name:->permanent-name' \
+        '1:Subcommand:->subcommand' \
+        '*:: :->option-or-argument'
+
+    case $state in
+        (subcommand)
+            local -a rcc_commands=(
+                'create:Create a permanent code, same as --permanent'
+                'run:Run a permanent code, same as --run-permanent'
+                'list:List all permanents, same as --list-permanent'
+                'remove:Remove permanent(s) and exit, same as --remove-permanent'
+                'rm:same as remove'
+            )
+            _describe -t commands 'rcc command' rcc_commands
+            ;;
+        (permanent-name) _rcc_complete_permanents 
+            ;;
+        (option-or-argument)
+            case ${words[1]} in
+                (run)       _rcc_complete_permanents ;;
+                (remove)    _rcc_complete_permanents ;;
+                (rm)        _rcc_complete_permanents ;;
+            esac
+            ;;
+    esac
+}
+
+_rcc "$@"

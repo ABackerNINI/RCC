@@ -116,7 +116,7 @@ int Settings::parse_argv(int argc, char **argv) {
                          ->allow_extras(false)
                          ->fallthrough(false);
 
-    (void)list;
+    list->add_flag("--fetch-autocompletion-zsh", flag_fetch_autocompletion_zsh, "Fetch autocompletion for zsh");
 
     // Add rm subcommand
     CLI::App *rm = app.add_subcommand("rm", "Remove permanent(s) and exit, same as --remove-permanent")

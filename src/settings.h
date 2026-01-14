@@ -28,6 +28,7 @@ class Settings {
     const std::string &get_permanent_desc() const { return permanent_desc; }
     bool get_flag_list_permanent() const { return flag_list_permanent; }
     const std::vector<std::string> &get_remove_permanent() const { return remove_permanent; }
+    bool get_flag_fetch_autocompletion_zsh() const { return flag_fetch_autocompletion_zsh; }
 
     // TODO: fix const std::string -> const std::string &
     const std::string get_compiler() const { return compiler; }
@@ -71,6 +72,8 @@ class Settings {
     std::string permanent_desc;
     std::vector<std::string> remove_permanent;
     bool flag_list_permanent{false};
+    bool flag_fetch_autocompletion_zsh{false};
+
     std::string compiler = RCC_COMPILER; // the compiler to use
     std::string std = RCC_CPP_STD; // the c++ standard to use, relates to "-std"
     // the c++ flags to use, default to a set of common flags.
