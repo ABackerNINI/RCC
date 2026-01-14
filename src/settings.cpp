@@ -98,6 +98,23 @@ int Settings::parse_argv(int argc, char **argv) {
         ->excludes("--list-permanent")
         ->option_text("NAME");
 
+    CLI::App *run = app.add_subcommand("run", "Run a permanent code")->allow_extras(false)->fallthrough(false);
+
+    run->add_option("NAME", run_permanent, "Name of the permanent code to run")->required();
+
+    CLI::App *list = app.add_subcommand("list", "List all permanents")
+                         ->parse_complete_callback([&]() { flag_list_permanent = true; })
+                         ->allow_extras(false)
+                         ->fallthrough(false);
+
+    (void)list;
+
+    CLI::App *rm = app.add_subcommand("rm", "Remove permanent(s) and exit")->allow_extras(false)->fallthrough(false);
+
+    rm->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
+
+    // TODO: add option --rename-permanent, add rn subcommand = rename permanent
+
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
