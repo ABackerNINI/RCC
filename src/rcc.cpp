@@ -117,13 +117,19 @@ bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &f
     return false;
 }
 
+// Generate the execution command with the binary path and command line arguments.
+std::string gen_exec_cmd(const Settings &settings, const Path &bin_path) {
+    const string command_line_args = settings.get_cli_args_as_string();
+    const string exec_cmd = bin_path.quote_if_needed() + (command_line_args.empty() ? "" : " " + command_line_args);
+    return exec_cmd;
+}
+
 // Compile the code.
 bool compile_code(const Settings &settings,
                   const Path &bin_path,
                   const Path &cpp_path,
                   const string &cxxflags,
                   const string &additional_flags,
-                  const string &exec_cmd,
                   std::shared_ptr<compiler_support> cs,
                   bool silent = false) {
     vector<Path> sources = {cpp_path};
@@ -140,6 +146,7 @@ bool compile_code(const Settings &settings,
 
     if (system(compile_cmd) != 0) {
         if (!silent) {
+            const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
             // print(emphasis::underline, "\n{}\n", cpp_path.quote_if_needed());
             print("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
             print(fg(color::red) | emphasis::bold, "\nCOMPILATION FAILED!\n");
@@ -151,23 +158,9 @@ bool compile_code(const Settings &settings,
     return true;
 }
 
-int run_permanent(const Settings &settings, const std::string &name) {
-    // rcc paths
-    Paths &paths = Paths::get_instance();
-
-    Path cpp_path, bin_path, desc_path;
-    paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path, desc_path);
-
-    if (!bin_path.exists()) {
-        // TODO: suggest similar names
-        print(stderr, "Error: permanent '{}' does not exist\n", name);
-        return 1;
-    }
-
-    // TODO: reduce code duplication with try_code()
-
-    const string command_line_args = settings.get_cli_args_as_string();
-    const string exec_cmd = bin_path.quote_if_needed() + (command_line_args.empty() ? "" : " " + command_line_args);
+// Run the binary executable, return the return code of the executable.
+int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path) {
+    const string exec_cmd = gen_exec_cmd(settings, bin_path);
 
     /*------------------------------------------------------------------------*/
     // * Run the Executable
@@ -182,6 +175,25 @@ int run_permanent(const Settings &settings, const std::string &name) {
     return ret;
 }
 
+// Run a permanent executable, return the return code of the executable or 1 if the executable does not exist.
+int run_permanent(const Settings &settings, const std::string &name) {
+    // rcc paths
+    Paths &paths = Paths::get_instance();
+
+    Path cpp_path, bin_path, desc_path;
+    paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path, desc_path);
+
+    if (!bin_path.exists()) {
+        // TODO: suggest similar names
+        print(stderr, "Error: permanent '{}' does not exist\n", name);
+        return 1;
+    }
+
+    // Run the executable
+    return run_bin(settings, cpp_path, bin_path);
+}
+
+// List all permanent executables, return 1 on error.
 int list_permanent() {
     // rcc paths
     Paths &paths = Paths::get_instance();
@@ -210,6 +222,7 @@ int list_permanent() {
     return 0;
 }
 
+// Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
 int remove_permanents(const Settings &settings) {
     // rcc paths
     Paths &paths = Paths::get_instance();
@@ -219,6 +232,7 @@ int remove_permanents(const Settings &settings) {
     for (const auto &permanent : settings.get_remove_permanent()) {
         Path cpp_path, bin_path, desc_path;
         paths.get_src_bin_full_path_permanent(permanent, cpp_path, bin_path, desc_path);
+        // TODO: does remove throw exception if file does not exist? If so, catch it.
         bool success = cpp_path.remove();
         success |= bin_path.remove();
         success |= desc_path.remove();
@@ -280,10 +294,6 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
         }
     }
 
-    // run the executable from cwd
-    const string command_line_args = settings.get_cli_args_as_string();
-    const string exec_cmd = bin_path.quote_if_needed() + (command_line_args.empty() ? "" : " " + command_line_args);
-
     // the compiler support
     auto cs = std::shared_ptr<compiler_support>(new_compiler_support(compiler, settings));
 
@@ -317,7 +327,7 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
         // Write c++ code to the cpp file
         cpp_path.write_file(full_code);
 
-        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, exec_cmd, cs, silent)) {
+        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, cs, silent)) {
             return {TryStatus::COMPILE_FAILED, 1}; // Compile failed
         }
     }
@@ -337,12 +347,7 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
-    gprint("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
-    gprint("EXECUTING : {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
-
-    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-    int ret = system(exec_cmd);
-    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+    int ret = run_bin(settings, cpp_path, bin_path);
 
     return {TryStatus::SUCCESS, ret};
 }
