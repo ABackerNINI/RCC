@@ -4,37 +4,84 @@ Only for linux now.
 
 [![GitHub](https://img.shields.io/github/license/ABackerNINI/RCC)](https://github.com/ABackerNINI/RCC/blob/master/LICENSE)
 
-* Run short C/C++ codes in terminal or shell scripts just using `rcc 'c++ codes'`,
-e.g. `rcc 'cout << sqrt(56) * pow(2, 13) << endl;'` or `rcc 'sqrt(56) * pow(2, 13)'`.
-RCC will place the c++ codes inside a main function, which is a pre-defined template, which includes frequently-used headers, then compile and run the codes.
+* Run short C/C++ code in terminal or shell scripts just using `rcc 'c++ code'`,
+e.g. `rcc 'cout << sqrt(56) * pow(2, 13) << endl;'` or even simpler, just `rcc 'sqrt(56) * pow(2, 13)'`.
+
+RCC will place the c++ code inside a main function, which is a pre-defined template, then compile and run the code.
 
 * RCC allows you to access all the C/C++ libraries, it's a good extension for your shell scripts.
 
-* RCC is also beneficial to those who are familiar with C/C++ but not shell scripts.
+* RCC is also beneficial to those who are more familiar with C/C++ than with shell scripts.
 
 ## Features
 
-* Run C/C++ codes in the command line or shell scripts.
+* Run C/C++ code in the command line or shell scripts.
 * Cache compiled executable files.
 * Show syntax errors.
 * Simple and fast enough with _Pre-Compiled Header_.
+* Create and run permanent code.
+
+## Is it fast?
+
+Well, the g++/clang++ takes around 0.4 seconds to compile, even for a small piece of code. But with _Pre-Compiled Header_, it takes around __0.1__ seconds, which is acceptable for most cases. And RCC will cache the binaries, so the next time you run RCC with the same arguments, RCC should be really fast, __0.004__ seconds according to my tests.
 
 ## Requirements
 
-* `g++` or `clang++` with c++11 or higher.
+* `g++` or `clang++` with c++11 or higher, on Linux.
 
 ## Install
 
 ```shell
 git clone https://github.com/ABackerNINI/RCC.git
 cd RCC/
-chmod +x ./install.sh
-./install.sh
+bash ./install.sh
+```
+
+## Quick Start
+
+Hello World:
+
+```shell
+rcc 'cout<<"Hello World!"<<endl;'
+```
+
+RCC will try to wrap the code in `cout<<...<<endl;` and compile it, so you can just:
+
+```shell
+rcc '"Hello World!"'
+```
+
+<!-- TODO: add more examples here. -->
+
+Compile with specific C++ standard and include the `bits/stdc++.h` header:
+
+```shell
+rcc -std=c++17 --include-all 'filesystem::path p="test"; p/= "test.txt";' 'p'
+```
+
+The following code will create a permanent code named `try_push` that will try `git push` 10 times until it succeeds.
+
+```shell
+rcc create try_push --desc "Try 'git push' for given times, default to 10" 'int times=10; if(argc==2){times=atoi(argv[1]);} for(int i=0;i<times;i++) { cout<<"Trying "<<(i+1)<<endl; if(system("git push")==0) {break;} sleep(1); }'
+```
+
+Never mind the indentation and formatting of the C++ code, this is how you write it in a terminal.
+
+Run it with:
+
+```shell
+rcc run try_push
+```
+
+or
+
+```shell
+rcc run try_push -- 15
 ```
 
 ## Usage
 
-__Only two things you need to know, the first is double quotes, second is single quotes.__
+__Only two things you need to know for starting, the first is double quotes, second is single quotes.__
 
 ```shell
 # test1.sh
@@ -75,9 +122,6 @@ Something else you may want to know.
 rcc 'cout << sqrt(56) * pow(2, 13) << endl;'
 
 # Even simpler
-# If only one argument is given without the trailing semicolon, rcc will
-# automatically add the semicolon and cout << ... << endl;
-# This is the same as the above.
 rcc 'sqrt(56) * pow(2, 13)'
 
 # Use C++ stl
@@ -115,33 +159,28 @@ rcc '
     auto func = [&](int a) -> bool { return a == 10; };
     cout << func(10) << endl;
 '
+# or use `--function` to define a function
+rcc --function 'int add(int a, int b) { return a + b; }' 'cout << add(1, 2) << endl;'
 ```
 
 ## Define your own template
 
-Before that, you may want to see the [Pre-Defined Template](./doc/PredefinedTemplate.md).
+Before that, you may want to see the [Pre-Defined Template](./docs/PredefinedTemplate.md).
 
 You could add your own helper functions in `template/rcc_template.hpp`, or macros or include library you want to use or whatever.
 
-It's not recommended to add more codes in `template/rcc_template.cpp` because it will slow down the compiling process. Add codes in the `rcc_template.hpp` file instead, `make install` will compile the header into a _Pre-Compiled Header_.
+It's not recommended to add more code in `template/rcc_template.cpp` because it will slow down the compiling process. Add code in the `rcc_template.hpp` file instead, the `install.sh` will compile the header into a _Pre-Compiled Header_.
 
 Steps:
 
 * Edit the template files in `template/rcc_template.[hpp/cpp]`.
-* Edit the `template/test.cpp`, then `./test.sh` to test your codes.
+* Edit the `template/test.cpp`, then `./test.sh` to test your code.
 * Finally `./install.sh`.
-
-## Is it fast?
-
-Well, the g++/clang++ will take around 0.4 seconds to compile, even if a small piece of codes. But with _Pre-Compiled Header_, it takes around 0.1 seconds, which is acceptable for most cases. And RCC will cache the binaries, so the next time you run RCC with the same arguments, RCC should be really fast, 0.004 seconds according to my tests.
-
-Of course, 0.1 seconds is far more than 0.001 seconds which you could easily achieve with raw shell commands. Use RCC just when it's hard to write shell commands for what you want to do while C++ does.
 
 ## Uninstall
 
 ```shell
-chmod +x ./uninstall.sh
-./uninstall.sh
+bash ./uninstall.sh
 ```
 
 ## License
