@@ -147,11 +147,10 @@ bool compile_code(const Settings &settings,
     if (system(compile_cmd) != 0) {
         if (!silent) {
             const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
-            // print(emphasis::underline, "\n{}\n", cpp_path.quote_if_needed());
             print("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
-            print(fg(color::red) | emphasis::bold, "\nCOMPILATION FAILED!\n");
-            print("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
-            print("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
+            print(fg(terminal_color::red) | emphasis::bold, "COMPILATION FAILED!\n");
+            gprint("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
+            gprint("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
         }
         return false;
     }
@@ -360,8 +359,6 @@ int rcc_main(int argc, char **argv) {
     // TODO: add the fmt, ghc libraries
     // TODO: no color for non-tty
     // TODO: add version info
-    // TODO: add option, --permanent NAME, make it permanent, give it a name, save as json file, or source and binary?
-    // TODO: add option, --run-permanent NAME, run the permanent one
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, --compile-only, compile only, return binary's name, run later
     // TODO: add option --dry-run, show what would be done without actually doing it
