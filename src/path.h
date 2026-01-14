@@ -82,6 +82,8 @@ class Path {
     /* ADDITIONAL METHODS */
     /*==========================================================================*/
 
+    const fs::path &get_path() const { return path_; } 
+
     bool exists() const { return fs::exists(path_); }
     bool is_dir() const { return fs::is_directory(path_); }
     bool is_file() const { return fs::is_regular_file(path_); }

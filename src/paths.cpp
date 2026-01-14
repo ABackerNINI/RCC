@@ -96,6 +96,10 @@ Path Paths::get_sub_templates_dir() const {
     return this->sub_templates_dir;
 }
 
+Path Paths::get_sub_permanent_dir() const {
+    return this->sub_permanent_dir;
+}
+
 Path Paths::get_template_file_path() const {
     return this->template_path;
 }
@@ -127,9 +131,13 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     bin_path = cache_dir / SUB_DIR_CACHE / out_bin_name;
 }
 
-void Paths::get_src_bin_full_path_permanent(const std::string name, Path &src_path, Path &bin_path) const {
+void Paths::get_src_bin_full_path_permanent(const std::string name,
+                                            Path &src_path,
+                                            Path &bin_path,
+                                            Path &desc_path) const {
     src_path = cache_dir / sub_permanent_dir / (name + ".cpp");
     bin_path = cache_dir / sub_permanent_dir / (name + ".bin");
+    desc_path = cache_dir / sub_permanent_dir / (name + ".desc");
 }
 
 } // namespace rcc

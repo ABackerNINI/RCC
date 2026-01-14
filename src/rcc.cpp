@@ -1,5 +1,7 @@
 #include "pch.h"
 
+// TODO: rearrange headers
+
 #include "compiler_support.h"
 #include "debug_fmt.h"
 #include "paths.h"
@@ -153,8 +155,8 @@ int run_permanent(const Settings &settings, const std::string &name) {
     // rcc paths
     Paths &paths = Paths::get_instance();
 
-    Path cpp_path, bin_path;
-    paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path);
+    Path cpp_path, bin_path, desc_path;
+    paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path, desc_path);
 
     if (!bin_path.exists()) {
         // TODO: suggest similar names
@@ -180,6 +182,20 @@ int run_permanent(const Settings &settings, const std::string &name) {
     return ret;
 }
 
+void list_permanent() {
+    // rcc paths
+    Paths &paths = Paths::get_instance();
+
+    auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".desc"});
+    gprint("Found {} files\n", files.size());
+
+    // TODO: show in red if the binary doesn't exist (compilation failed or has been deleted)
+    for (const auto &file : files) {
+        std::string content = Path(file).read_file();
+        print("{}: {}\n", fmt::styled(file.stem(), fg(fmt::terminal_color::green)), content);
+    }
+}
+
 enum class TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
 
 struct TryResult {
@@ -203,7 +219,8 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
     const string additional_sources = settings.get_additional_sources_as_string();
 
     // the output cpp code and executable file's full paths
-    Path cpp_path, bin_path;
+    Path cpp_path, bin_path, desc_path;
+    bool desc_written = false;
 
     if (settings.get_permanent().empty()) {
         // The string to hash, which determines the output file name.
@@ -213,7 +230,14 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
 
         paths.get_src_bin_full_path(to_hash, cpp_path, bin_path);
     } else {
-        paths.get_src_bin_full_path_permanent(settings.get_permanent(), cpp_path, bin_path);
+        paths.get_src_bin_full_path_permanent(settings.get_permanent(), cpp_path, bin_path, desc_path);
+
+        // Write the description of the permanent
+        // If the description file doesn't exist, we can safely write it before the compilation
+        if (!desc_path.exists() && !settings.get_permanent_desc().empty()) {
+            desc_path.write_file(settings.get_permanent_desc());
+            desc_written = true;
+        }
     }
 
     // run the executable from cwd
@@ -242,10 +266,14 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
     /*------------------------------------------------------------------------*/
     // * Compile If Needed
 
-    if (check_if_cached(bin_path, cpp_path, full_code)) {
+    if (settings.get_permanent().empty() && check_if_cached(bin_path, cpp_path, full_code)) {
         // Cached, skip the compiling process, run the executable directly
         gprint(fg(fmt::color::green), "Running cached binary\n");
     } else {
+        if (!settings.get_permanent().empty()) {
+            // TODO: confirm overwrite, add option -f, --force
+        }
+
         // Write c++ code to the cpp file
         cpp_path.write_file(full_code);
 
@@ -256,6 +284,13 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
 
     // If --permanent is set, just compile the code, don't run it
     if (!settings.get_permanent().empty()) {
+        // If compilation succeeded, we need to update the description
+        // * This means if the compilation failed, we do NOT update the description
+        if (!desc_written) {
+            desc_path.write_file(settings.get_permanent_desc().empty() ? "No description provided"
+                                                                       : settings.get_permanent_desc());
+        }
+
         return {TryStatus::SUCCESS, 0};
     }
 
@@ -322,6 +357,12 @@ int rcc_main(int argc, char **argv) {
         clean_cache();
     } else { // clean cache automatically, but not too often
         random_clean_cache();
+    }
+
+    // If --list-permanent is set, list all permanent programs
+    if (settings.get_flag_list_permanent()) {
+        list_permanent();
+        return 0;
     }
 
     // If --run-permanent is set, just run the program

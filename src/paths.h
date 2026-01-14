@@ -43,6 +43,10 @@ class Paths {
     // Usually ~/.cache/rcc/templates.
     Path get_sub_templates_dir() const;
 
+    // Get the sub permanent directory. This is where the permanent files are stored.
+    // Usually ~/.cache/rcc/permanent.
+    Path get_sub_permanent_dir() const;
+
     // Get the template cpp file path. User code is written to this file.
     // Usually ~/.cache/rcc/templates/rcc_template.cpp.
     Path get_template_file_path() const;
@@ -55,7 +59,7 @@ class Paths {
     // The filenames are based on the hash of the code.
     void get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const;
 
-    void get_src_bin_full_path_permanent(const std::string name, Path &src_path, Path &bin_path) const;
+    void get_src_bin_full_path_permanent(const std::string name, Path &src_path, Path &bin_path, Path &desc_path) const;
 
   private:
     // Private constructor to prevent instantiation.

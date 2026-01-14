@@ -1,6 +1,7 @@
 #ifndef __RCC_UTILS_H__
 #define __RCC_UTILS_H__
 
+#include "libs/ghc/fs_std_fwd.hpp" // IWYU pragma: keep
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -20,6 +21,9 @@ std::string u64_to_string_base64x(uint64_t val);
 std::string vector_to_string(const std::vector<std::string> &vec,
                              const std::string &sep = " ",
                              const std::string &default_for_empty = "");
+
+// Find all files with the given extensions in the given directory and all subdirectories.
+std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions);
 
 } // namespace rcc
 

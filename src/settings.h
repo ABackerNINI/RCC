@@ -25,6 +25,8 @@ class Settings {
 
     const std::string &get_permanent() const { return permanent; }
     const std::string &get_run_permanent() const { return run_permanent; }
+    const std::string &get_permanent_desc() const { return permanent_desc; }
+    bool get_flag_list_permanent() const { return flag_list_permanent; }
 
     // TODO: fix const std::string -> const std::string &
     const std::string get_compiler() const { return compiler; }
@@ -65,6 +67,8 @@ class Settings {
   private:
     std::string permanent;
     std::string run_permanent;
+    std::string permanent_desc;
+    bool flag_list_permanent{false};
     std::string compiler = RCC_COMPILER; // the compiler to use
     std::string std = RCC_CPP_STD; // the c++ standard to use, relates to "-std"
     // the c++ flags to use, default to a set of common flags.
@@ -83,6 +87,8 @@ class Settings {
     std::vector<std::string> functions; // functions to declare before the main function, relates to "--function"
     std::vector<std::string> codes; // the command line code snippets
     std::vector<std::string> additional_sources; // additional source files to compile with, relates to "--compile-with"
+
+    // TODO: change = to {}
 
     bool clean_cache = false; // whether to clean the cache, relates to "--clean-cache"
 

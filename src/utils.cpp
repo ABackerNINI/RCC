@@ -1,3 +1,6 @@
+// This header should be included before the `libs/ghc/fs_std_fwd.hpp`
+#include "libs/ghc/fs_std_impl.hpp"
+
 #include "utils.h"
 
 namespace rcc {
@@ -48,6 +51,20 @@ std::string vector_to_string(const std::vector<std::string> &vec,
         }
     }
     return result;
+}
+
+std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions) {
+    std::vector<fs::path> files;
+    for (const auto &entry : fs::recursive_directory_iterator(dir)) {
+        if (entry.is_regular_file()) {
+            for (const auto &ext : extensions) {
+                if (entry.path().extension() == ext) {
+                    files.push_back(entry.path());
+                }
+            }
+        }
+    }
+    return files; // Return the vector of files
 }
 
 } // namespace rcc

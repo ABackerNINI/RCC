@@ -79,11 +79,17 @@ int Settings::parse_argv(int argc, char **argv) {
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
 
+    /*==========================================================================*/
+    // Permanent code options
+
+    // TODO: add option --remove-permanent, -f, --force
+
     app.add_option("--permanent", permanent, "Make the code permanent")->option_text("NAME");
     app.add_option("--run-permanent", run_permanent, "Run a permanent code")
         ->excludes("--permanent")
         ->option_text("NAME");
-    // TODO: add option --desc, --list-permanent
+    app.add_option("--desc", permanent_desc, "Description for the permanent code")->needs("--permanent");
+    app.add_flag("--list-permanent", flag_list_permanent, "List all permanents and exit");
 
     try {
         app.parse(argc, argv);
@@ -175,6 +181,8 @@ void Settings::debug_print() const {
     gprintc("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
     gprintc("args_count: {}\n", args_count);
     gprintc("clean_cache: {}\n", clean_cache);
+
+    // TODO: print more settings
 }
 
 } // namespace rcc
