@@ -89,8 +89,8 @@ class Path {
     bool is_file() const { return fs::is_regular_file(path_); }
     std::size_t file_size() const { return fs::file_size(path_); }
 
-    void remove() const { fs::remove(path_); }
-    void remove_all() const { fs::remove_all(path_); }
+    bool remove() const { return fs::remove(path_); }
+    uintmax_t remove_all() const { return fs::remove_all(path_); }
     void copy(const Path &new_path) const { fs::copy(path_, new_path.path_); }
     void rename(const Path &new_path) {
         fs::rename(path_, new_path.path_);

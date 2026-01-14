@@ -186,6 +186,8 @@ void list_permanent() {
     // rcc paths
     Paths &paths = Paths::get_instance();
 
+    // TODO: catch filesystem exceptions
+
     auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".desc"});
     gprint("Found {} files\n", files.size());
 
@@ -194,6 +196,32 @@ void list_permanent() {
         std::string content = Path(file).read_file();
         print("{}: {}\n", fmt::styled(file.stem(), fg(fmt::terminal_color::green)), content);
     }
+}
+
+int remove_permanents(const Settings &settings) {
+    // rcc paths
+    Paths &paths = Paths::get_instance();
+
+    int ret = 0;
+    size_t num_removed = 0;
+    for (const auto &permanent : settings.get_remove_permanent()) {
+        Path cpp_path, bin_path, desc_path;
+        paths.get_src_bin_full_path_permanent(permanent, cpp_path, bin_path, desc_path);
+        bool success = cpp_path.remove();
+        success |= bin_path.remove();
+        success |= desc_path.remove();
+        if (success) {
+            ++num_removed;
+            gprint("Removed '{}'\n", permanent);
+        } else {
+            ret = 1;
+            print(stderr, "Permanent '{}' does not exist!\n", permanent);
+        }
+    }
+
+    print("Removed {} permanent(s), {} failed.\n", num_removed, settings.get_remove_permanent().size() - num_removed);
+
+    return ret;
 }
 
 enum class TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
@@ -363,6 +391,11 @@ int rcc_main(int argc, char **argv) {
     if (settings.get_flag_list_permanent()) {
         list_permanent();
         return 0;
+    }
+
+    // If --remove-permanent is set, remove the specified permanents
+    if (!settings.get_remove_permanent().empty()) {
+        return remove_permanents(settings);
     }
 
     // If --run-permanent is set, just run the program

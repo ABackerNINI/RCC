@@ -27,6 +27,7 @@ class Settings {
     const std::string &get_run_permanent() const { return run_permanent; }
     const std::string &get_permanent_desc() const { return permanent_desc; }
     bool get_flag_list_permanent() const { return flag_list_permanent; }
+    const std::vector<std::string> &get_remove_permanent() const { return remove_permanent; }
 
     // TODO: fix const std::string -> const std::string &
     const std::string get_compiler() const { return compiler; }
@@ -68,6 +69,7 @@ class Settings {
     std::string permanent;
     std::string run_permanent;
     std::string permanent_desc;
+    std::vector<std::string> remove_permanent;
     bool flag_list_permanent{false};
     std::string compiler = RCC_COMPILER; // the compiler to use
     std::string std = RCC_CPP_STD; // the c++ standard to use, relates to "-std"
