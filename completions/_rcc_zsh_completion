@@ -47,9 +47,10 @@ _rcc() {
             ;;
         (option-or-argument)
             case ${words[1]} in
+                (r)       _rcc_complete_permanents ;;
                 (run)       _rcc_complete_permanents ;;
-                (remove)    _rcc_complete_permanents ;;
                 (rm)        _rcc_complete_permanents ;;
+                (remove)    _rcc_complete_permanents ;;
             esac
             ;;
     esac

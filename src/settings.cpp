@@ -84,6 +84,7 @@ int Settings::parse_argv(int argc, char **argv) {
 
     // TODO: add option -f, --force
     // TODO: add option --remove-invalid-permanents
+    // TODO: add option --update-permanent
 
     app.add_option("--permanent", permanent, "Make the code permanent")->option_text("NAME");
     app.add_option("--run-permanent", run_permanent, "Run a permanent code")
@@ -106,7 +107,8 @@ int Settings::parse_argv(int argc, char **argv) {
     // Add run subcommand
     CLI::App *run = app.add_subcommand("run", "Run a permanent code, same as --run-permanent")
                         ->allow_extras(false)
-                        ->fallthrough(false);
+                        ->fallthrough(false)
+                        ->alias("r");
 
     run->add_option("NAME", run_permanent, "Name of the permanent code to run")->required();
 
@@ -114,21 +116,16 @@ int Settings::parse_argv(int argc, char **argv) {
     CLI::App *list = app.add_subcommand("list", "List all permanents, same as --list-permanent")
                          ->parse_complete_callback([&]() { flag_list_permanent = true; })
                          ->allow_extras(false)
-                         ->fallthrough(false);
+                         ->fallthrough(false)
+                         ->alias("ls");
 
     list->add_flag("--fetch-autocompletion-zsh", flag_fetch_autocompletion_zsh, "Fetch autocompletion for zsh");
-
-    // Add rm subcommand
-    CLI::App *rm = app.add_subcommand("rm", "Remove permanent(s) and exit, same as --remove-permanent")
-                       ->allow_extras(false)
-                       ->fallthrough(false);
-
-    rm->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
 
     // Add remove subcommand
     CLI::App *remove = app.add_subcommand("remove", "Remove permanent(s) and exit, same as --remove-permanent")
                            ->allow_extras(false)
-                           ->fallthrough(false);
+                           ->fallthrough(false)
+                           ->alias("rm");
 
     remove->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
 
