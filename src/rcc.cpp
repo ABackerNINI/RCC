@@ -281,6 +281,18 @@ int list_permanent(const Settings &settings) {
     return 0;
 }
 
+// Remove file and handle exceptions. Return true if successful, false otherwise.
+bool remove_file(Path &p) noexcept {
+    try {
+        // *Note: remove() does not throw if the file does not exist. It returns false in that case.
+        // *Note: remove() may throw `std::bad_alloc` or `fs::filesystem_error`
+        return p.remove();
+    } catch (const std::exception &e) {
+        print(stderr, "Error: {}\n", e.what());
+        return false;
+    }
+}
+
 // Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
 int remove_permanents(const Settings &settings) {
     // rcc paths
@@ -291,10 +303,13 @@ int remove_permanents(const Settings &settings) {
     for (const auto &permanent : settings.get_remove_permanent()) {
         Path cpp_path, bin_path, desc_path;
         paths.get_src_bin_full_path_permanent(permanent, cpp_path, bin_path, desc_path);
-        // TODO: does remove throw exception if file does not exist? If so, catch it.
-        bool success = cpp_path.remove();
-        success |= bin_path.remove();
-        success |= desc_path.remove();
+
+        bool success = false;
+
+        success |= remove_file(cpp_path);
+        success |= remove_file(bin_path);
+        success |= remove_file(desc_path);
+
         if (success) {
             ++num_removed;
             gprint("Removed '{}'\n", permanent);
@@ -414,10 +429,13 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
 // The main function of rcc.
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
+    // TODO: add options --g++ --clang++
     // TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
     // TODO: add -q, --quiet, or --silent flag to suppress output
     // TODO: add the fmt, ghc libraries
     // TODO: no color for non-tty
+    // TODO: add json support
+    // TODO: add csv support
     // TODO: add version info
     // TODO: add option, --debug, show debug messages
     // TODO: add option -c, --compile-only, compile only, return binary's name, run later
