@@ -163,6 +163,13 @@ echo "${YELLOW}Installing rcc to /usr/local/bin/${NORMAL}"
 sudo cp bin/rcc /usr/local/bin/
 check_error "sudo cp rcc /usr/local/bin/"
 
+# Install zsh completion if zsh is installed
+if command -v zsh &> /dev/null; then
+    echo "${YELLOW}Installing zsh completion to /usr/local/share/zsh/site-functions/${NORMAL}"
+    sudo cp completions/_rcc_zsh_completion /usr/local/share/zsh/site-functions/
+    check_error "cp completions/_rcc_zsh_completion /usr/local/share/zsh/site-functions/"
+fi
+
 # Remove and then create rcc cache dir
 if [ -d "$CACHE_DIR" ]; then
     echo "${YELLOW}Removing old cache directory \"$CACHE_DIR\"${NORMAL}"
