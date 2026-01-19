@@ -29,9 +29,8 @@ class Settings {
     const std::vector<std::string> &get_remove_permanent() const { return remove_permanent; }
     bool get_flag_fetch_autocompletion_zsh() const { return flag_fetch_autocompletion_zsh; }
 
-    // TODO: fix const std::string -> const std::string &
-    const std::string get_compiler() const { return compiler; }
-    const std::string get_std() const { return std; }
+    const std::string &get_compiler() const { return compiler; }
+    const std::string &get_std() const { return std; }
     bool get_clean_cache_flag() const { return clean_cache; }
     const std::vector<std::string> &get_additional_flags() const { return additional_flags; }
     const std::vector<std::string> &get_additional_includes() const { return additional_includes; }
@@ -73,14 +72,14 @@ class Settings {
     bool flag_list_permanent{false};
     bool flag_fetch_autocompletion_zsh{false};
 
-    std::string compiler = RCC_COMPILER; // the compiler to use
-    std::string std = RCC_CXX_STD; // the c++ standard to use, relates to "-std"
+    std::string compiler{RCC_COMPILER}; // the compiler to use
+    std::string std{RCC_CXX_STD}; // the c++ standard to use, relates to "-std"
     // the c++ flags to use, default to a set of common flags.
-    std::vector<std::string> cxxflags = {"-Wall",
-                                         "-Wextra",
-                                         "-Wno-unused-variable",
-                                         "-Wno-unused-parameter",
-                                         "-Wno-unused-function"};
+    std::vector<std::string> cxxflags{"-Wall",
+                                      "-Wextra",
+                                      "-Wno-unused-variable",
+                                      "-Wno-unused-parameter",
+                                      "-Wno-unused-function"};
     // additional flags to pass to the compiler, at the end of the compile command, the libraries to link against have
     // to be specified after source files that use them. Relates to anything that starts with "-l", or "-pthread", or
     // "-math".
@@ -92,17 +91,15 @@ class Settings {
     std::vector<std::string> codes; // the command line code snippets
     std::vector<std::string> additional_sources; // additional source files to compile with, relates to "--compile-with"
 
-    // TODO: change = to {}
-
-    bool clean_cache = false; // whether to clean the cache, relates to "--clean-cache"
+    bool clean_cache{false}; // whether to clean the cache, relates to "--clean-cache"
 
     // the start of the arguments that are going to pass to the program, anything after "--".
     //* These arguments will not be parsed by CLI11, and will be passed to the program as is.
-    char **args_start = NULL;
-    int args_count = 0; // the number of arguments
+    char **args_start{NULL};
+    int args_count{0}; // the number of arguments
 
-    bool included_stdcpp = false; // whether the `bits/stdc++.h` has been included, relates to "--include-all"
-                                  // and"--include"
+    bool included_stdcpp{false}; // whether the `bits/stdc++.h` has been included, relates to "--include-all"
+                                 // and"--include"
 };
 
 } // namespace rcc
