@@ -11,9 +11,9 @@
     #define RCC_COMPILER "g++"
 #endif
 
-#ifndef RCC_CPP_STD
+#ifndef RCC_CXX_STD
     // Use this standard to compile the code, at least c++11.
-    #define RCC_CPP_STD "c++17"
+    #define RCC_CXX_STD "c++17"
 #endif
 
 namespace rcc {
@@ -75,7 +75,7 @@ class Settings {
     bool flag_fetch_autocompletion_zsh{false};
 
     std::string compiler = RCC_COMPILER; // the compiler to use
-    std::string std = RCC_CPP_STD; // the c++ standard to use, relates to "-std"
+    std::string std = RCC_CXX_STD; // the c++ standard to use, relates to "-std"
     // the c++ flags to use, default to a set of common flags.
     std::vector<std::string> cxxflags = {"-Wall",
                                          "-Wextra",

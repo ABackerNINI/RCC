@@ -1,119 +1,308 @@
-PROJECT = rcc
+PROJECT_ROOT := $(CURDIR)
 
+CUR_MAKEFILE := $(lastword $(MAKEFILE_LIST))
+
+# ======================================================================================================================
+# PROJECT
+
+PROJECT := RCC
+
+# ======================================================================================================================
 # OPTIONS
 
-CONFIG 		  ?= debug
+MODE := debug
 
-CXX 		  ?= g++
-CPP_STD       ?= c++17
-RCC_CACHE_DIR ?= $(HOME)/.cache/rcc
+CC := gcc
+CXX := g++
+CSTD := c11
+CXXSTD := c++17
 
-# SOURCES
+RCC_CACHE_DIR := $(HOME)/.cache/rcc
 
-SRC_DIR = src
-SRCS = $(wildcard $(SRC_DIR)/*.cpp)
-HDRS = $(wildcard $(SRC_DIR)/*.h)
+# ======================================================================================================================
+# DIRECTORIES
 
-# CONFIGURATIONS
+# Where to put object files. Must be subdirectory of the project root! Can be set to ".".
+BLD_DIR := build
+# Where to put the final binary. Must be subdirectory of the project root! Can be set to ".".
+BIN_DIR := bin
+# Extra arguments to identify the build configuration.
+# This is used to create a unique object directory for each build configuration.
+EXTRA_ARGS :=
+ARGS_SIGNATURE := $(shell echo "a$(EXTRA_ARGS)b" | md5sum | cut -c1-12)
+# Where to put object files for each build configuration. Must be subdirectory of the project root!
+OBJ_DIR = $(BLD_DIR)/$(MODE)/$(CC).$(CXX).$(CSTD).$(CXXSTD).$(ARGS_SIGNATURE)
+# Should not be a commonly used extension!
+CONFIG_FILE_EXT := ascan.conf
 
-PARAMS = $(RCC_CACHE_DIR)
-PARAMS_SIGNATURE = $(shell echo "$(PARAMS)" | md5sum | cut -c1-12)
-BUILD = build
-BUILD_DIR = $(BUILD)/$(CONFIG)/$(CXX).$(CPP_STD).$(PARAMS_SIGNATURE)
-BIN_DIR = bin
+# ======================================================================================================================
+# CHECK DIRECTORIES
 
-CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) 			\
-		   -I. -I./libs/							\
-		   -DRCC_COMPILER=\"$(CXX)\"				\
-		   -DRCC_CPP_STD=\"-std=$(CPP_STD)\"      	\
-		   -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
-LDFLAGS  = -L./libs -lfmt
-
-BINARY = $(PROJECT)
-
-ifeq ($(CONFIG),debug)
-    CXXFLAGS += -g -O0 -DDEBUG
-else ifeq ($(CONFIG),release)
-    CXXFLAGS += -flto=4 -O3 -march=native -DNDEBUG
-else ifeq ($(CONFIG),test)
-    CXXFLAGS += -g -O0 -DTEST -Igoogletest/include
-    BINARY = $(PROJECT)_test
-    LDFLAGS += -Lgoogletest/lib -lgtest -lgtest_main -lpthread
+# Check that directories do not contain spaces.
+SPACE_CHECKS := $(words $(BLD_DIR)) $(words $(OBJ_DIR)) $(words $(BIN_DIR))
+ifneq ($(filter-out 1,$(SPACE_CHECKS)),)
+$(error "BLD_DIR, OBJ_DIR, BIN_DIR must be set to a directory. Please check your Makefile.")
 endif
 
-# OBJECTS
+# Check that directories are subdirectories of the project root.
+SUB_DIR_CHECKS := $(shell echo "$(abspath $(BLD_DIR))" | grep -q "^$(PROJECT_ROOT)" || echo 0) \
+				  $(shell echo "$(abspath $(OBJ_DIR))" | grep -q "^$(PROJECT_ROOT)" || echo 0) \
+				  $(shell echo "$(abspath $(BIN_DIR))" | grep -q "^$(PROJECT_ROOT)" || echo 0)
+ifeq ($(filter 0,$(SUB_DIR_CHECKS)),0)
+$(error "BLD_DIR, OBJ_DIR, BIN_DIR must be subdirectories of the project root. Please check your Makefile.")
+endif
 
-OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-DEPS = $(OBJS:.o=.d)
+# ======================================================================================================================
+# BUILD DETAILS
 
-# MAIN TARGET
+CFLAGS := -Wall -Wextra -std=$(CSTD)
+CXXFLAGS = -Wall -Wextra -std=$(CXXSTD)
+LDFLAGS  = -L./libs -lfmt
 
-$(BIN_DIR)/$(BINARY): $(OBJS) $(BUILD)/$(CONFIG).mode
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
-	$(call check_build_params)
-	$(call save_build_params,$(BUILD_DIR)/build_params.txt)
+ifeq ($(MODE),debug)
+	CFLAGS += -g -O0 -DDEBUG
+	CXXFLAGS += -g -O0 -DDEBUG
+else ifeq ($(MODE),release)
+	CFLAGS += -flto=auto -O3 -march=native -DNDEBUG
+	CXXFLAGS += -flto=auto -O3 -march=native -DNDEBUG
+else ifeq ($(MODE),test)
+	CFLAGS += -g -O0 -DTEST -Igoogletest/include
+	CXXFLAGS += -g -O0 -DTEST -Igoogletest/include
+	LDFLAGS += -Lgoogletest/lib -lgtest -lgtest_main -lpthread
+endif
 
-# COMPILE RULE
+default: all
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+# ======================================================================================================================
+# CONFIGS
 
-$(BUILD)/$(CONFIG).mode:
-	@mkdir -p $(dir $@)
-	@rm -f $(BUILD)/*.mode
-	@touch $@
-
-# INCLUDE DEPENDENCIES
-
--include $(DEPS)
-
-# PHONY TARGETS
-
-.PHONY: debug release test clean all
-
-debug:
-	@$(MAKE) CONFIG=debug --no-print-directory
-
-release:
-	@$(MAKE) CONFIG=release --no-print-directory
-
-test:
-	@$(MAKE) CONFIG=test --no-print-directory
-
-all: debug release
-
-clean:
-	rm -rf build/ bin/
-
-# BUILD PARAMS
-
-RED = \033[0;31m
-RESET = \033[0m
-
-define save_build_params
-	@echo "PROJECT=$(PROJECT)" > "$(1)"
-	@echo "CONFIG=$(CONFIG)" >> "$(1)"
-	@echo "CXX=$(CXX)" >> "$(1)"
-	@echo "CPP_STD=$(CPP_STD)" >> "$(1)"
-	@echo "CXXFLAGS=$(CXXFLAGS)" >> "$(1)"
-	@echo "RCC_CACHE_DIR=$(RCC_CACHE_DIR)" >> "$(1)"
+# Override the following variables to change the build configuration for each CONFIG
+define REDEFINE
+cc := $(CC)
+cxx := $(CXX)
+cstd := $(CSTD)
+cxxstd := $(CXXSTD)
+cflags := $(CFLAGS)
+cxxflags := $(CXXFLAGS)
+ldflags := $(LDFLAGS)
 endef
 
-define check_build_params
-	$(call save_build_params,$(BUILD_DIR)/temp.txt)
+# ----------------------------------------------------------------------------------------------------------------------
 
-	@if [ -f $(BUILD_DIR)/build_params.txt ]; then \
-		if ! diff -q "$(BUILD_DIR)/build_params.txt" "$(BUILD_DIR)/temp.txt" >/dev/null 2>&1 ; then \
-			echo ""; \
-			printf "$(RED)"; \
-			echo "WARNING: Build params mismatch, most likely due to Makefile changes, or barely hash collision, try 'make clean' first."; \
-			printf "$(RESET)"; \
-			echo ""; \
-			echo "Diff of build params:"; \
-			diff --ignore-space-change --color --minimal "$(BUILD_DIR)/build_params.txt" "$(BUILD_DIR)/temp.txt"; \
+define CONFIG1
+target := $(BIN_DIR)/rcc
+
+cxxflags := $(CXXFLAGS) -I. -I./libs/				\
+		    -DRCC_COMPILER=\"$(CXX)\"				\
+		    -DRCC_CXX_STD=\"-std=$(CXXSTD)\"      	\
+		    -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
+
+srcs := $(wildcard src/*.cpp)
+endef
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+RED		  := $(shell tput setaf 1)
+GREEN	  := $(shell tput setaf 2)
+YELLOW	  := $(shell tput setaf 3)
+BOLD 	  := $(shell tput bold)
+UNDERLINE := $(shell tput smul)
+RESET	  := $(shell tput sgr0)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+define GEN_VARS
+objs := $(foreach src,$(srcs),$(OBJ_DIR)/$(basename $(src)).o)
+cobjs := $(foreach src,$(filter %.c,$(srcs)),$(OBJ_DIR)/$(basename $(src)).o)
+ccobjs := $(foreach src,$(filter %.cc,$(srcs)),$(OBJ_DIR)/$(basename $(src)).o)
+cxxobjs := $(foreach src,$(filter %.cpp,$(srcs)),$(OBJ_DIR)/$(basename $(src)).o)
+deps := $$(objs:.o=.d)
+
+target_type := cxx
+ifeq ($$(ccobjs),)
+	ifeq ($$(cxxobjs),)
+		target_type := c
+	endif
+endif
+
+# This file is used to store the configuration of the last successful build, so that
+# when the configuration changes, we can rebuild the target.
+configs := $(MODE),$(BLD_DIR),$(BIN_DIR),$(OBJ_DIR),\
+		   $(cc),$(cxx),$(cstd),$(cxxstd),$(cflags),$(cxxflags),$(ldflags),$(target),$(srcs)
+config_file := $(BLD_DIR)/$(notdir $(target))/$$(shell echo $$(configs) | md5sum | cut -c1-32).$(CONFIG_FILE_EXT)
+endef
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+OBJS :=
+DEPS :=
+TARGETS :=
+
+define REGISTER_CONFIG
+$(eval $(call REDEFINE))
+$(eval $(call $1,$1))
+$(eval $(call GEN_VARS))
+
+$(notdir $(target)): $(target)
+
+OBJS += $(objs)
+DEPS += $(deps)
+TARGETS += $(target)
+
+-include $(deps)
+
+ifeq ($(target_type),c)
+$(target): $(config_file) $(objs)
+	@mkdir -p $$(@D)
+	@echo -n " > $(YELLOW)$(BOLD)$$(@F)$(RESET) "
+	@$(cc) $(cflags) $(objs) -o $$@ $(ldflags)
+	$$(call CHECK_BUILD_ARGS)
+	@echo "$(GREEN)OK$(RESET)"
+	@echo -n ""
+else
+$(target): $(config_file) $(objs)
+	@mkdir -p $$(@D)
+	@echo -n " > $(YELLOW)$(BOLD)$$(@F)$(RESET) "
+	@$(cxx) $(cxxflags) $(objs) -o $$@ $(ldflags)
+	$$(call CHECK_BUILD_ARGS)
+	@echo "$(GREEN)OK$(RESET)"
+	@echo -n ""
+endif
+
+$(cobjs): $(OBJ_DIR)/%.o: %.c
+	@mkdir -p $$(@D)
+	@echo -n " > $$(@F) "
+	@$(cc) $(cflags) -MMD -MP -c $$< -o $$@
+	@echo "$(GREEN)OK$(RESET)"
+
+$(ccobjs): $(OBJ_DIR)/%.o: %.cc
+	@mkdir -p $$(@D)
+	@echo -n " > $$(@F) "
+	@$(cxx) $(cxxflags) -MMD -MP -c $$< -o $$@
+	@echo "$(GREEN)OK$(RESET)"
+
+$(cxxobjs): $(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $$(@D)
+	@echo -n " > $$(@F) "
+	@$(cxx) $(cxxflags) -MMD -MP -c $$< -o $$@
+	@echo "$(GREEN)OK$(RESET)"
+
+$(config_file):
+	@mkdir -p $$(@D)
+	@rm -f $$(@D)/*.$(CONFIG_FILE_EXT)
+	@echo "$(configs)" > $$@
+
+	@echo "$(GREEN)### Compiling $(target)$(RESET)"
+	@if [ $(target_type) = "c" ]; then \
+		echo "CC       = $(CC)"; \
+		echo "CFLAGS   = $(cflags)"; \
+	else \
+		echo "CXX      = $(CXX)"; \
+		echo "CXXFLAGS = $(cxxflags)"; \
+	fi
+	@echo "LDFLAGS  = $(ldflags)"
+	@echo "OBJ_DIR  = $(OBJ_DIR)"
+endef
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+define DEBUG_PRINT_CONFIG
+$(info CONFIG_NAME=$1)
+$(info target=$(target))
+$(info cflags=$(cflags))
+$(info cxxflags=$(cxxflags))
+$(info ldflags=$(ldflags))
+$(info objs=$(objs))
+$(info cobjs=$(cobjs))
+$(info ccobjs=$(ccobjs))
+$(info cxxobjs=$(cxxobjs))
+$(info deps=$(deps))
+$(info target_type=$(target_type))
+$(info -----------------------------------------------------------------------)
+endef
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+$(eval $(call REGISTER_CONFIG,CONFIG1))
+# $(eval $(call DEBUG_PRINT_CONFIG,CONFIG1))
+
+# $(info OBJS=$(OBJS))
+# $(info DEPS=$(DEPS))
+# $(info TARGETS=$(TARGETS))
+
+# ======================================================================================================================
+# PHONY TARGETS
+
+all: $(TARGETS)
+
+debug:
+	@$(MAKE) -f $(CUR_MAKEFILE) MODE=debug --no-print-directory
+
+release:
+	@$(MAKE) -f $(CUR_MAKEFILE) MODE=release --no-print-directory
+
+test:
+	@$(MAKE) -f $(CUR_MAKEFILE) MODE=test --no-print-directory
+
+clean:
+	@echo "Cleaning..."
+
+	@rm -f $(TARGETS) $(OBJS) $(DEPS) $(BLD_DIR)/*.$(CONFIG_FILE_EXT)
+
+	@#! CAUTION: rm -rf command
+	@if echo "$(abspath $(BLD_DIR))" | grep -q "^$(PROJECT_ROOT)" && \
+		[ "$(BLD_DIR)" != "." ] && \
+		[ "$(BLD_DIR)" != "/"  ]; then \
+		echo "rm -rf \"$(BLD_DIR)\""; \
+		rm -rf "$(BLD_DIR)"; \
+	fi
+
+	@#! CAUTION: rm -rf command
+	@if echo "$(abspath $(BIN_DIR))" | grep -q "^$(PROJECT_ROOT)" && \
+		[ "$(BIN_DIR)" != "." ] && \
+		[ "$(BIN_DIR)" != "/"  ]; then \
+		echo "rm -rf \"$(BIN_DIR)\""; \
+		rm -rf "$(BIN_DIR)"; \
+	fi
+
+.PHONY: default all debug release test clean
+
+# ======================================================================================================================
+# CHECK BUILD PARAMS
+
+define SAVE_BUILD_ARGS
+	@echo "PROJECT=$(PROJECT)" > "$(1)"
+	@echo "MODE=$(MODE)" >> "$(1)"
+	@echo "CC=$(CC)" >> "$(1)"
+	@echo "CXX=$(CXX)" >> "$(1)"
+	@echo "CSTD=$(CSTD)" >> "$(1)"
+	@echo "CXXSTD=$(CXXSTD)" >> "$(1)"
+	@echo "BLD_DIR=$(BLD_DIR)" >> "$(1)"
+	@echo "BIN_DIR=$(BIN_DIR)" >> "$(1)"
+	@echo "EXTRA_ARGS=$(EXTRA_ARGS)" >> "$(1)"
+	@echo "OBJ_DIR=$(OBJ_DIR)" >> "$(1)"
+	@echo "CONFIG_FILE=$(CONFIG_FILE)" >> "$(1)"
+	@echo "CXXFLAGS=$(CXXFLAGS)" >> "$(1)"
+	@echo "LDFLAGS=$(LDFLAGS)" >> "$(1)"
+endef
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+define CHECK_BUILD_ARGS
+	$(call SAVE_BUILD_ARGS,$(OBJ_DIR)/temp.txt)
+
+	@if [ -f $(OBJ_DIR)/build_args.txt ]; then \
+		if ! diff -q "$(OBJ_DIR)/build_args.txt" "$(OBJ_DIR)/temp.txt" >/dev/null 2>&1 ; then \
+			echo "$(RED)$(BOLD)"; \
+			echo "WARNING: Build arguments mismatch!"; \
+			echo "  Most likely due to Makefile changes, or a hash collision."; \
+			echo "  You may need a 'make clean'."; \
+			echo "$(RESET)"; \
+			echo "Diff of build arguments (last vs current):"; \
+			diff --ignore-space-change --color --minimal "$(OBJ_DIR)/build_args.txt" "$(OBJ_DIR)/temp.txt"; \
 			echo ""; \
 		fi \
 	fi
+
+	@mv -f "$(OBJ_DIR)/temp.txt" "$(OBJ_DIR)/build_args.txt"
 endef
