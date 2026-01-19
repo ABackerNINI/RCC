@@ -9,6 +9,32 @@
 
 namespace rcc {
 
+// Check if a path exists, if not, exit with error.
+static void expect_exists(const fs::path &path) {
+    if (!fs::exists(path)) {
+        std::cerr << "RCC mandatory file/directory does not exist: " << path << std::endl;
+        std::cerr << "Please reinstall RCC." << std::endl;
+        exit(1);
+    }
+}
+
+// Create a directory if it doesn't exist.
+static void create_dir_if_not_exists(const fs::path &path) {
+    try {
+        if (!fs::exists(path)) {
+            fs::create_directories(path);
+
+            // Set permissions to 755 (rwxr-xr-x)
+            fs::perms perms = fs::perms::owner_all | fs::perms::group_read | fs::perms::group_exec |
+                              fs::perms::others_read | fs::perms::others_exec;
+            fs::permissions(path, perms);
+        }
+    } catch (const std::exception &ex) {
+        std::cerr << ex.what() << std::endl;
+        exit(1);
+    }
+}
+
 Paths &Paths::get_instance() {
     static Paths instance;
     return instance;
@@ -24,68 +50,37 @@ Paths::Paths() {
 
     this->cwd = std::string(cwd);
 
-    // TODO: rename to validate_installation()
     validate_cache_dir();
-
-    // TODO: move into validate_installation()
-    this->template_path = sub_templates_dir / "rcc_template.cpp";
-    this->template_header_path = sub_templates_dir / "rcc_template.hpp";
 }
 
 // Check the cache directory of rcc.
 void Paths::validate_cache_dir() {
-    const char *HOME = getenv("HOME");
-    if (HOME == NULL) {
-        std::cerr << "Can't get $HOME" << std::endl;
-        exit(1);
-    }
-
     // Get rcc cache directory, default is $HOME/.cache/rcc
-    std::string cache_dir = RCC_CACHE_DIR;
-    if (cache_dir == "") {
-        cache_dir = std::string(HOME) + "/.cache/rcc";
-    }
-
-    const std::string sub_cache_dir = cache_dir + "/" + SUB_DIR_CACHE;
-    const std::string sub_templates_dir = cache_dir + "/" + SUB_DIR_TEMPLATES;
-    const std::string sub_permanent_dir = cache_dir + "/" + SUB_DIR_PERMANENT;
-
-    // TODO: reduce duplicated code
-
-    // Check if the cache directory exists, if not, exit
-    if (access(cache_dir.c_str(), F_OK) != 0) {
-        std::cerr << "Cache directory does not exist: " << cache_dir << std::endl;
-        std::cerr << "Please reinstall rcc." << std::endl;
-        exit(1);
-    }
-
-    // Check if the templates sub-directory exists, if not, exit
-    if (access(sub_templates_dir.c_str(), F_OK) != 0) {
-        std::cerr << "Templates directory does not exist: " << cache_dir + "/" + SUB_DIR_TEMPLATES << std::endl;
-        std::cerr << "Please reinstall rcc." << std::endl;
-        exit(1);
-    }
-
-    // Check if the cache sub-directory exists, if not, create it
-    if (access(sub_cache_dir.c_str(), F_OK) != 0) {
-        if (mkdir(sub_cache_dir.c_str(), 0755) != 0) {
-            std::cerr << "Failed to create cache directory: " << sub_cache_dir << std::endl;
+    cache_dir = RCC_CACHE_DIR;
+    if (cache_dir.string().empty()) {
+        const char *HOME = getenv("HOME");
+        if (HOME == NULL) {
+            std::cerr << "Can't get $HOME" << std::endl;
             exit(1);
         }
+        cache_dir = fs::path(HOME) / ".cache/rcc";
     }
 
-    // Check if the permanent sub-directory exists, if not, create it
-    if (access(sub_permanent_dir.c_str(), F_OK) != 0) {
-        if (mkdir(sub_permanent_dir.c_str(), 0755) != 0) {
-            std::cerr << "Failed to create cache directory: " << sub_permanent_dir << std::endl;
-            exit(1);
-        }
-    }
+    sub_cache_dir = cache_dir / SUB_DIR_CACHE;
+    sub_templates_dir = cache_dir / SUB_DIR_TEMPLATES;
+    sub_permanent_dir = cache_dir / SUB_DIR_PERMANENT;
+    template_path = this->sub_templates_dir / "rcc_template.cpp";
+    template_header_path = this->sub_templates_dir / "rcc_template.hpp";
 
-    this->cache_dir = cache_dir;
-    this->sub_cache_dir = sub_cache_dir;
-    this->sub_templates_dir = sub_templates_dir;
-    this->sub_permanent_dir = sub_permanent_dir;
+    // Check if the mandatory files or directories exist, if not, exit
+    expect_exists(cache_dir.get_path());
+    expect_exists(sub_templates_dir.get_path());
+    expect_exists(template_path.get_path());
+    expect_exists(template_header_path.get_path());
+
+    // Check if the non-mandatory directories exist, if not, create them
+    create_dir_if_not_exists(sub_cache_dir.get_path());
+    create_dir_if_not_exists(sub_permanent_dir.get_path());
 }
 
 Path Paths::get_cache_dir() const {
