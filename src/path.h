@@ -1,9 +1,8 @@
 #ifndef __RCC_PATH_H__
 #define __RCC_PATH_H__
 
-#include <string>
-
 #include "libs/ghc/fs_std_fwd.hpp" // IWYU pragma: keep
+#include <string>
 
 // Wrapper class for fs::path with some additional utility functions
 class Path {
@@ -82,7 +81,7 @@ class Path {
     /* ADDITIONAL METHODS */
     /*==========================================================================*/
 
-    const fs::path &get_path() const { return path_; } 
+    const fs::path &get_path() const { return path_; }
 
     bool exists() const { return fs::exists(path_); }
     bool is_dir() const { return fs::is_directory(path_); }

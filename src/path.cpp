@@ -2,12 +2,10 @@
 #include "libs/ghc/fs_std_impl.hpp"
 
 #include "path.h"
-
 #include <dirent.h>
-#include <sys/stat.h>
-
 #include <fstream>
 #include <iostream>
+#include <sys/stat.h>
 
 std::string Path::check_whitespaces(const std::string &path) {
     for (char c : path) {

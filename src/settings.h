@@ -1,10 +1,9 @@
 #ifndef __RCC_SETTINGS_H__
 #define __RCC_SETTINGS_H__
 
+#include "utils.h"
 #include <string>
 #include <vector>
-
-#include "utils.h"
 
 #ifndef RCC_COMPILER
     // Use this compiler to compile the code.

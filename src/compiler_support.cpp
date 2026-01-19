@@ -1,7 +1,9 @@
-#include "pch.h"
-
 #include "compiler_support.h"
+#include "fmt.h"
+#include "paths.h"
 #include "utils.h"
+#include <algorithm>
+#include <iostream>
 
 namespace rcc {
 
@@ -19,7 +21,7 @@ class safe_replacer {
         std::vector<pos> positions;
         for (size_t i = 0; i < replaces.size(); i++) {
             size_t p = str.find(replaces[i].first);
-            while (p != string::npos) {
+            while (p != std::string::npos) {
                 positions.push_back({p, i});
                 p = str.find(replaces[i].first, p + replaces[i].first.size());
             }
@@ -44,7 +46,7 @@ class safe_replacer {
 };
 
 std::string compiler_support::gen_additional_includes(const std::vector<std::string> &additional_includes) const {
-    string includes = "";
+    std::string includes = "";
     for (auto &inc : additional_includes) {
         if (inc == "bits/stdc++.h") {
             //* g++ and clang++ uses different strategies for PCH.
@@ -77,7 +79,7 @@ std::string compiler_support::gen_code(const Path &template_filename,
                                        const std::vector<std::string> &functions,
                                        const std::string &commandline_code,
                                        const std::string &identifier) const {
-    string temp = template_filename.read_file();
+    std::string temp = template_filename.read_file();
 
     // The template file should be checked during installation
     // so do not check it here
@@ -113,7 +115,7 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
                                            const std::string &additional_flags) const {
     Paths &paths = Paths::get_instance();
 
-    string compile_cmd = "g++";
+    std::string compile_cmd = "g++";
     if (cxxflags != "") {
         compile_cmd += " " + cxxflags;
     }
@@ -147,7 +149,7 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
 
     Path pch_path = paths.get_sub_templates_dir();
 
-    string compile_cmd = "clang++";
+    std::string compile_cmd = "clang++";
     if (cxxflags != "") {
         compile_cmd += " " + cxxflags;
     }
@@ -184,7 +186,7 @@ compiler_support *new_compiler_support(const std::string &compiler_name, const S
     } else if (compiler_name == "clang++") {
         cs = new linux_clang(settings);
     } else {
-        cerr << "Unsupported compiler: " + compiler_name + "\n";
+        std::cerr << "Unsupported compiler: " + compiler_name + "\n";
         exit(EXIT_FAILURE);
     }
     return cs;

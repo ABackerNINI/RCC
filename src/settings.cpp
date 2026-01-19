@@ -1,7 +1,7 @@
-#include "pch.h"
-
-#include "debug_fmt.h"
 #include "settings.h"
+#include "debug_fmt.h"
+#include "libs/CLI11.hpp"
+#include "libs/rang.hpp"
 
 namespace rcc {
 
@@ -35,9 +35,9 @@ int Settings::parse_argv(int argc, char **argv) {
                  clean_cache,
                  "Clean cached source and binary files. Permanent code will not be affected.");
 
-    app.add_option_function<string>(
+    app.add_option_function<std::string>(
            "--include",
-           [&](const string &inc) {
+           [&](const std::string &inc) {
                if (inc == "bits/stdc++.h") {
                    included_stdcpp = true;
                }
@@ -53,28 +53,28 @@ int Settings::parse_argv(int argc, char **argv) {
             additional_includes.push_back("bits/stdc++.h");
         },
         "Include the bits/stdc++.h header, this will increase compile time");
-    app.add_option_function<string>(
+    app.add_option_function<std::string>(
            "--compile-with",
-           [&](const string &fname) { additional_sources.push_back(fname); },
+           [&](const std::string &fname) { additional_sources.push_back(fname); },
            "Compile with additional source file")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse()
         ->check(CLI::ExistingFile);
-    app.add_option_function<string>(
+    app.add_option_function<std::string>(
            "--put-above-main",
-           [&](const string &code) { above_main.push_back(code); },
+           [&](const std::string &code) { above_main.push_back(code); },
            "Any code that should be put above the main function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
-    app.add_option_function<string>(
+    app.add_option_function<std::string>(
            "--function",
-           [&](const string &code) { functions.push_back(code); },
+           [&](const std::string &code) { functions.push_back(code); },
            "Define a function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
-    app.add_option_function<string>(
+    app.add_option_function<std::string>(
            "--code",
-           [&](const string &code) { codes.push_back(code); },
+           [&](const std::string &code) { codes.push_back(code); },
            "Add code explicitly")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
@@ -141,7 +141,7 @@ int Settings::parse_argv(int argc, char **argv) {
         return ret;
     }
 
-    vector<string> remaining = app.remaining(true);
+    std::vector<std::string> remaining = app.remaining(true);
 
     for (auto &s : remaining) {
         if (s.substr(0, 1) == "-" && s.size() >= 2 && std::isalpha(s[1])) { // Option or flag
@@ -176,7 +176,7 @@ std::string Settings::get_cxxflags_as_string() const {
 }
 
 std::string Settings::get_cli_args_as_string() const {
-    string args = "";
+    std::string args = "";
     for (int i = 0; i < args_count; i++) {
         char *arg = args_start[i];
 
@@ -193,9 +193,9 @@ std::string Settings::get_cli_args_as_string() const {
         if (has_space) {
             // TODO: maybe wrap the arg in single or double quotes depending on whether it
             // contains single or double quotes.
-            args += "'" + string(arg) + "' ";
+            args += "'" + std::string(arg) + "' ";
         } else {
-            args += string(arg) + " ";
+            args += std::string(arg) + " ";
         }
     }
 
@@ -207,8 +207,8 @@ std::string Settings::get_cli_args_as_string() const {
 }
 
 void Settings::debug_print() const {
-    const string cxxflags = get_cxxflags_as_string();
-    const string additional_flags = get_additional_flags_as_string();
+    const std::string cxxflags = get_cxxflags_as_string();
+    const std::string additional_flags = get_additional_flags_as_string();
 
     gprint("Settings:\n");
     gprintc("compiler: {}\n", compiler);

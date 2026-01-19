@@ -1,11 +1,10 @@
 #ifndef __RCC_COMPILER_SUPPORT_H__
 #define __RCC_COMPILER_SUPPORT_H__
 
+#include "path.h"
+#include "settings.h"
 #include <string>
 #include <vector>
-
-#include "paths.h"
-#include "settings.h"
 
 namespace rcc {
 

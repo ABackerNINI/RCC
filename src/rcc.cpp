@@ -1,12 +1,11 @@
-#include "pch.h"
-
-// TODO: rearrange headers
-
 #include "compiler_support.h"
 #include "debug_fmt.h"
+#include "libs/rang.hpp"
 #include "paths.h"
 #include "settings.h"
 #include "utils.h"
+#include <csignal>
+#include <iostream>
 
 using namespace rcc;
 
@@ -15,7 +14,7 @@ using namespace rcc;
 template <typename T> void IGNORE_RESULT(T &&) {}
 
 // Wrapper function of system(const char *);
-int system(const string &cmd) {
+int system(const std::string &cmd) {
     // print(cmd);
     return system(cmd.c_str());
 }
@@ -27,7 +26,7 @@ void ignore_system(const char *cmd) {
 }
 
 // Wrapper for system() to ignore return value.
-void ignore_system(const string &cmd) {
+void ignore_system(const std::string &cmd) {
     // [[maybe_unused]] auto result = system(cmd); // ignore result
     IGNORE_RESULT(system(cmd));
 }
@@ -64,14 +63,14 @@ pid_t random_clean_cache() {
         if (pid == 0) { // in child process
             Paths &paths = Paths::get_instance();
             // find and remove src/bin files whose access time is 31 days ago
-            // string find_rm_cmd;
-            // find_rm_cmd += string("find ") + paths.get_sub_cache_dir().get_path();
-            // find_rm_cmd += string(" -type f");
-            // find_rm_cmd += string(" \\( -name \"*.cpp\" -o -name \"*.bin\" \\)");
-            // find_rm_cmd += string(" -atime +30 | xargs rm -f");
+            // std::string find_rm_cmd;
+            // find_rm_cmd += std::string("find ") + paths.get_sub_cache_dir().get_path();
+            // find_rm_cmd += std::string(" -type f");
+            // find_rm_cmd += std::string(" \\( -name \"*.cpp\" -o -name \"*.bin\" \\)");
+            // find_rm_cmd += std::string(" -atime +30 | xargs rm -f");
 
             //! Caution: rm command
-            string find_rm_cmd =
+            std::string find_rm_cmd =
                 fmt::format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
                             paths.get_sub_cache_dir().quote_if_needed());
 
@@ -97,16 +96,16 @@ pid_t random_clean_cache() {
 // Clean up all cached sources and binaries.
 int clean_cache() {
     //! Caution: rm command
-    const string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().quote_if_needed();
-    string rm_cmd = "rm -f " + sub_cache_dir + "/*.cpp " + sub_cache_dir + "/*.bin";
+    const std::string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().quote_if_needed();
+    std::string rm_cmd = "rm -f " + sub_cache_dir + "/*.cpp " + sub_cache_dir + "/*.bin";
     return system(rm_cmd.c_str());
 }
 
 // Check if the binary is cached and the content matches.
 //* The file hash may collide, so we need to check the content as well.
-bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &full_code) {
+bool check_if_cached(const Path &bin_path, const Path &cpp_path, const std::string &full_code) {
     if (bin_path.exists()) {
-        const string code_old = cpp_path.read_file();
+        const std::string code_old = cpp_path.read_file();
         if (code_old == full_code) {
             return true;
         }
@@ -119,8 +118,9 @@ bool check_if_cached(const Path &bin_path, const Path &cpp_path, const string &f
 
 // Generate the execution command with the binary path and command line arguments.
 std::string gen_exec_cmd(const Settings &settings, const Path &bin_path) {
-    const string command_line_args = settings.get_cli_args_as_string();
-    const string exec_cmd = bin_path.quote_if_needed() + (command_line_args.empty() ? "" : " " + command_line_args);
+    const std::string command_line_args = settings.get_cli_args_as_string();
+    const std::string exec_cmd = bin_path.quote_if_needed() +
+                                 (command_line_args.empty() ? "" : " " + command_line_args);
     return exec_cmd;
 }
 
@@ -128,17 +128,17 @@ std::string gen_exec_cmd(const Settings &settings, const Path &bin_path) {
 bool compile_code(const Settings &settings,
                   const Path &bin_path,
                   const Path &cpp_path,
-                  const string &cxxflags,
-                  const string &additional_flags,
+                  const std::string &cxxflags,
+                  const std::string &additional_flags,
                   std::shared_ptr<compiler_support> cs,
                   bool silent = false) {
-    vector<Path> sources = {cpp_path};
+    std::vector<Path> sources = {cpp_path};
     for (auto &src : settings.get_additional_sources()) {
         sources.emplace_back(src);
     }
 
-    const string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags) +
-                               (silent ? " >/dev/null 2>&1" : "");
+    const std::string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags) +
+                                    (silent ? " >/dev/null 2>&1" : "");
 
     gprint("{}\n", compile_cmd);
 
@@ -159,7 +159,7 @@ bool compile_code(const Settings &settings,
 
 // Run the binary executable, return the return code of the executable.
 int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path) {
-    const string exec_cmd = gen_exec_cmd(settings, bin_path);
+    const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
 
     /*------------------------------------------------------------------------*/
     // * Run the Executable
@@ -332,19 +332,19 @@ struct TryResult {
 };
 
 // Silent mode: no output of compiler errors, and no output after the compilation failed.
-TryResult try_code(Settings &settings, const string &code, bool silent = false) {
+TryResult try_code(Settings &settings, const std::string &code, bool silent = false) {
     // rcc paths
     Paths &paths = Paths::get_instance();
 
     // the compiler
-    const string compiler = settings.get_compiler();
+    const std::string compiler = settings.get_compiler();
 
-    const string cxxflags = settings.get_cxxflags_as_string();
-    const string additional_flags = settings.get_additional_flags_as_string();
-    const string additional_includes = settings.get_additional_includes_as_string();
-    const string above_main = settings.get_above_main_as_string();
-    const string functions = settings.get_functions_as_string();
-    const string additional_sources = settings.get_additional_sources_as_string();
+    const std::string cxxflags = settings.get_cxxflags_as_string();
+    const std::string additional_flags = settings.get_additional_flags_as_string();
+    const std::string additional_includes = settings.get_additional_includes_as_string();
+    const std::string above_main = settings.get_above_main_as_string();
+    const std::string functions = settings.get_functions_as_string();
+    const std::string additional_sources = settings.get_additional_sources_as_string();
 
     // the output cpp code and executable file's full paths
     Path cpp_path, bin_path, desc_path;
@@ -353,8 +353,8 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
     if (settings.get_permanent().empty()) {
         // The string to hash, which determines the output file name.
         // It is used to determine if we need to recompile the code or not.
-        const string to_hash = code + "a" + compiler + "b" + cxxflags + "a" + additional_flags + "c" +
-                               additional_includes + "k" + above_main + "e" + functions + "r" + additional_sources;
+        const std::string to_hash = code + "a" + compiler + "b" + cxxflags + "a" + additional_flags + "c" +
+                                    additional_includes + "k" + above_main + "e" + functions + "r" + additional_sources;
 
         paths.get_src_bin_full_path(to_hash, cpp_path, bin_path);
     } else {
@@ -376,16 +376,16 @@ TryResult try_code(Settings &settings, const string &code, bool silent = false) 
     //* So in theory, if this program somehow runs the wrong binary, then the two different inputs must have the same
     //* two hashes, and the same code, includes, above main, and functions, since these fields will go into the cpp file
     //* as well, and as what they were given.
-    const string id = compiler + "n" + cxxflags + "i" + additional_flags + "n" + additional_includes + "i" +
-                      additional_sources;
+    const std::string id = compiler + "n" + cxxflags + "i" + additional_flags + "n" + additional_includes + "i" +
+                           additional_sources;
 
     // full c++ code generated by the template and the command line arguments
-    const string full_code = cs->gen_code(paths.get_template_file_path(),
-                                          settings.get_additional_includes(),
-                                          settings.get_above_main(),
-                                          settings.get_functions(),
-                                          code,
-                                          u64_to_string_base64x(fnv1a_64_hash_string(id)));
+    const std::string full_code = cs->gen_code(paths.get_template_file_path(),
+                                               settings.get_additional_includes(),
+                                               settings.get_above_main(),
+                                               settings.get_functions(),
+                                               code,
+                                               u64_to_string_base64x(fnv1a_64_hash_string(id)));
 
     /*------------------------------------------------------------------------*/
     // * Compile If Needed
@@ -515,7 +515,7 @@ int rcc_main(int argc, char **argv) {
     if (codes.size() > 0) {
         auto &last_code = codes.back();
         if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
-            string code;
+            std::string code;
 
             for (size_t i = 0; i < codes.size() - 1; i++) {
                 code.append(codes[i]);
@@ -535,7 +535,7 @@ int rcc_main(int argc, char **argv) {
     }
 
     // command line c++ code
-    const string code = settings.get_codes_as_string();
+    const std::string code = settings.get_codes_as_string();
 
     // Try to compile and run the unwrapped code
     auto try_result = try_code(settings, code);

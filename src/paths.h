@@ -1,9 +1,8 @@
 #ifndef __RCC_PATHS_H__
 #define __RCC_PATHS_H__
 
-#include <string>
-
 #include "path.h"
+#include <string>
 
 #ifndef RCC_CACHE_DIR
     // Store all temporary files in this directory, including auto-generated .cpp
