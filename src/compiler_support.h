@@ -79,7 +79,6 @@ class linux_clang : public compiler_support {
 };
 
 // Create a new compiler support object based on the compiler name.
-// The returned object should be deleted by the caller.
 std::unique_ptr<compiler_support> create_compiler_support(const std::string &compiler_name, const Settings &settings);
 
 } // namespace rcc
