@@ -179,17 +179,15 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
     return compile_cmd;
 }
 
-compiler_support *new_compiler_support(const std::string &compiler_name, const Settings &settings) {
-    compiler_support *cs = NULL;
+std::unique_ptr<compiler_support> create_compiler_support(const std::string &compiler_name, const Settings &settings) {
     if (compiler_name == "g++") {
-        cs = new linux_gcc(settings);
+        return std::make_unique<linux_gcc>(linux_gcc(settings));
     } else if (compiler_name == "clang++") {
-        cs = new linux_clang(settings);
+        return std::make_unique<linux_clang>(settings);
     } else {
         std::cerr << "Unsupported compiler: " + compiler_name + "\n";
         exit(EXIT_FAILURE);
     }
-    return cs;
 }
 
 } // namespace rcc

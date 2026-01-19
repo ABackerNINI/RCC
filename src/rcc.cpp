@@ -130,14 +130,14 @@ bool compile_code(const Settings &settings,
                   const Path &cpp_path,
                   const std::string &cxxflags,
                   const std::string &additional_flags,
-                  std::shared_ptr<compiler_support> cs,
+                  const compiler_support &cs,
                   bool silent = false) {
     std::vector<Path> sources = {cpp_path};
     for (auto &src : settings.get_additional_sources()) {
         sources.emplace_back(src);
     }
 
-    const std::string compile_cmd = cs->get_compile_command(sources, bin_path, cxxflags, additional_flags) +
+    const std::string compile_cmd = cs.get_compile_command(sources, bin_path, cxxflags, additional_flags) +
                                     (silent ? " >/dev/null 2>&1" : "");
 
     gprint("{}\n", compile_cmd);
@@ -369,7 +369,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
     }
 
     // the compiler support
-    auto cs = std::shared_ptr<compiler_support>(new_compiler_support(compiler, settings));
+    auto cs = create_compiler_support(compiler, settings);
 
     // The hash of this string will be written into the cpp file, so that if one of the fields change, we can detect it
     // and recompile the code. This is an insurance in case the first hash collides.
@@ -401,7 +401,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
         // Write c++ code to the cpp file
         cpp_path.write_file(full_code);
 
-        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, cs, silent)) {
+        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, *cs, silent)) {
             return {TryStatus::COMPILE_FAILED, 1}; // Compile failed
         }
     }
