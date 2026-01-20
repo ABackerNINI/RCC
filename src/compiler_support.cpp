@@ -180,10 +180,11 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
 }
 
 std::unique_ptr<compiler_support> create_compiler_support(const std::string &compiler_name, const Settings &settings) {
+    // Note: std::make_unique is not available in C++11
     if (compiler_name == "g++") {
-        return std::make_unique<linux_gcc>(linux_gcc(settings));
+        return std::unique_ptr<compiler_support>(new linux_gcc(settings));
     } else if (compiler_name == "clang++") {
-        return std::make_unique<linux_clang>(settings);
+        return std::unique_ptr<compiler_support>(new linux_clang(settings));
     } else {
         std::cerr << "Unsupported compiler: " + compiler_name + "\n";
         exit(EXIT_FAILURE);
