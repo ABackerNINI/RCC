@@ -93,7 +93,7 @@ COMPILER="g++"
 
 # The C++ standard to use when compiling the rcc and using inside rcc.
 # If not specified, the default is to use the latest standard supported by the compiler.
-CPP_STD=""
+CXXSTD=""
 
 # The rcc cache directory
 CACHE_DIR="$HOME/.cache/rcc"
@@ -113,7 +113,7 @@ while true; do
         shift 2
         ;;
     -s | --std)
-        CPP_STD="$2"
+        CXXSTD="$2"
         shift 2
         ;;
     --)
@@ -137,11 +137,11 @@ chmod +x scripts/*.sh
 
 echo "${YELLOW}Using compiler:${NORMAL} ${UNDERLINE}$COMPILER${NORMAL}"
 
-if [ -z "$CPP_STD" ]; then
+if [ -z "$CXXSTD" ]; then
     # Get C++ highest standard
     echo "${YELLOW}Testing C++ standard support of${NORMAL} ${UNDERLINE}$COMPILER${NORMAL}"
-    CPP_STD=$(scripts/test_cpp_standard.sh "$COMPILER") || exit 1
-    echo "${YELLOW}Found C++ standard:${NORMAL} ${UNDERLINE}$CPP_STD${NORMAL}"
+    CXXSTD=$(scripts/test_cpp_standard.sh "$COMPILER") || exit 1
+    echo "${YELLOW}Found C++ standard:${NORMAL} ${UNDERLINE}$CXXSTD${NORMAL}"
 fi
 
 echo "${YELLOW}Cache directory:${NORMAL} ${UNDERLINE}$CACHE_DIR${NORMAL}"
@@ -149,12 +149,12 @@ echo "${YELLOW}DEBUG:${NORMAL} ${UNDERLINE}$DEBUG${NORMAL}"
 echo ""
 
 # Build rcc
-echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CPP_STD${NORMAL}"
+echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CXXSTD${NORMAL}"
 if [ $DEBUG == true ]; then
-    make debug "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
+    make debug "CXX=$COMPILER" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make debug"
 else
-    make release "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
+    make release "CXX=$COMPILER" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make release"
 fi
 
@@ -201,7 +201,7 @@ check_error "cp -r src/template/* -t \"$CACHE_DIR/templates\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
-make -C "$CACHE_DIR/templates" "CPP_COMPILER=$COMPILER" "CPP_STD=$CPP_STD"
+make -C "$CACHE_DIR/templates" "CPP_COMPILER=$COMPILER" "CXXSTD=$CXXSTD"
 check_error "make"
 
 echo ""
