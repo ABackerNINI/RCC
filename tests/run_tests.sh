@@ -20,6 +20,9 @@ function setup(){
             MAGENTA="$(tput setaf 5)"
             CYAN="$(tput setaf 6)"
             WHITE="$(tput setaf 7)"
+
+            # Use them so that the Bash IDE does not complain about unused variables
+            echo "$BOLD $UNDERLINE $STANDOUT $BLACK $RED $GREEN $YELLOW $BLUE $MAGENTA $CYAN $WHITE $NORMAL" > /dev/null
         fi
     fi
 }
