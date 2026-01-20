@@ -261,13 +261,13 @@ int list_permanent(const Settings &settings) {
 
             if (settings.get_flag_fetch_autocompletion_zsh()) {
                 // No color, no space between name and description
-                print("{}:{}\n", file.stem(), desc);
+                print("{}:{}\n", file.stem().string(), desc);
             } else {
                 Path cpp_path, bin_path, desc_path;
                 paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
                 // Show in red if the binary doesn't exist (compilation failed or has been deleted)
                 auto color = bin_path.exists() ? fmt::terminal_color::green : fmt::terminal_color::red;
-                print("{}: {}\n", fmt::styled(file.stem(), fg(color)), desc);
+                print("{}: {}\n", fmt::styled(file.stem().string(), fg(color)), desc);
             }
         }
     } catch (const fs::filesystem_error &e) {
