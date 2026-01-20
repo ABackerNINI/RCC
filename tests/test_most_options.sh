@@ -1,6 +1,6 @@
 #!/bin/bash
 
-out=$(rcc --include test_compile_with.h --compile-with test_compile_with.cpp --include-all -lm \
+out=$(rcc --include test_option_compile_with.h --compile-with test_option_compile_with.cpp --include-all -lm \
     --put-above-main 'using namespace rcc;' --function 'void func(){cout<<"this is a function"<<endl;}' \
     'TestClass t; t.test_method();' 'func(); cout<<"argc: "<<argc<<endl;' -- \
     1 2 3 xx "x x")
