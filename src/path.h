@@ -1,7 +1,7 @@
 #ifndef __RCC_PATH_H__
 #define __RCC_PATH_H__
 
-#include "libs/ghc/fs_std_fwd.hpp" // IWYU pragma: keep
+#include "libs/ghc/fs_std.hpp" // IWYU pragma: keep
 #include <string>
 
 // Wrapper class for fs::path with some additional utility functions

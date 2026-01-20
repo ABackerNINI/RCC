@@ -1,6 +1,3 @@
-// This header should be included before the `libs/ghc/fs_std_fwd.hpp`
-#include "libs/ghc/fs_std_impl.hpp"
-
 #include "utils.h"
 
 namespace rcc {

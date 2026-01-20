@@ -1,7 +1,7 @@
 #ifndef __RCC_UTILS_H__
 #define __RCC_UTILS_H__
 
-#include "libs/ghc/fs_std_fwd.hpp" // IWYU pragma: keep
+#include "libs/ghc/fs_std.hpp" // IWYU pragma: keep
 #include <cstdint>
 #include <string>
 #include <vector>

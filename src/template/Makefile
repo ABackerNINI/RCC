@@ -1,5 +1,7 @@
 # Build details
 
+# TODO: rewrite this Makefile
+
 CPP_COMPILER  ?= g++
 CPP_STD       ?= c++17
 
