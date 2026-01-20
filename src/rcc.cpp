@@ -1,6 +1,5 @@
 #include "compiler_support.h"
 #include "debug_fmt.h"
-#include "libs/rang.hpp"
 #include "paths.h"
 #include "settings.h"
 #include "utils.h"
@@ -31,11 +30,12 @@ void ignore_system(const std::string &cmd) {
     IGNORE_RESULT(system(cmd));
 }
 
+// TODO: Handle signals
+
 // Signal handler for SIGINT (Control-C) to exit the program gracefully.
 void signal_handler(int s) {
     (void)s;
-    std::cout << std::endl << rang::style::reset << rang::fg::red << rang::style::bold;
-    std::cout << "Control-C detected, exiting..." << rang::style::reset << std::endl;
+    std::cout << "Control-C detected, exiting..." << std::endl;
     std::exit(1);
 }
 
@@ -453,9 +453,6 @@ int rcc_main(int argc, char **argv) {
     // TODO: add version and help messages
     // TODO: boost with multi-thread
     //? TODO: add option --stdin, read input from stdin instead of arguments
-
-    // Reset colors at exit to avoid terminal issues after program termination
-    std::atexit([]() { std::cout << rang::style::reset; });
 
     // Handle signals gracefully
     register_signal_handler();

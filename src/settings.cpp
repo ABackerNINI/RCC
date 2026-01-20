@@ -1,7 +1,7 @@
 #include "settings.h"
 #include "debug_fmt.h"
 #include "libs/CLI11.hpp"
-#include "libs/rang.hpp"
+#include <sstream>
 
 namespace rcc {
 
@@ -137,9 +137,14 @@ int Settings::parse_argv(int argc, char **argv) {
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
-        std::cout << (e.get_exit_code() == 0 ? rang::fg::blue : rang::fg::red);
-        int ret = app.exit(e);
-        std::cout << rang::fg::reset;
+        std::stringstream out, err;
+        int ret = app.exit(e, out, err);
+
+        auto color = e.get_exit_code() == 0 ? fmt::text_style{} : fg(fmt::terminal_color::red);
+
+        print(stdout, "{}", fmt::styled(out.str(), color));
+        print(stderr, "{}", fmt::styled(err.str(), color));
+
         return ret;
     }
 
