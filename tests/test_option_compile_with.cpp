@@ -1,4 +1,4 @@
-#include "test_compile_with.h"
+#include "test_option_compile_with.h"
 
 namespace rcc {
 
