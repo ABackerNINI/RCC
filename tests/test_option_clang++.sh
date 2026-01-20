@@ -1,6 +1,6 @@
 #!/bin/bash
 
-out=$(rcc --clang++ "1+2")
+out=$(rcc --clang++ "cout<<(1+2)<<endl;")
 
 diff <(
     cat <<EOF
