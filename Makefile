@@ -93,8 +93,8 @@ define CONFIG1
 target := $(BIN_DIR)/rcc
 
 cxxflags := $(CXXFLAGS) -I. -I./libs/				\
-		    -DRCC_COMPILER=\"$(CXX)\"				\
-		    -DRCC_CXX_STD=\"-std=$(CXXSTD)\"      	\
+		    -DRCC_CXX=\"$(CXX)\"					\
+		    -DRCC_CXXSTD=\"-std=$(CXXSTD)\"      	\
 		    -DRCC_CACHE_DIR=\"$(RCC_CACHE_DIR)\"
 
 srcs := $(wildcard src/*.cpp)

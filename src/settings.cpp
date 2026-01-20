@@ -78,6 +78,8 @@ int Settings::parse_argv(int argc, char **argv) {
            "Add code explicitly")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+    app.add_flag_callback("--g++", [&]() { compiler = "g++"; }, "Use g++ as compiler");
+    app.add_flag_callback("--clang++", [&]() { compiler = "clang++"; }, "Use clang++ as compiler")->excludes("--g++");
 
     /*==========================================================================*/
     // Permanent code options

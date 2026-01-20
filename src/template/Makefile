@@ -2,11 +2,9 @@
 
 # TODO: rewrite this Makefile
 
-CPP_COMPILER  ?= g++
-CPP_STD       ?= c++17
-
-CXX = $(CPP_COMPILER)
-CXXFLAGS = -Wall -Wextra -std=$(CPP_STD) -Wno-unused-parameter
+CXX = g++
+CXXSTD = c++17
+CXXFLAGS = -Wall -Wextra -std=$(CXXSTD) -Wno-unused-parameter
 BD = ./build
 
 # Pre-Compiled Header
@@ -17,8 +15,8 @@ GCC_GCH_DIR = $(PCH).gch
 GCH = ""
 
 ifeq ($(CXX), g++)
-	GCH = $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CPP_STD).default.gch \
-		  $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CPP_STD).stdc++.gch
+	GCH = $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CXXSTD).default.gch \
+		  $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CXXSTD).stdc++.gch
 else ifeq ($(CXX), clang++)
 	GCH = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
 endif

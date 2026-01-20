@@ -58,11 +58,11 @@ Usage: $0 [OPTION]...
 OPTIONS:
     -h, --help          Display this help and exit.
     -d, --debug         Enable debug mode.
-    -c, --compiler      Specify the compiler to use.
+    -c, --cxx           Specify the compiler to use.
     -s, --std           Specify the C++ standard to use.
 
 EXAMPLES:
-    $0 -d --compiler=g++ --std=c++17
+    $0 -d --cxx=g++ --std=c++17
 EOF
     exit 0
 }
@@ -73,7 +73,7 @@ EOF
 # --: end of options
 # "$0": program name
 # "$@": all arguments
-TEMP=$(getopt -o hdc:s: --long help,debug,compiler:,std: -n "$0" -- "$@")
+TEMP=$(getopt -o hdc:s: --long help,debug,cxx:,std: -n "$0" -- "$@")
 
 # Check for errors in argument parsing. If getopt returns a non-zero status, it means there was an error.
 # shellcheck disable=SC2181
@@ -88,8 +88,8 @@ eval set -- "$TEMP"
 DEBUG=false
 
 # The compiler to use to both compile the rcc and use inside rcc
-COMPILER="g++"
-# COMPILER="clang++"
+CXX="g++"
+# CXX="clang++"
 
 # The C++ standard to use when compiling the rcc and using inside rcc.
 # If not specified, the default is to use the latest standard supported by the compiler.
@@ -108,8 +108,8 @@ while true; do
         DEBUG=true
         shift
         ;;
-    -c | --compiler)
-        COMPILER="$2"
+    -c | --cxx)
+        CXX="$2"
         shift 2
         ;;
     -s | --std)
@@ -135,12 +135,12 @@ done
 # For test_cpp_standard.sh
 chmod +x scripts/*.sh
 
-echo "${YELLOW}Using compiler:${NORMAL} ${UNDERLINE}$COMPILER${NORMAL}"
+echo "${YELLOW}Using compiler:${NORMAL} ${UNDERLINE}$CXX${NORMAL}"
 
 if [ -z "$CXXSTD" ]; then
     # Get C++ highest standard
-    echo "${YELLOW}Testing C++ standard support of${NORMAL} ${UNDERLINE}$COMPILER${NORMAL}"
-    CXXSTD=$(scripts/test_cpp_standard.sh "$COMPILER") || exit 1
+    echo "${YELLOW}Testing C++ standard support of${NORMAL} ${UNDERLINE}$CXX${NORMAL}"
+    CXXSTD=$(scripts/test_cpp_standard.sh "$CXX") || exit 1
     echo "${YELLOW}Found C++ standard:${NORMAL} ${UNDERLINE}$CXXSTD${NORMAL}"
 fi
 
@@ -149,12 +149,12 @@ echo "${YELLOW}DEBUG:${NORMAL} ${UNDERLINE}$DEBUG${NORMAL}"
 echo ""
 
 # Build rcc
-echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$COMPILER${NORMAL} and ${UNDERLINE}$CXXSTD${NORMAL}"
+echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$CXX${NORMAL} and ${UNDERLINE}$CXXSTD${NORMAL}"
 if [ $DEBUG == true ]; then
-    make debug "CXX=$COMPILER" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
+    make debug "CXX=$CXX" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make debug"
 else
-    make release "CXX=$COMPILER" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
+    make release "CXX=$CXX" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
     check_error "make release"
 fi
 
@@ -187,7 +187,7 @@ mkdir -p "$CACHE_DIR/permanent"
 check_error "mkdir -p \"$CACHE_DIR/permanent\""
 
 # Copy templates to rcc cache dir
-make -C src/template clean "CPP_COMPILER=$COMPILER"
+make -C src/template clean "CXX=$CXX"
 check_error "make clean"
 echo "${YELLOW}Copying templates to cache directory${NORMAL}"
 cp -r --preserve=timestamps src/template/* -t "$CACHE_DIR/templates"
@@ -201,8 +201,10 @@ check_error "cp -r src/template/* -t \"$CACHE_DIR/templates\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"
-make -C "$CACHE_DIR/templates" "CPP_COMPILER=$COMPILER" "CXXSTD=$CXXSTD"
-check_error "make"
+make -C "$CACHE_DIR/templates" "CXX=g++" "CXXSTD=$CXXSTD"
+check_error "make PCH for g++"
+make -C "$CACHE_DIR/templates" "CXX=clang++" "CXXSTD=$CXXSTD"
+check_error "make PCH for clang++"
 
 echo ""
 echo "${GREEN}${UNDERLINE}INSTALLATION COMPLETE!${NORMAL}"
