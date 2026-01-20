@@ -171,7 +171,23 @@ int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path
     int ret = system(exec_cmd);
     gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
-    return ret;
+    if (ret == -1) { // System call failed. This is an error, e.g. fork() failed
+        print(stderr, fg(fmt::color::red), "system(): {}\n", strerror(errno));
+        return 1;
+    };
+
+    int exit_status = 1;
+    if (WIFEXITED(ret)) { // The process exited normally
+        exit_status = WEXITSTATUS(ret);
+    } else if (WIFSIGNALED(ret)) { // The process was terminated by a signal
+        print(stderr, fg(fmt::color::red), "Killed by signal {}\n", WTERMSIG(ret));
+        return 1;
+    } else { // The process was stopped by a signal or some other unexpected event
+        print(stderr, fg(fmt::color::red), "Unexpected exit status {}\n", ret);
+        return 1;
+    }
+
+    return exit_status;
 }
 
 // Suggest a similar permanent, return empty string if not match found.
