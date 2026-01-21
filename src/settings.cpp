@@ -82,7 +82,7 @@ int Settings::parse_argv(int argc, char **argv) {
         ->trigger_on_parse();
     app.add_flag_callback("--g++", [&]() { compiler = "g++"; }, "Use g++ as compiler");
     app.add_flag_callback("--clang++", [&]() { compiler = "clang++"; }, "Use clang++ as compiler")->excludes("--g++");
-    app.add_flag("-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}",
+    app.add_flag("-d0{0},-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}",
                  debug_level,
                  "Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE")
         ->check(CLI::Range(0, 5))
