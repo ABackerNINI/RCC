@@ -56,7 +56,8 @@
 #endif
 
 #if (ENABLE_RUNTIME_DEBUG_LEVEL)
-enum class DBG_LEVEL { ERROR = 0, WARNING = 1, INFO = 2, DEBUG = 3, MSGDUMP = 4, EXCESSIVE = 5 };
+// Note: the name `DEBUG` is already used by the macro, so we use `DEBUG_` instead.
+enum class DBG_LEVEL { ERROR = 0, WARNING = 1, INFO = 2, DEBUG_ = 3, MSGDUMP = 4, EXCESSIVE = 5 };
 
 /* Runtime debug level, you should declare it yourself. */
 extern DBG_LEVEL debug_level;
@@ -65,7 +66,7 @@ extern DBG_LEVEL debug_level;
 
     #ifndef DEBUG_LEVEL
         /* Debug level during compiling, level greater than this will not be compiled into code.*/
-        #define DEBUG_LEVEL 2
+        #define DEBUG_LEVEL 5
     #endif
 #endif
 
@@ -157,14 +158,14 @@ extern DBG_LEVEL debug_level;
 #if (DEBUG_LEVEL >= 3)
     /* Print debug msg. */
     #define gprint_dbg(...)                                                                                            \
-        __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG, fmt::fg(fmt::terminal_color::green), "[DEBUG] ", __VA_ARGS__)
+        __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "[DEBUG] ", __VA_ARGS__)
     /* Print continued debug msg. */
     #define gprint_dbg_c(...)                                                                                          \
-        __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG, fmt::fg(fmt::terminal_color::green), " . ", __VA_ARGS__)
+        __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), " . ", __VA_ARGS__)
     /* Print extended debug msg. */
-    #define gprint_dbg_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG, fmt::fg(fmt::terminal_color::green), "", __VA_ARGS__)
+    #define gprint_dbg_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "", __VA_ARGS__)
     /* Statements for debug. */
-    #define gstmt_dbg(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::DEBUG, __VA_ARGS__)
+    #define gstmt_dbg(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::DEBUG_, __VA_ARGS__)
 #else
     /* Print debug msg. */
     #define gprint_dbg(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
