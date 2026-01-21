@@ -44,12 +44,12 @@
 #ifndef ENABLE_RUNTIME_DEBUG_LEVEL
     /* Debug level during runtime.
      *
-     * You should declare global variable 'int debug_level;' in your .c/.cpp source
-     * file and set 'debug_level' to DBG_LVL_'XXX', macros print_'xxx',
-     * print_'xxx'_ex and stmt_'xxx' will be executed only if debug_level is not
+     * You should declare global variable `DBG_LEVEL debug_level;` in your .cpp source
+     * file and set `debug_level` to `DBG_LVL::XXX`, macros `gprint_xxx`,
+     * print_`xxx`_ex and stmt_`xxx` will be executed only if debug_level is not
      * less than the corresponding value.
      *
-     * E.g. If you set debug_level to DBG_LVL_INFO, print_error/warning/info will be
+     * E.g. If you set debug_level to `DBG_LVL::INFO`, print_error/warning/info will be
      * executed but print_debug/msgdump/excessive will not.
      */
     #define ENABLE_RUNTIME_DEBUG_LEVEL 1
@@ -64,8 +64,7 @@ extern DBG_LEVEL debug_level;
     #include <unistd.h>
 
     #ifndef DEBUG_LEVEL
-        /* Debug level during compiling, level greater than this will not be compiled
-         * into code.*/
+        /* Debug level during compiling, level greater than this will not be compiled into code.*/
         #define DEBUG_LEVEL 2
     #endif
 #endif
