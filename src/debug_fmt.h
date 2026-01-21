@@ -45,7 +45,7 @@
     /* Debug level during runtime.
      *
      * You should declare global variable `DBG_LEVEL debug_level;` in your .cpp source
-     * file and set `debug_level` to `DBG_LVL::XXX`, macros `gprint_xxx`,
+     * file and set `debug_level` to `DBG_LVL::XXX`, macros `gpxxx`,
      * print_`xxx`_ex and stmt_`xxx` will be executed only if debug_level is not
      * less than the corresponding value.
      *
@@ -92,133 +92,129 @@ extern DBG_LEVEL debug_level;
 
 #if (DEBUG_LEVEL >= 0)
     /* Print error msg. */
-    #define gprint_error(...)                                                                                          \
-        __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), "[ERROR] ", __VA_ARGS__)
+    #define gperror(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), "[ERROR] ", __VA_ARGS__)
     /* Print continued error msg. */
-    #define gprint_error_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), ". ", __VA_ARGS__)
+    #define gperror_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), ". ", __VA_ARGS__)
     /* Print extended error msg. */
-    #define gprint_error_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), "", __VA_ARGS__)
+    #define gperror_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), "", __VA_ARGS__)
     /* Statements for error. */
     #define gstmt_error(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::ERROR, __VA_ARGS__)
 #else
     /* Print error msg. */
-    #define gprint_error(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gperror(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print continued error msg. */
-    #define gprint_error_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gperror_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print extended error msg. */
-    #define gprint_error_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gperror_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Statements for error. */
     #define gstmt_error(...) __DPF_DO_NOTHING(__VA_ARGS__)
 #endif
 
 #if (DEBUG_LEVEL >= 1)
     /* Print warning msg. */
-    #define gprint_warning(...)                                                                                        \
+    #define gpwarning(...)                                                                                             \
         __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, fmt::fg(fmt::terminal_color::yellow), "[WARNING] ", __VA_ARGS__)
     /* Print continued warning msg. */
-    #define gprint_warning_c(...)                                                                                      \
+    #define gpwarning_c(...)                                                                                           \
         __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, fmt::fg(fmt::terminal_color::yellow), ". ", __VA_ARGS__)
     /* Print extended warning msg. */
-    #define gprint_warning_ex(...)                                                                                     \
+    #define gpwarning_ex(...)                                                                                          \
         __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, fmt::fg(fmt::terminal_color::yellow), "", __VA_ARGS__)
     /* Statements for warning. */
     #define gstmt_warning(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::WARNING, __VA_ARGS__)
 #else
     /* Print warning msg. */
-    #define gprint_warning(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpwarning(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print continued warning msg. */
-    #define gprint_warning_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpwarning_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print extended warning msg. */
-    #define gprint_warning_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpwarning_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Statements for warning. */
     #define gstmt_warning(...) __DPF_DO_NOTHING(__VA_ARGS__)
 #endif
 
 #if (DEBUG_LEVEL >= 2)
     /* Print info msg. */
-    #define gprint_info(...)                                                                                           \
-        __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), "[INFO] ", __VA_ARGS__)
+    #define gpinfo(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), "[INFO] ", __VA_ARGS__)
     /* Print continued info msg. */
-    #define gprint_info_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), " . ", __VA_ARGS__)
+    #define gpinfo_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), " . ", __VA_ARGS__)
     /* Print extended info msg. */
-    #define gprint_info_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), "", __VA_ARGS__)
+    #define gpinfo_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), "", __VA_ARGS__)
     /* Statements for info. */
     #define gstmt_info(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::INFO, __VA_ARGS__)
 #else
     /* Print info msg. */
-    #define gprint_info(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpinfo(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print continued info msg. */
-    #define gprint_info_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpinfo_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print extended info msg. */
-    #define gprint_info_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpinfo_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Statements for info. */
     #define gstmt_info(...) __DPF_DO_NOTHING(__VA_ARGS__)
 #endif
 
 #if (DEBUG_LEVEL >= 3)
     /* Print debug msg. */
-    #define gprint_dbg(...)                                                                                            \
+    #define gpdebug(...)                                                                                               \
         __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "[DEBUG] ", __VA_ARGS__)
     /* Print continued debug msg. */
-    #define gprint_dbg_c(...)                                                                                          \
-        __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), " . ", __VA_ARGS__)
+    #define gpdebug_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), " . ", __VA_ARGS__)
     /* Print extended debug msg. */
-    #define gprint_dbg_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "", __VA_ARGS__)
+    #define gpdebug_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "", __VA_ARGS__)
     /* Statements for debug. */
     #define gstmt_dbg(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::DEBUG_, __VA_ARGS__)
 #else
     /* Print debug msg. */
-    #define gprint_dbg(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpdebug(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print continued debug msg. */
-    #define gprint_dbg_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpdebug_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print extended debug msg. */
-    #define gprint_dbg_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpdebug_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Statements for debug. */
-    #define gstmt_dbg(...) __DPF_DO_NOTHING(__VA_ARGS__)
+    #define gstmt_debug(...) __DPF_DO_NOTHING(__VA_ARGS__)
 #endif
 
 #if (DEBUG_LEVEL >= 4)
     /* Print msgdump msg. */
-    #define gprint_msgdump(...)                                                                                        \
+    #define gpmsgdump(...)                                                                                             \
         __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), "[MSGDUMP] ", __VA_ARGS__)
     /* Print continued msgdump msg. */
-    #define gprint_msgdump_c(...)                                                                                      \
+    #define gpmsgdump_c(...)                                                                                           \
         __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), " . ", __VA_ARGS__)
     /* Print extended msgdump msg. */
-    #define gprint_msgdump_ex(...)                                                                                     \
-        __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), "", __VA_ARGS__)
+    #define gpmsgdump_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), "", __VA_ARGS__)
     /* Statements for msgdump. */
     #define gstmt_msgdump(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::MSGDUMP, __VA_ARGS__)
 #else
     /* Print msgdump msg. */
-    #define gprint_msgdump(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpmsgdump(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print continued msgdump msg. */
-    #define gprint_msgdump_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpmsgdump_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print extended msgdump msg. */
-    #define gprint_msgdump_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpmsgdump_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Statements for msgdump. */
     #define gstmt_msgdump(...) __DPF_DO_NOTHING(__VA_ARGS__)
 #endif
 
 #if (DEBUG_LEVEL >= 5)
     /* Print excessive msg. */
-    #define gprint_excessive(...)                                                                                      \
+    #define gpexcessive(...)                                                                                           \
         __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, fmt::fg(fmt::terminal_color::white), "[EXCESSIVE] ", __VA_ARGS__)
     /* Print continued excessive msg. */
-    #define gprint_excessive_c(...)                                                                                    \
+    #define gpexcessive_c(...)                                                                                         \
         __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, fmt::fg(fmt::terminal_color::white), " . ", __VA_ARGS__)
     /* Print extended excessive msg. */
-    #define gprint_excessive_ex(...)                                                                                   \
+    #define gpexcessive_ex(...)                                                                                        \
         __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, fmt::fg(fmt::terminal_color::white), "", __VA_ARGS__)
     /* Statements for excessive. */
     #define gstmt_excessive(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::EXCESSIVE, __VA_ARGS__)
 #else
     /* Print excessive msg. */
-    #define gprint_excessive(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpexcessive(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print continued excessive msg. */
-    #define gprint_excessive_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpexcessive_c(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Print extended excessive msg. */
-    #define gprint_excessive_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
+    #define gpexcessive_ex(...) __DPF_DO_NOTHING(fmt::print(__VA_ARGS__))
     /* Statements for excessive. */
     #define gstmt_excessive(...) __DPF_DO_NOTHING(__VA_ARGS__)
 #endif

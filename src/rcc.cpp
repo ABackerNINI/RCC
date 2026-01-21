@@ -74,9 +74,9 @@ pid_t random_clean_cache() {
                 fmt::format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
                             paths.get_sub_cache_dir().quote_if_needed());
 
-            gprint("{}: {}\n",
-                   fmt::styled("Removing old cache files", fg(fmt::color::dark_red) | fmt::emphasis::bold),
-                   find_rm_cmd);
+            gpdebug("{}: {}\n",
+                    fmt::styled("Removing old cache files", fg(fmt::color::dark_red) | fmt::emphasis::bold),
+                    find_rm_cmd);
 
             if (system(find_rm_cmd.c_str()) != 0) {
                 perror("system:find");
@@ -109,9 +109,9 @@ bool check_if_cached(const Path &bin_path, const Path &cpp_path, const std::stri
         if (code_old == full_code) {
             return true;
         }
-        gprint(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "WARNING: hash collided but content does not match!\n");
-        gprint("{}:\n{}", fmt::styled("Old Code", fmt::fg(fmt::color::red)), code_old);
-        gprint("{}:\n{}", fmt::styled("New Code", fmt::fg(fmt::color::red)), full_code);
+        gpdebug(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "WARNING: hash collided but content does not match!\n");
+        gpdebug("{}:\n{}", fmt::styled("Old Code", fmt::fg(fmt::color::red)), code_old);
+        gpdebug("{}:\n{}", fmt::styled("New Code", fmt::fg(fmt::color::red)), full_code);
     }
     return false;
 }
@@ -140,7 +140,7 @@ bool compile_code(const Settings &settings,
     const std::string compile_cmd = cs.get_compile_command(sources, bin_path, cxxflags, additional_flags) +
                                     (silent ? " >/dev/null 2>&1" : "");
 
-    gprint("{}\n", compile_cmd);
+    gpdebug("{}\n", compile_cmd);
 
     using namespace fmt;
 
@@ -149,8 +149,8 @@ bool compile_code(const Settings &settings,
             const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
             print("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
             print(fg(terminal_color::red) | emphasis::bold, "COMPILATION FAILED!\n");
-            gprint("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
-            gprint("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
+            gpdebug("{}: {}\n", styled("COMPILE COMMAND", fg(color::saddle_brown) | emphasis::bold), compile_cmd);
+            gpdebug("{}: {}\n", styled("EXECUTE COMMAND", fg(color::saddle_brown) | emphasis::bold), exec_cmd);
         }
         return false;
     }
@@ -164,12 +164,12 @@ int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
-    gprint("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
-    gprint("EXECUTING : {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
+    gpdebug("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+    gpdebug("EXECUTING : {}\n", fmt::styled(exec_cmd, fmt::emphasis::underline));
 
-    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    gpdebug(fg(fmt::color::yellow) | fmt::emphasis::bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     int ret = system(exec_cmd);
-    gprint(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+    gpdebug(fg(fmt::color::yellow) | fmt::emphasis::bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
     if (ret == -1) { // System call failed. This is an error, e.g. fork() failed
         print(stderr, fg(fmt::color::red), "system(): {}\n", strerror(errno));
@@ -202,7 +202,7 @@ std::string suggest_similar_permanent(const std::string &name) {
 
     try {
         auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".bin"});
-        gprint("Found {} files\n", files.size());
+        gpdebug("Found {} files\n", files.size());
 
         // Find the closest match
         size_t min_distance = INT32_MAX;
@@ -215,10 +215,10 @@ std::string suggest_similar_permanent(const std::string &name) {
             }
         }
     } catch (const fs::filesystem_error &e) {
-        gprint("Filesystem error: {}\n", e.what());
+        gpdebug("Filesystem error: {}\n", e.what());
         return "";
     } catch (const std::exception &e) {
-        gprint("Error: {}\n", e.what());
+        gpdebug("Error: {}\n", e.what());
         return "";
     }
 
@@ -270,7 +270,7 @@ int list_permanent(const Settings &settings) {
 
     try {
         auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".desc"});
-        gprint("Found {} files\n", files.size());
+        gpdebug("Found {} files\n", files.size());
 
         for (const auto &file : files) {
             std::string desc = Path(file).read_file();
@@ -328,7 +328,7 @@ int remove_permanents(const Settings &settings) {
 
         if (success) {
             ++num_removed;
-            gprint("Removed '{}'\n", permanent);
+            gpdebug("Removed '{}'\n", permanent);
         } else {
             ret = 1;
             print(stderr, "Permanent '{}' does not exist!\n", permanent);
@@ -408,7 +408,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
 
     if (settings.get_permanent().empty() && check_if_cached(bin_path, cpp_path, full_code)) {
         // Cached, skip the compiling process, run the executable directly
-        gprint(fg(fmt::color::green), "Running cached binary\n");
+        gpdebug(fg(fmt::color::green), "Running cached binary\n");
     } else {
         if (!settings.get_permanent().empty()) {
             // TODO: confirm overwrite, add option -f, --force
@@ -480,9 +480,6 @@ int rcc_main(int argc, char **argv) {
         return result;
     }
 
-    // Print the settings
-    gstmt(settings.debug_print());
-
     // Seed the random number generator
     //? Why time() + getpid()?
     //* If we only use time() as the seed, rcc may run in one second multiple
@@ -535,12 +532,12 @@ int rcc_main(int argc, char **argv) {
             }
             code.append("cout << (" + last_code + ") << endl;");
 
-            gprint(fg(fmt::color::dodger_blue) | fmt::emphasis::bold,
-                   ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-            gprint("Tring to wrap code with 'cout << ... << endl;'\n");
+            gpdebug(fg(fmt::color::dodger_blue) | fmt::emphasis::bold,
+                    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+            gpdebug("Tring to wrap code with 'cout << ... << endl;'\n");
             auto try_result = try_code(settings, code, true); // silent mode
-            gprint(fg(fmt::color::dodger_blue) | fmt::emphasis::bold,
-                   "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+            gpdebug(fg(fmt::color::dodger_blue) | fmt::emphasis::bold,
+                    "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
             if (try_result.status == TryStatus::SUCCESS) {
                 return try_result.return_code;
             }

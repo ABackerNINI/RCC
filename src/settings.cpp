@@ -3,6 +3,8 @@
 #include "libs/CLI11.hpp"
 #include <sstream>
 
+DBG_LEVEL debug_level = DBG_LEVEL::WARNING;
+
 namespace rcc {
 
 int Settings::locate_args(int argc, char **argv) {
@@ -80,6 +82,11 @@ int Settings::parse_argv(int argc, char **argv) {
         ->trigger_on_parse();
     app.add_flag_callback("--g++", [&]() { compiler = "g++"; }, "Use g++ as compiler");
     app.add_flag_callback("--clang++", [&]() { compiler = "clang++"; }, "Use clang++ as compiler")->excludes("--g++");
+    app.add_flag("-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}",
+                 debug_level,
+                 "Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE")
+        ->check(CLI::Range(0, 5))
+        ->option_text("LEVEL");
 
     /*==========================================================================*/
     // Permanent code options
@@ -168,6 +175,9 @@ int Settings::parse_argv(int argc, char **argv) {
         }
     }
 
+    // Print the settings
+    debug_print();
+
     return 0;
 }
 
@@ -217,18 +227,18 @@ void Settings::debug_print() const {
     const std::string cxxflags = get_cxxflags_as_string();
     const std::string additional_flags = get_additional_flags_as_string();
 
-    gprint("Settings:\n");
-    gprintc("compiler: {}\n", compiler);
-    gprintc("std: {}\n", std);
-    gprintc("cxxflags: {}\n", cxxflags.empty() ? "<NONE>" : cxxflags);
-    gprintc("additional_flags: {}\n", additional_flags.empty() ? "<NONE>" : additional_flags);
-    gprintc("additional_includes: {}\n", vector_to_string(additional_includes, ", ", "<NONE>"));
-    gprintc("above_main_count: {}\n", above_main.size());
-    gprintc("functions_count: {}\n", functions.size());
-    gprintc("code_count: {}\n", codes.size());
-    gprintc("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
-    gprintc("args_count: {}\n", args_count);
-    gprintc("clean_cache: {}\n", clean_cache);
+    gpdebug("Settings:\n");
+    gpdebug_c("compiler: {}\n", compiler);
+    gpdebug_c("std: {}\n", std);
+    gpdebug_c("cxxflags: {}\n", cxxflags.empty() ? "<NONE>" : cxxflags);
+    gpdebug_c("additional_flags: {}\n", additional_flags.empty() ? "<NONE>" : additional_flags);
+    gpdebug_c("additional_includes: {}\n", vector_to_string(additional_includes, ", ", "<NONE>"));
+    gpdebug_c("above_main_count: {}\n", above_main.size());
+    gpdebug_c("functions_count: {}\n", functions.size());
+    gpdebug_c("code_count: {}\n", codes.size());
+    gpdebug_c("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
+    gpdebug_c("args_count: {}\n", args_count);
+    gpdebug_c("clean_cache: {}\n", clean_cache);
 
     // TODO: print more settings
 }
