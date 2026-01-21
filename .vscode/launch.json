@@ -5,36 +5,15 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/rcc",
+            "program": "${workspaceFolder}/bin/rcc",
             "args": [
-                "FOR(0,3){cout<<i<<endl;cout<<pow(2,23)<<endl;}"
+                "-d3",
+                "cout<<(1+3)<<endl; return 1;"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/",
             "environment": [],
             "preLaunchTask": "build",
-            "externalConsole": true,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
-        },
-        {
-            "name": "(gdb) Launch",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/test",
-            "args": [
-                "-h"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/",
-            "environment": [],
-            "preLaunchTask": "",
             "externalConsole": true,
             "MIMode": "gdb",
             "setupCommands": [
