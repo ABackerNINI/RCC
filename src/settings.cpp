@@ -176,7 +176,7 @@ int Settings::parse_argv(int argc, char **argv) {
     }
 
     // Print the settings
-    gstmt_debug(debug_print());
+    gstmt_msgdump(debug_print());
 
     return 0;
 }
@@ -227,18 +227,18 @@ void Settings::debug_print() const {
     const std::string cxxflags = get_cxxflags_as_string();
     const std::string additional_flags = get_additional_flags_as_string();
 
-    gpdebug("Settings:\n");
-    gpdebug_c("compiler: {}\n", compiler);
-    gpdebug_c("std: {}\n", std);
-    gpdebug_c("cxxflags: {}\n", cxxflags.empty() ? "<NONE>" : cxxflags);
-    gpdebug_c("additional_flags: {}\n", additional_flags.empty() ? "<NONE>" : additional_flags);
-    gpdebug_c("additional_includes: {}\n", vector_to_string(additional_includes, ", ", "<NONE>"));
-    gpdebug_c("above_main_count: {}\n", above_main.size());
-    gpdebug_c("functions_count: {}\n", functions.size());
-    gpdebug_c("code_count: {}\n", codes.size());
-    gpdebug_c("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
-    gpdebug_c("args_count: {}\n", args_count);
-    gpdebug_c("clean_cache: {}\n", clean_cache);
+    gpmsgdump("Settings:\n");
+    gpmsgdump_c("compiler: {}\n", compiler);
+    gpmsgdump_c("std: {}\n", std);
+    gpmsgdump_c("cxxflags: {}\n", cxxflags.empty() ? "<NONE>" : cxxflags);
+    gpmsgdump_c("additional_flags: {}\n", additional_flags.empty() ? "<NONE>" : additional_flags);
+    gpmsgdump_c("additional_includes: {}\n", vector_to_string(additional_includes, ", ", "<NONE>"));
+    gpmsgdump_c("above_main_count: {}\n", above_main.size());
+    gpmsgdump_c("functions_count: {}\n", functions.size());
+    gpmsgdump_c("code_count: {}\n", codes.size());
+    gpmsgdump_c("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
+    gpmsgdump_c("args_count: {}\n", args_count);
+    gpmsgdump_c("clean_cache: {}\n", clean_cache);
 
     // TODO: print more settings
 }
