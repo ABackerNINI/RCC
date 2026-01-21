@@ -29,6 +29,13 @@ _rcc() {
         '--desc[Description for the permanent code]' \
         '--list-permanent[List all permanents and exit]' \
         '--remove-permanent[Remove permanent(s)]:existing_permanent_name:->permanent-name' \
+        '--debug=[Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE]:LEVEL:->debug-level' \
+        '-d0[Debug level: ERROR]' \
+        '-d1[Debug level: WARNING]' \
+        '-d2[Debug level: INFO]' \
+        '-d3[Debug level: DEBUG]' \
+        '-d4[Debug level: MSGDUMP]' \
+        '-d5[Debug level: EXCESSIVE]' \
         '1:Subcommand:->subcommand' \
         '*:: :->option-or-argument'
 
@@ -52,6 +59,17 @@ _rcc() {
                 (rm)        _rcc_complete_permanents ;;
                 (remove)    _rcc_complete_permanents ;;
             esac
+            ;;
+        (debug-level)
+            local -a debug_levels=(
+                '0:Error level'
+                '1:Warning level'
+                '2:Info level'
+                '3:Debug level'
+                '4:Message dump level'
+                '5:Excessive level'
+            )
+            _describe -t debug-levels 'debug level' debug_levels
             ;;
     esac
 }
