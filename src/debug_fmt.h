@@ -86,9 +86,9 @@ extern DBG_LEVEL debug_level;
 
 #define __DPF_PRINT_FUNC(lvl, ts, lvl_str, ...)                                                                        \
     __DPF_DO_IF_RT_DBG(                                                                                                \
-        lvl, if (isatty(STDERR_FILENO)) { fmt::print("{}", fmt::styled(lvl_str, ts)); } else {                         \
-            fmt::print(lvl_str);                                                                                       \
-        } fmt::print(__VA_ARGS__);)
+        lvl, if (isatty(STDERR_FILENO)) { fmt::print(stderr, "{}", fmt::styled(lvl_str, ts)); } else {                 \
+            fmt::print(stderr, lvl_str);                                                                               \
+        } fmt::print(stderr, __VA_ARGS__);)
 
 #if (RUNTIME_DEBUG_LEVEL >= 0)
     /* Print error msg. */

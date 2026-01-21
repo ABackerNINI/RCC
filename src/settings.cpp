@@ -147,10 +147,10 @@ int Settings::parse_argv(int argc, char **argv) {
         std::stringstream out, err;
         int ret = app.exit(e, out, err);
 
-        auto color = e.get_exit_code() == 0 ? fmt::text_style{} : fg(fmt::terminal_color::red);
+        auto color = e.get_exit_code() == 0 ? text_style{} : fg(terminal_color::red);
 
-        print(stdout, "{}", fmt::styled(out.str(), color));
-        print(stderr, "{}", fmt::styled(err.str(), color));
+        print(stdout, "{}", styled(out.str(), TTY_TS(color)));
+        print(stderr, "{}", styled(err.str(), TTY_TS(color, stderr)));
 
         return ret;
     }
@@ -176,7 +176,7 @@ int Settings::parse_argv(int argc, char **argv) {
     }
 
     // Print the settings
-    debug_print();
+    gstmt_debug(debug_print());
 
     return 0;
 }
