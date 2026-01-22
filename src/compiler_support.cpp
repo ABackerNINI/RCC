@@ -307,8 +307,7 @@ bool linux_clang::test_pch(const std::string &std,
     // If already in cache, return the cached result.
     bool result;
     if (get_test_pch_from_cache(std, filtered_cxxflags, filtered_additional_flags, result)) {
-        gpinfo(TTY_TS(fg(terminal_color::blue), stderr),
-               "clang pch test cached ({:.2f}ms)\n",
+        gpinfo(TTY_TS(fg(terminal_color::blue), stderr), "clang pch test cached ({:.2f}ms)\n",
                duration_ms(time_begin, now()));
         return result;
     }

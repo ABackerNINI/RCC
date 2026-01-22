@@ -33,8 +33,7 @@ int Settings::parse_argv(int argc, char **argv) {
     // TODO: opt code for vector options, and option_text
     // TODO: BinPackArguments false -> true
 
-    app.add_flag("--clean-cache",
-                 clean_cache,
+    app.add_flag("--clean-cache", clean_cache,
                  "Clean cached source and binary files. Permanent code will not be affected.");
 
     app.add_option_function<std::string>(
@@ -56,34 +55,27 @@ int Settings::parse_argv(int argc, char **argv) {
         },
         "Include the bits/stdc++.h header, this will increase compile time");
     app.add_option_function<std::string>(
-           "--compile-with",
-           [&](const std::string &fname) { additional_sources.push_back(fname); },
+           "--compile-with", [&](const std::string &fname) { additional_sources.push_back(fname); },
            "Compile with additional source file")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse()
         ->check(CLI::ExistingFile);
     app.add_option_function<std::string>(
-           "--put-above-main",
-           [&](const std::string &code) { above_main.push_back(code); },
+           "--put-above-main", [&](const std::string &code) { above_main.push_back(code); },
            "Any code that should be put above the main function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
     app.add_option_function<std::string>(
-           "--function",
-           [&](const std::string &code) { functions.push_back(code); },
-           "Define a function")
+           "--function", [&](const std::string &code) { functions.push_back(code); }, "Define a function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
     app.add_option_function<std::string>(
-           "--code",
-           [&](const std::string &code) { codes.push_back(code); },
-           "Add code explicitly")
+           "--code", [&](const std::string &code) { codes.push_back(code); }, "Add code explicitly")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
     app.add_flag_callback("--g++", [&]() { compiler = "g++"; }, "Use g++ as compiler");
     app.add_flag_callback("--clang++", [&]() { compiler = "clang++"; }, "Use clang++ as compiler")->excludes("--g++");
-    app.add_flag("-d0{0},-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}",
-                 debug_level,
+    app.add_flag("-d0{0},-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}", debug_level,
                  "Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE")
         ->check(CLI::Range(0, 5))
         ->option_text("LEVEL");

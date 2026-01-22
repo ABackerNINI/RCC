@@ -29,7 +29,7 @@ AlignTrailingComments: false
 # Bin Pack #####################################################################
 
 # false表示函数实参(function call)要么都在同一行，要么都各自一行
-BinPackArguments: false
+BinPackArguments: true
 # false表示所有形参(function declaration or function definition)要么都在同一行，要么都各自一行
 BinPackParameters: false
 
