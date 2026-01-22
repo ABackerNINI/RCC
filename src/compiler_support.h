@@ -34,10 +34,7 @@ class compiler_support {
                                  const std::string &identifier) const;
 
     // Generate the compile command to compile the given sources into a binary using that compiler.
-    virtual std::string get_compile_command(const std::vector<Path> &sources,
-                                            const Path &bin_path,
-                                            const std::string &cxxflags,
-                                            const std::string &additional_flags) const = 0;
+    virtual std::string get_compile_command(const std::vector<Path> &sources, const Path &bin_path) const = 0;
 
   protected:
     static size_t safe_replace(std::string &str, size_t pos, const std::string &from, const std::string &to);
@@ -57,10 +54,7 @@ class linux_gcc : public compiler_support {
     virtual ~linux_gcc() = default;
 
     // Generate the compile command for the Linux g++ compiler.
-    virtual std::string get_compile_command(const std::vector<Path> &sources,
-                                            const Path &bin_path,
-                                            const std::string &cxxflags,
-                                            const std::string &additional_flags) const override;
+    virtual std::string get_compile_command(const std::vector<Path> &sources, const Path &bin_path) const override;
 };
 
 // Subclass for Linux clang++ compiler.
@@ -72,10 +66,26 @@ class linux_clang : public compiler_support {
     virtual ~linux_clang() = default;
 
     // Generate the compile command for the Linux clang++ compiler.
-    virtual std::string get_compile_command(const std::vector<Path> &sources,
-                                            const Path &bin_path,
-                                            const std::string &cxxflags,
-                                            const std::string &additional_flags) const override;
+    virtual std::string get_compile_command(const std::vector<Path> &sources, const Path &bin_path) const override;
+
+  protected:
+    // Return flags that will cause PCH mismatch.
+    std::vector<std::string> filter_pch_flags(const std::vector<std::string> &flags) const;
+
+    bool get_test_pch_from_cache(const std::string &std,
+                                 const std::vector<std::string> &cxxflags,
+                                 const std::vector<std::string> &additional_flags,
+                                 bool &result) const;
+    void save_test_pch_to_cache(const std::string &std,
+                                const std::vector<std::string> &cxxflags,
+                                const std::vector<std::string> &additional_flags,
+                                bool result) const;
+
+    // Test if the generated PCH is compatible with the given flags.
+    // Note: not like g++, clang++ treats PCH mismatch as an error. So we need to test it.
+    bool test_pch(const std::string &std,
+                  const std::vector<std::string> &cxxflags,
+                  const std::vector<std::string> &additional_flags) const;
 };
 
 // Create a new compiler support object based on the compiler name.

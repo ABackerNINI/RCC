@@ -40,7 +40,7 @@ class Settings {
     const std::vector<std::string> &get_cxxflags() const { return cxxflags; }
     const std::vector<std::string> &get_additional_sources() const { return additional_sources; }
 
-    std::string get_cxxflags_as_string() const;
+    std::string get_std_cxxflags_as_string() const;
     std::string get_additional_flags_as_string() const { return vector_to_string(additional_flags); }
     std::string get_cli_args_as_string() const;
     std::string get_additional_includes_as_string() const { return vector_to_string(additional_includes); }
@@ -100,6 +100,7 @@ class Settings {
 
     bool included_stdcpp{false}; // whether the `bits/stdc++.h` has been included, relates to "--include-all"
                                  // and "--include"
+    // bool default_compiler_flags{true}; // true means no additional compiler flags are added
 };
 
 } // namespace rcc

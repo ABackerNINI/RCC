@@ -2,6 +2,14 @@
 
 namespace rcc {
 
+bool starts_with(const std::string &str, const std::string &prefix) {
+    return str.length() >= prefix.length() && str.compare(0, prefix.length(), prefix) == 0;
+}
+
+bool ends_with(const std::string &str, const std::string &suffix) {
+    return str.length() >= suffix.length() && str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+}
+
 uint64_t fnv1a_64_hash_string(const std::string &str) {
     const uint64_t FNV_PRIME = 1099511628211ULL; // 2^40 + 2^8 + 0xb3
     const uint64_t FNV_OFFSET = 14695981039346656037ULL; // 2^64 - 2^32 - 2^16 - 2^8 - 1
@@ -33,7 +41,8 @@ std::string u64_to_string_base64x(uint64_t val) {
 
 std::string vector_to_string(const std::vector<std::string> &vec,
                              const std::string &sep,
-                             const std::string &default_for_empty) {
+                             const std::string &default_for_empty,
+                             bool keep_trailing_sep) {
     if (vec.empty()) {
         return default_for_empty;
     }
@@ -42,7 +51,7 @@ std::string vector_to_string(const std::vector<std::string> &vec,
     for (const auto &item : vec) {
         result += item + sep;
     }
-    if (result.size() > 0) {
+    if (!keep_trailing_sep && result.size() > 0) {
         for (size_t i = 0; i < sep.size(); i++) {
             result.pop_back();
         }

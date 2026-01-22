@@ -181,7 +181,7 @@ int Settings::parse_argv(int argc, char **argv) {
     return 0;
 }
 
-std::string Settings::get_cxxflags_as_string() const {
+std::string Settings::get_std_cxxflags_as_string() const {
     //? Should use a C++ standard like "-std=c++11"?
     //* This will be necessary on some lower version compilers. But this will
     //* prevent us using a higher default standard.
@@ -224,7 +224,7 @@ std::string Settings::get_cli_args_as_string() const {
 }
 
 void Settings::debug_print() const {
-    const std::string cxxflags = get_cxxflags_as_string();
+    const std::string cxxflags = get_std_cxxflags_as_string();
     const std::string additional_flags = get_additional_flags_as_string();
 
     gpmsgdump("Settings:\n");

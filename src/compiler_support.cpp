@@ -1,4 +1,5 @@
 #include "compiler_support.h"
+#include "debug_fmt.h"
 #include "fmt.h"
 #include "paths.h"
 #include "utils.h"
@@ -111,14 +112,14 @@ std::string compiler_support::gen_code(const Path &template_filename,
     return temp;
 }
 
-std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
-                                           const Path &bin_path,
-                                           const std::string &cxxflags,
-                                           const std::string &additional_flags) const {
+std::string linux_gcc::get_compile_command(const std::vector<Path> &sources, const Path &bin_path) const {
+    const std::string &cxxflags = settings.get_std_cxxflags_as_string();
+    const std::string &additional_flags = settings.get_additional_flags_as_string();
+
     Paths &paths = Paths::get_instance();
 
     std::string compile_cmd = "g++";
-    if (cxxflags != "") {
+    if (!cxxflags.empty()) {
         compile_cmd += " " + cxxflags;
     }
 
@@ -137,22 +138,22 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources,
     for (const auto &source : sources) {
         compile_cmd += " " + source.quote_if_needed();
     }
-    if (additional_flags != "") {
+    if (!additional_flags.empty()) {
         compile_cmd += " " + additional_flags;
     }
     return compile_cmd;
 }
 
-std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
-                                             const Path &bin_path,
-                                             const std::string &cxxflags,
-                                             const std::string &additional_flags) const {
+std::string linux_clang::get_compile_command(const std::vector<Path> &sources, const Path &bin_path) const {
+    const std::string &cxxflags = settings.get_std_cxxflags_as_string();
+    const std::string &additional_flags = settings.get_additional_flags_as_string();
+
     Paths &paths = Paths::get_instance();
 
     Path pch_path = paths.get_sub_templates_dir();
 
     std::string compile_cmd = "clang++";
-    if (cxxflags != "") {
+    if (!cxxflags.empty()) {
         compile_cmd += " " + cxxflags;
     }
 
@@ -161,24 +162,174 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources,
     }
     compile_cmd += " -I" + paths.get_sub_templates_dir().quote_if_needed();
 
-    // clang++ needs to specify the .pch file explicitly
-    if (settings.has_included_stdcpp()) {
-        pch_path /= "rcc_template.hpp.stdc++.pch";
-        compile_cmd += " -DINCLUDE_BITS_STDCPP_H";
-        compile_cmd += " -include-pch " + pch_path.quote_if_needed();
-    } else {
-        pch_path /= "rcc_template.hpp.pch";
-        compile_cmd += " -include-pch " + pch_path.quote_if_needed();
+    // Test if the generated PCH is compatible with the given flags.
+    // Note: not like g++, clang++ treats PCH mismatch as an error. So we need to test it.
+    if (test_pch(settings.get_std(), settings.get_cxxflags(), settings.get_additional_flags())) {
+        compile_cmd += " -include " + paths.get_template_header_path().quote_if_needed();
     }
 
     compile_cmd += " -o " + bin_path.quote_if_needed();
     for (const auto &source : sources) {
         compile_cmd += " " + source.quote_if_needed();
     }
-    if (additional_flags != "") {
+    if (!additional_flags.empty()) {
         compile_cmd += " " + additional_flags;
     }
     return compile_cmd;
+}
+
+std::vector<std::string> linux_clang::filter_pch_flags(const std::vector<std::string> &flags) const {
+    // These flags have no effect on PCH generation, so we can safely remove them.
+    static const std::vector<std::string> simple_flags = {"-c",
+                                                          "-o",
+                                                          "-S",
+                                                          "-pedantic",
+                                                          "-w",
+                                                          "-shared",
+                                                          "-static",
+                                                          "-pthread",
+                                                          "-pg",
+                                                          "-fprofile-arcs",
+                                                          "-ftest-coverage",
+                                                          "-E",
+                                                          "-P",
+                                                          "-C",
+                                                          "-v",
+                                                          "-###",
+                                                          "--help",
+                                                          "-x",
+                                                          "-save-temps"};
+
+    std::vector<std::string> filtered_flags;
+    for (const auto &flag : flags) {
+        if (std::find(simple_flags.begin(), simple_flags.end(), flag) != simple_flags.end()) {
+            continue;
+        }
+
+        if (starts_with(flag, "-W") || starts_with(flag, "-L") || starts_with(flag, "-l") || starts_with(flag, "-M")) {
+            continue;
+        }
+
+        filtered_flags.push_back(flag);
+    }
+
+    return filtered_flags;
+}
+
+bool linux_clang::get_test_pch_from_cache(const std::string &std,
+                                          const std::vector<std::string> &cxxflags,
+                                          const std::vector<std::string> &additional_flags,
+                                          bool &result) const {
+    // * NOTE: we can't sort the flags, consider this case: -D FOO -D BAR
+
+    result = false;
+
+    Paths &paths = Paths::get_instance();
+
+    const std::string cxxflags_str = vector_to_string(cxxflags, " ");
+    const std::string additional_flags_str = vector_to_string(additional_flags, " ");
+
+    const std::string to_hash = std + cxxflags_str + additional_flags_str;
+
+    std::string out_name = u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
+
+    Path outpath = paths.get_sub_clang_pch_test() / out_name;
+
+    // Check if the file exists
+    if (!outpath.exists()) {
+        return false;
+    }
+
+    try {
+        std::ifstream file(outpath.string());
+        if (!file.is_open()) {
+            return false;
+        }
+
+        std::string std_read, cxxflags_read, additional_flags_read, result_read;
+        if (!std::getline(file, std_read) || !std::getline(file, cxxflags_read) ||
+            !std::getline(file, additional_flags_read) || !std::getline(file, result_read)) {
+            return false;
+        }
+
+        file.close();
+
+        if (std_read != std || cxxflags_read != cxxflags_str || additional_flags_read != additional_flags_str) {
+            gpdebug("Clang test PCH cache file content mismatch");
+            return false;
+        }
+
+        result = (result_read == "true");
+        return true;
+    } catch (const std::exception &e) {
+        gpwarning(TTY_TS(fg(terminal_color::red), stderr), "Failed to read clang test PCH cache file: {}\n", e.what());
+        return false;
+    }
+}
+
+void linux_clang::save_test_pch_to_cache(const std::string &std,
+                                         const std::vector<std::string> &cxxflags,
+                                         const std::vector<std::string> &additional_flags,
+                                         bool result) const {
+    Paths &paths = Paths::get_instance();
+
+    const std::string cxxflags_str = vector_to_string(cxxflags, " ");
+    const std::string additional_flags_str = vector_to_string(additional_flags, " ");
+
+    const std::string to_hash = std + cxxflags_str + additional_flags_str;
+
+    std::string out_name = u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
+
+    Path outpath = paths.get_sub_clang_pch_test() / out_name;
+
+    try {
+        std::ofstream out_file(outpath.string());
+        out_file << std << "\n"
+                 << cxxflags_str << "\n"
+                 << additional_flags_str << "\n"
+                 << (result ? "true" : "false") << "\n";
+        out_file.close();
+    } catch (const std::exception &e) {
+        gpwarning(TTY_TS(fg(terminal_color::red), stderr), "Failed to write clang pch test file: {}\n", e.what());
+    }
+}
+
+bool linux_clang::test_pch(const std::string &std,
+                           const std::vector<std::string> &cxxflags,
+                           const std::vector<std::string> &additional_flags) const {
+    auto time_begin = now();
+
+    auto filtered_cxxflags = filter_pch_flags(cxxflags);
+    auto filtered_additional_flags = filter_pch_flags(additional_flags);
+
+    // TODO: return true if the flags are defaults
+
+    // If already in cache, return the cached result.
+    bool result;
+    if (get_test_pch_from_cache(std, filtered_cxxflags, filtered_additional_flags, result)) {
+        gpinfo(TTY_TS(fg(terminal_color::blue), stderr),
+               "clang pch test cached ({:.2f}ms)\n",
+               duration_ms(time_begin, now()));
+        return result;
+    }
+
+    Paths &paths = Paths::get_instance();
+
+    const std::string test_cmd = "clang++ " + vector_to_string(filtered_cxxflags, " ", "", true) + "-x c++ -include " +
+                                 paths.get_template_header_path().quote_if_needed() + " -x c++ /dev/null " +
+                                 vector_to_string(filtered_additional_flags, " ", "", true) + "> /dev/null 2>&1";
+
+    result = system(test_cmd.c_str()) == 0;
+
+    const auto tty_ts = TTY_TS(result ? fg(terminal_color::green) : fg(terminal_color::red), stderr);
+    gpdebug("PCH test result: {}\n", styled(result ? "true" : "false", tty_ts));
+    gpmsgdump("TEST CMD: {}\n", test_cmd);
+
+    gpinfo("PCH test took {:.2f} ms\n", duration_ms(time_begin, now()));
+
+    save_test_pch_to_cache(std, filtered_cxxflags, filtered_additional_flags, result);
+
+    return result;
 }
 
 std::unique_ptr<compiler_support> create_compiler_support(const std::string &compiler_name, const Settings &settings) {

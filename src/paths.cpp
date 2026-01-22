@@ -69,6 +69,8 @@ void Paths::validate_cache_dir() {
     sub_cache_dir = cache_dir / SUB_DIR_CACHE;
     sub_templates_dir = cache_dir / SUB_DIR_TEMPLATES;
     sub_permanent_dir = cache_dir / SUB_DIR_PERMANENT;
+    sub_clang_pch_test = cache_dir / SUB_DIR_CLANG_PCH_TEST;
+
     template_path = this->sub_templates_dir / "rcc_template.cpp";
     template_header_path = this->sub_templates_dir / "rcc_template.hpp";
 
@@ -79,6 +81,7 @@ void Paths::validate_cache_dir() {
     expect_exists(template_header_path.get_path());
 
     // Check if the non-mandatory directories exist, if not, create them
+    create_dir_if_not_exists(sub_clang_pch_test.get_path());
     create_dir_if_not_exists(sub_cache_dir.get_path());
     create_dir_if_not_exists(sub_permanent_dir.get_path());
 }
@@ -97,6 +100,10 @@ Path Paths::get_sub_templates_dir() const {
 
 Path Paths::get_sub_permanent_dir() const {
     return this->sub_permanent_dir;
+}
+
+Path Paths::get_sub_clang_pch_test() const {
+    return this->sub_clang_pch_test;
 }
 
 Path Paths::get_template_file_path() const {

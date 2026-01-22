@@ -128,8 +128,6 @@ std::string gen_exec_cmd(const Settings &settings, const Path &bin_path) {
 bool compile_code(const Settings &settings,
                   const Path &bin_path,
                   const Path &cpp_path,
-                  const std::string &cxxflags,
-                  const std::string &additional_flags,
                   const compiler_support &cs,
                   bool silent = false) {
     std::vector<Path> sources = {cpp_path};
@@ -137,8 +135,7 @@ bool compile_code(const Settings &settings,
         sources.emplace_back(src);
     }
 
-    const std::string compile_cmd = cs.get_compile_command(sources, bin_path, cxxflags, additional_flags) +
-                                    (silent ? " >/dev/null 2>&1" : "");
+    const std::string compile_cmd = cs.get_compile_command(sources, bin_path) + (silent ? " >/dev/null 2>&1" : "");
 
     gpdebug("{}\n", compile_cmd);
 
@@ -361,7 +358,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
     // the compiler
     const std::string compiler = settings.get_compiler();
 
-    const std::string cxxflags = settings.get_cxxflags_as_string();
+    const std::string cxxflags = settings.get_std_cxxflags_as_string();
     const std::string additional_flags = settings.get_additional_flags_as_string();
     const std::string additional_includes = settings.get_additional_includes_as_string();
     const std::string above_main = settings.get_above_main_as_string();
@@ -423,7 +420,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
         // Write c++ code to the cpp file
         cpp_path.write_file(full_code);
 
-        if (!compile_code(settings, bin_path, cpp_path, cxxflags, additional_flags, *cs, silent)) {
+        if (!compile_code(settings, bin_path, cpp_path, *cs, silent)) {
             return {TryStatus::COMPILE_FAILED, 1}; // Compile failed
         }
     }
