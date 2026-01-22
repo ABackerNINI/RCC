@@ -1,73 +1,65 @@
-# Build details
+PROJECT_ROOT := $(CURDIR)
 
-# TODO: rewrite this Makefile
+CUR_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 
-CXX = g++
-CXXSTD = c++17
-CXXFLAGS = -Wall -Wextra -std=$(CXXSTD) -Wno-unused-parameter
-BD = ./build
+# ======================================================================================================================
+# PROJECT
 
-# Pre-Compiled Header
+PROJECT := RCC_TEMPLATE
 
-PCH = rcc_template.hpp
-GCC_GCH_DIR = $(PCH).gch
+# ======================================================================================================================
+# OPTIONS
 
-GCH = ""
+MODE := debug
 
-ifeq ($(CXX), g++)
-	GCH = $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CXXSTD).default.gch \
-		  $(GCC_GCH_DIR)/rcc_template.hpp.$(CXX).$(CXXSTD).stdc++.gch
-else ifeq ($(CXX), clang++)
-	GCH = rcc_template.hpp.pch rcc_template.hpp.stdc++.pch
+CXX := g++
+CXXSTD := c++17
+
+# ======================================================================================================================
+# BUILD DETAILS
+
+CXXFLAGS = -Wall -Wextra -std=$(CXXSTD)
+
+ifeq ($(MODE),debug)
+	CXXFLAGS += -g -O0 -DDEBUG
+else ifeq ($(MODE),release)
+	CXXFLAGS += -flto=auto -O3 -march=native -DNDEBUG
 endif
 
-# for g++ PCH
-$(GCC_GCH_DIR)/%.default.gch: $(PCH)
-	@mkdir -p $(GCC_GCH_DIR)
-	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
-$(GCC_GCH_DIR)/%.stdc++.gch: $(PCH)
-	@mkdir -p $(GCC_GCH_DIR)
-	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
+SRC := rcc_template.hpp
+DIR := $(SRC).gch
 
-# for clang++ PCH
-%.hpp.pch: $(PCH)
-	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
-%.hpp.stdc++.pch: $(PCH)
-	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H -o $@ $<
+SIGNATURE_ARGS := $(CXXFLAGS)
+SIGNATURE := $(shell echo "a$(SIGNATURE_ARGS)b" | md5sum | cut -c1-12)
 
-# Build Executable
+PREFIX := $(CXX).$(CXXSTD).$(MODE).$(SIGNATURE)
+TARGETS := $(DIR)/$(PREFIX).default.gch $(DIR)/$(PREFIX).stdc++.gch
 
-TARGET = test
+default: all
 
-all: $(GCH)
+# ======================================================================================================================
+# RULES
 
-rebuild: clean all
+$(DIR)/%.default.gch: $(SRC)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -x c++-header $< -o $@
 
-# Executable 1
+$(DIR)/%.stdc++.gch: $(SRC)
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -x c++-header -DINCLUDE_BITS_STDCPP_H $< -o $@
 
-OBJ = test.o
-OBJBD = $(OBJ:%=$(BD)/%)
+# ======================================================================================================================
+# PHONY TARGETS
 
-$(TARGET): $(PCH) $(OBJBD)
-	$(CXX) $(CXXFLAGS) -g -I. -o $(TARGET) $(OBJBD)
+all: $(TARGETS)
 
-# Compile to objects
+debug:
+	@$(MAKE) -f $(CUR_MAKEFILE) MODE=debug --no-print-directory
 
-$(BD)/%.o: %.cpp
-	@$(if $(wildcard $(BD)),,mkdir -p $(BD))
-	$(CXX) -c -o $@ $< $(CXXFLAGS)
-
-# Dependencies
-
-test.o: rcc_template.hpp test.cpp
-
-# Clean up
+release:
+	@$(MAKE) -f $(CUR_MAKEFILE) MODE=release --no-print-directory
 
 clean:
-	rm -f *.gch *.pch
-	rm -f "$(TARGET)" $(OBJBD)
-	rm -fd "$(GCC_GCH_DIR)" "$(BD)"
+	rm -rf $(DIR)
 
-# PHONY
-
-.PHONY: all rebuild clean
+.PHONY: default all debug release clean
