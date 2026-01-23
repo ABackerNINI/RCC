@@ -34,30 +34,41 @@ Well, the g++/clang++ takes around 0.4 seconds to compile, even for a small piec
 ```shell
 git clone https://github.com/ABackerNINI/RCC.git
 cd RCC/
-bash ./install.sh
+bash install.sh
 ```
 
 ## Quick Start
 
-Hello World:
+### Hello World
 
 ```shell
 rcc 'cout<<"Hello World!"<<endl;'
+# OUTPUT: Hello World!
 ```
+
+### Auto Wrap
 
 RCC will try to wrap the code in `cout<<...<<endl;` and compile it, so you can just:
 
 ```shell
 rcc '"Hello World!"'
+# OUTPUT: Hello World!
 ```
 
 <!-- TODO: add more examples here. -->
 
-Compile with specific C++ standard and include the `bits/stdc++.h` header:
+### Options
+
+Compile using `clang++` with specific C++ standard and include the `filesystem` header:
 
 ```shell
-rcc -std=c++17 --include-all 'filesystem::path p="test"; p/= "test.txt";' 'p'
+rcc --clang++ -std=c++17 --include 'filesystem' 'filesystem::path p="test"; p /= "test.txt";' 'p'
+# OUTPUT: "test/test.txt"
 ```
+
+A lot more options are available, see `rcc --help` for more information.
+
+### Permanent Code
 
 The following code will create a permanent code named `try_push` that will try `git push` 10 times until it succeeds.
 
@@ -73,7 +84,7 @@ Run it with:
 rcc run try_push
 ```
 
-or
+or run with arguments:
 
 ```shell
 rcc run try_push -- 15
@@ -84,20 +95,20 @@ rcc run try_push -- 15
 __Only two things you need to know for starting, the first is double quotes, second is single quotes.__
 
 ```shell
-# test1.sh
-
 #!/bin/bash
+
+# test1.sh
 
 # Double quotes `"` inside single quotes `'` will be interpreted as is by sh,
 # the same as shell variables, so usually double quotes should be inside single
 # quotes while variables should be outside single quotes.
 #
 # RCC will concat all the 3 arguments together.
-#    1             2   3
-#    v__________v  vv  v_________________________________________v
-rcc 'string s = "' $1 '"; s[0] = toupper(s[0]); cout << s << endl;'
+#    1              2    3
+#    v__________v   vv   v_________________________________________v
+rcc 'string s = "' "$1" '"; s[0] = toupper(s[0]); cout << s << endl;'
 
-# Avoid using single quote, use 'CH(c)' instead of 'char c='c''.
+# Avoid using single quotes, use 'CH(c)' instead of 'char c='c''.
 # CH() is a wrapper macro returns the first character passed in.
 rcc 'char c = CH(f); cout << c << endl;'
 ```
@@ -114,9 +125,9 @@ f
 Something else you may want to know.
 
 ```shell
-# test2.sh
-
 #!/bin/bash
+
+# test2.sh
 
 # Use C++ math functions
 rcc 'cout << sqrt(56) * pow(2, 13) << endl;'
@@ -180,7 +191,7 @@ Steps:
 ## Uninstall
 
 ```shell
-bash ./uninstall.sh
+bash uninstall.sh
 ```
 
 ## License
