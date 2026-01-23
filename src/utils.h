@@ -4,10 +4,33 @@
 #include "libs/ghc/fs_std.hpp" // IWYU pragma: keep
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
 namespace rcc {
+
+// Ignore the result of a function call so that compiler doesn't warn about
+// unused return result.
+template <typename T> void IGNORE_RESULT(T &&) {}
+
+// Wrapper function of system(const char *);
+inline int system(const std::string &cmd) {
+    // print(cmd);
+    return ::system(cmd.c_str());
+}
+
+// Wrapper for system() to ignore return value.
+inline void ignore_system(const char *cmd) {
+    // [[maybe_unused]] auto result = system(cmd); // ignore result
+    IGNORE_RESULT(system(cmd));
+}
+
+// Wrapper for system() to ignore return value.
+inline void ignore_system(const std::string &cmd) {
+    // [[maybe_unused]] auto result = system(cmd); // ignore result
+    IGNORE_RESULT(system(cmd));
+}
 
 // Check if the string starts with the given prefix.
 bool starts_with(const std::string &str, const std::string &prefix);

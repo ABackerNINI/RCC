@@ -116,7 +116,7 @@ std::string linux_gcc::get_compile_command(const std::vector<Path> &sources, con
     const std::string &cxxflags = settings.get_std_cxxflags_as_string();
     const std::string &additional_flags = settings.get_additional_flags_as_string();
 
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     std::string compile_cmd = "g++";
     if (!cxxflags.empty()) {
@@ -148,7 +148,7 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources, c
     const std::string &cxxflags = settings.get_std_cxxflags_as_string();
     const std::string &additional_flags = settings.get_additional_flags_as_string();
 
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     Path pch_path = paths.get_sub_templates_dir();
 
@@ -224,7 +224,7 @@ bool linux_clang::get_test_pch_from_cache(const std::string &std,
 
     result = false;
 
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     const std::string cxxflags_str = vector_to_string(cxxflags, " ");
     const std::string additional_flags_str = vector_to_string(additional_flags, " ");
@@ -271,7 +271,7 @@ void linux_clang::save_test_pch_to_cache(const std::string &std,
                                          const std::vector<std::string> &cxxflags,
                                          const std::vector<std::string> &additional_flags,
                                          bool result) const {
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     const std::string cxxflags_str = vector_to_string(cxxflags, " ");
     const std::string additional_flags_str = vector_to_string(additional_flags, " ");
@@ -307,12 +307,11 @@ bool linux_clang::test_pch(const std::string &std,
     // If already in cache, return the cached result.
     bool result;
     if (get_test_pch_from_cache(std, filtered_cxxflags, filtered_additional_flags, result)) {
-        gpinfo(TTY_TS(fg(terminal_color::blue), stderr), "clang pch test cached ({:.2f}ms)\n",
-               duration_ms(time_begin, now()));
+        gpinfo("clang pch test cached ({:.2f}ms)\n", duration_ms(time_begin, now()));
         return result;
     }
 
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     const std::string test_cmd = "clang++ " + vector_to_string(filtered_cxxflags, " ", "", true) + "-x c++ -include " +
                                  paths.get_template_header_path().quote_if_needed() + " -x c++ /dev/null " +

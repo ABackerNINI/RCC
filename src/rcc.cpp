@@ -8,28 +8,6 @@
 
 using namespace rcc;
 
-// Ignore the result of a function call so that compiler doesn't warn about
-// unused return result.
-template <typename T> void IGNORE_RESULT(T &&) {}
-
-// Wrapper function of system(const char *);
-int system(const std::string &cmd) {
-    // print(cmd);
-    return system(cmd.c_str());
-}
-
-// Wrapper for system() to ignore return value.
-void ignore_system(const char *cmd) {
-    // [[maybe_unused]] auto result = system(cmd); // ignore result
-    IGNORE_RESULT(system(cmd));
-}
-
-// Wrapper for system() to ignore return value.
-void ignore_system(const std::string &cmd) {
-    // [[maybe_unused]] auto result = system(cmd); // ignore result
-    IGNORE_RESULT(system(cmd));
-}
-
 // TODO: Handle signals
 
 // Signal handler for SIGINT (Control-C) to exit the program gracefully.
@@ -61,18 +39,12 @@ pid_t random_clean_cache() {
 
         pid_t pid = fork();
         if (pid == 0) { // in child process
-            Paths &paths = Paths::get_instance();
-            // find and remove src/bin files whose access time is 31 days ago
-            // std::string find_rm_cmd;
-            // find_rm_cmd += std::string("find ") + paths.get_sub_cache_dir().get_path();
-            // find_rm_cmd += std::string(" -type f");
-            // find_rm_cmd += std::string(" \\( -name \"*.cpp\" -o -name \"*.bin\" \\)");
-            // find_rm_cmd += std::string(" -atime +30 | xargs rm -f");
-
+            const Paths &paths = Paths::get_instance();
+            // Find and remove src/bin files whose access time is 31 days ago
             //! Caution: rm command
-            std::string find_rm_cmd =
-                format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
-                       paths.get_sub_cache_dir().quote_if_needed());
+            std::string
+                find_rm_cmd = format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
+                                     paths.get_sub_cache_dir().quote_if_needed());
 
             const auto tty_ts = TTY_TS(fg(color::dark_red) | emphasis::bold, stderr);
             gpdebug("{}: {}\n", styled("Removing old cache files", tty_ts), find_rm_cmd);
@@ -144,13 +116,12 @@ bool compile_code(const Settings &settings,
     if (system(compile_cmd) != 0) {
         if (!silent) {
             const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
+            print(stderr, TTY_TS(red_bold, stderr), "\nCOMPILATION FAILED!\n");
             if (isatty(fileno(stderr))) {
                 print(stderr, "OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
             } else {
                 print(stderr, "OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
             }
-            print(stderr, TTY_TS(red_bold, stderr), "COMPILATION FAILED!\n");
-
             const auto tty_saddle_brown_bold = TTY_TS(fg(color::saddle_brown) | emphasis::bold, stderr);
             gpdebug("{}: {}\n", styled("COMPILE COMMAND", tty_saddle_brown_bold), compile_cmd);
             gpdebug("{}: {}\n", styled("EXECUTE COMMAND", tty_saddle_brown_bold), exec_cmd);
@@ -202,7 +173,7 @@ std::string suggest_similar_permanent(const std::string &name) {
         return "";
     }
 
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     std::string suggestion;
 
@@ -234,7 +205,7 @@ std::string suggest_similar_permanent(const std::string &name) {
 // Run a permanent executable, return the return code of the executable or 1 if the executable does not exist.
 int run_permanent(const Settings &settings, const std::string &name) {
     // rcc paths
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     Path cpp_path, bin_path, desc_path;
     paths.get_src_bin_full_path_permanent(name, cpp_path, bin_path, desc_path);
@@ -269,7 +240,7 @@ int run_permanent(const Settings &settings, const std::string &name) {
 // List all permanent executables, return 1 on error.
 int list_permanent(const Settings &settings) {
     // rcc paths
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     try {
         auto files = find_files(paths.get_sub_permanent_dir().get_path(), {".desc"});
@@ -307,7 +278,7 @@ bool remove_file(Path &p) noexcept {
         // *Note: remove() may throw `std::bad_alloc` or `fs::filesystem_error`
         return p.remove();
     } catch (const std::exception &e) {
-        print(stderr, "Error: {}\n", e.what());
+        gperror("{}", e.what());
         return false;
     }
 }
@@ -315,7 +286,7 @@ bool remove_file(Path &p) noexcept {
 // Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
 int remove_permanents(const Settings &settings) {
     // rcc paths
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     int ret = 0;
     size_t num_removed = 0;
@@ -334,7 +305,7 @@ int remove_permanents(const Settings &settings) {
             gpdebug("Removed '{}'\n", permanent);
         } else {
             ret = 1;
-            print(stderr, "Permanent '{}' does not exist!\n", permanent);
+            gperror("Permanent '{}' does not exist!\n", styled(permanent, TTY_TS(fg(terminal_color::red), stderr)));
         }
     }
 
@@ -343,17 +314,17 @@ int remove_permanents(const Settings &settings) {
     return ret;
 }
 
-enum class TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
+struct TryCodeResult {
+    enum TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
 
-struct TryResult {
     TryStatus status;
-    int return_code;
+    int exit_status;
 };
 
 // Silent mode: no output of compiler errors, and no output after the compilation failed.
-TryResult try_code(Settings &settings, const std::string &code, bool silent = false) {
+TryCodeResult try_code(const Settings &settings, const std::string &code, bool silent = false) {
     // rcc paths
-    Paths &paths = Paths::get_instance();
+    const Paths &paths = Paths::get_instance();
 
     // the compiler
     const std::string compiler = settings.get_compiler();
@@ -418,7 +389,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
         cpp_path.write_file(full_code);
 
         if (!compile_code(settings, bin_path, cpp_path, *cs, silent)) {
-            return {TryStatus::COMPILE_FAILED, 1}; // Compile failed
+            return {TryCodeResult::COMPILE_FAILED, 1}; // Compile failed
         }
     }
 
@@ -431,7 +402,7 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
                                                                        : settings.get_permanent_desc());
         }
 
-        return {TryStatus::SUCCESS, 0};
+        return {TryCodeResult::SUCCESS, 0};
     }
 
     /*------------------------------------------------------------------------*/
@@ -439,7 +410,51 @@ TryResult try_code(Settings &settings, const std::string &code, bool silent = fa
 
     int ret = run_bin(settings, cpp_path, bin_path);
 
-    return {TryStatus::SUCCESS, ret};
+    return {TryCodeResult::SUCCESS, ret};
+}
+
+struct AutoWrapResult {
+    bool tried{false};
+    TryCodeResult try_result;
+};
+
+AutoWrapResult auto_wrap(const Settings &settings) {
+    auto time_begin = now();
+
+    auto &codes = settings.get_codes();
+
+    if (codes.empty()) {
+        return {false, {}}; // No code to wrap
+    }
+
+    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
+    // 'cout << ... << endl;' and try to compile and run it.
+    // This is for convenience, e.g. rcc '2+3*5'.
+
+    auto &last_code = codes.back();
+    if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
+        std::string code;
+
+        for (size_t i = 0; i < codes.size() - 1; i++) {
+            code.append(codes[i]);
+        }
+        code.append("cout << (" + last_code + ") << endl;");
+
+        const auto tty_dodger_blue_bold = TTY_TS(fg(color::dodger_blue) | emphasis::bold, stderr);
+
+        gpdebug(tty_dodger_blue_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+        gpdebug("Trying to wrap code with 'cout << ... << endl;'\n");
+        auto try_result = try_code(settings, code, true); // silent mode
+        if (try_result.status != TryCodeResult::SUCCESS) {
+            gpdebug(TTY_TS(fg(color::brown) | emphasis::bold, stderr), "AUTO-WRAP FAILED\n");
+        }
+        gpdebug(tty_dodger_blue_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+        gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin, now()));
+
+        return {true, try_result};
+    }
+
+    return {false, {}};
 }
 
 // The main function of rcc.
@@ -511,40 +526,16 @@ int rcc_main(int argc, char **argv) {
     // No code to compile, just return
     if (!settings.has_code()) {
         if (!settings.get_permanent().empty()) {
-            print(stderr, "Error: No code to compile as permanent program.\n");
+            gperror("No code to compile as permanent program.\n");
             return 1;
         }
         return 0;
     }
 
-    auto &codes = settings.get_codes();
-
-    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
-    // 'cout << ... << endl;' and try to compile and run it.
-    // This is for convenience, e.g. rcc '2+3*5'.
-    if (codes.size() > 0) {
-        auto &last_code = codes.back();
-        if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
-            std::string code;
-
-            for (size_t i = 0; i < codes.size() - 1; i++) {
-                code.append(codes[i]);
-            }
-            code.append("cout << (" + last_code + ") << endl;");
-
-            const auto tty_dodger_blue_bold = TTY_TS(fg(color::dodger_blue) | emphasis::bold, stderr);
-
-            gpdebug(tty_dodger_blue_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-            gpdebug("Trying to wrap code with 'cout << ... << endl;'\n");
-            auto try_result = try_code(settings, code, true); // silent mode
-            if (try_result.status != TryStatus::SUCCESS) {
-                gpdebug(TTY_TS(fg(color::brown) | emphasis::bold, stderr), "AUTO-WRAP FAILED\n");
-            }
-            gpdebug(tty_dodger_blue_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-            if (try_result.status == TryStatus::SUCCESS) {
-                return try_result.return_code;
-            }
-        }
+    // Try to auto-wrap the code, if successful, return the result directly
+    auto auto_warp_result = auto_wrap(settings);
+    if (auto_warp_result.tried && auto_warp_result.try_result.status == TryCodeResult::SUCCESS) {
+        return auto_warp_result.try_result.exit_status;
     }
 
     // command line c++ code
@@ -553,8 +544,7 @@ int rcc_main(int argc, char **argv) {
     // Try to compile and run the unwrapped code
     auto try_result = try_code(settings, code);
 
-    // TODO: optimize the return code
-    return try_result.return_code;
+    return try_result.exit_status;
 }
 
 int main(int argc, char **argv) {
