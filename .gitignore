@@ -9,3 +9,6 @@ rcc
 test
 p?.txt
 *.bin
+
+out.txt
+err.txt
