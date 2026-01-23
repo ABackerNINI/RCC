@@ -17,6 +17,7 @@
 #define SUB_DIR_CACHE "cache"
 #define SUB_DIR_TEMPLATES "templates"
 #define SUB_DIR_PERMANENT "permanent"
+#define SUB_DIR_LIBS "libs"
 #define SUB_DIR_CLANG_PCH_TEST "templates/clang_pch_test_cache"
 
 namespace rcc {
@@ -46,6 +47,10 @@ class Paths {
     // Get the sub permanent directory. This is where the permanent files are stored.
     // Usually ~/.cache/rcc/permanent.
     const Path &get_sub_permanent_dir() const { return sub_permanent_dir; }
+
+    // Get the sub libs directory. This is where the libraries are stored.
+    // Usually ~/.cache/rcc/libs.
+    const Path &get_sub_libs_dir() const { return sub_libs_dir; }
 
     // Get the sub clang pch test cache directory. This is where the clang pch test cache files are stored.
     // Usually ~/.cache/rcc/templates/clang_pch_test_cache.
@@ -86,6 +91,7 @@ class Paths {
     Path sub_cache_dir;
     Path sub_templates_dir;
     Path sub_permanent_dir;
+    Path sub_libs_dir;
     Path sub_clang_pch_test_cache_dir;
     Path template_path;
     Path template_header_path;

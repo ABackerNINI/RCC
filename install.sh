@@ -188,6 +188,8 @@ mkdir -p "$CACHE_DIR/templates"
 check_error "mkdir -p \"$CACHE_DIR/templates\""
 mkdir -p "$CACHE_DIR/permanent"
 check_error "mkdir -p \"$CACHE_DIR/permanent\""
+mkdir -p "$CACHE_DIR/libs"
+check_error "mkdir -p \"$CACHE_DIR/libs\""
 
 # Copy templates to rcc cache dir
 make -C src/template clean
@@ -201,6 +203,11 @@ check_error "cp -r src/template/* -t \"$CACHE_DIR/templates\""
 #! This might interfere with the PCH matching process, so ...
 # cp -r src/template/*.hpp -t "$CACHE_DIR/cache"
 # check_error "cp -r src/template/*.hpp -t \"$CACHE_DIR/cache\""
+
+# Copy libs to rcc cache dir
+echo "${YELLOW}Copying libs to cache directory${NORMAL}"
+cp -r --update=older libs -t "$CACHE_DIR"
+check_error "cp -r --update=older libs -t \"$CACHE_DIR\""
 
 # Build Pre-Compiled Header
 echo "${YELLOW}Building Pre-Compiled Header${NORMAL}"

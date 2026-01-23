@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "debug_fmt.h"
 #include "libs/CLI11.hpp"
+#include "paths.h"
 #include <sstream>
 
 DBG_LEVEL debug_level = DBG_LEVEL::WARNING;
@@ -31,6 +32,25 @@ void Settings::add_options_and_flags(CLI::App &app) {
            "Include additional header")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+
+    app.add_flag_callback(
+        "-fmt,--include-fmt",
+        [&]() {
+            additional_includes.push_back("fmt/os.h"); // includes format.h
+            additional_includes.push_back("fmt/color.h"); // includes format.h
+            additional_includes.push_back("fmt/ranges.h"); // includes format.h
+            additional_includes.push_back("fmt/std.h"); // includes format.h, ostream.h
+            // additional_includes.push_back("fmt/format.h");
+            // additional_includes.push_back("fmt/chrono.h");
+            // additional_includes.push_back("fmt/ostream.h"); // includes chrono.h
+            // ? Compile warning: possibly dangling reference to a temporary
+            // additional_includes.push_back("fmt/xchar.h");
+            const auto &paths = Paths::get_instance();
+            additional_flags.push_back("-I" + paths.get_sub_libs_dir().string());
+            additional_flags.push_back("-L" + paths.get_sub_libs_dir().string());
+            additional_flags.push_back("-lfmt");
+        },
+        "Include the `fmt` library, which will increase compile time a lot");
 
     app.add_flag_callback(
         "--include-all",

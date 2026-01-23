@@ -69,6 +69,7 @@ void Paths::validate_cache_dir() {
     sub_cache_dir = cache_dir / SUB_DIR_CACHE;
     sub_templates_dir = cache_dir / SUB_DIR_TEMPLATES;
     sub_permanent_dir = cache_dir / SUB_DIR_PERMANENT;
+    sub_libs_dir = cache_dir / SUB_DIR_LIBS;
     sub_clang_pch_test_cache_dir = cache_dir / SUB_DIR_CLANG_PCH_TEST;
 
     template_path = this->sub_templates_dir / "rcc_template.cpp";
@@ -78,6 +79,7 @@ void Paths::validate_cache_dir() {
     // Check if the mandatory files or directories exist, if not, exit
     expect_exists(cache_dir.get_path());
     expect_exists(sub_templates_dir.get_path());
+    expect_exists(sub_libs_dir.get_path());
     expect_exists(template_path.get_path());
     expect_exists(template_header_path.get_path());
 
