@@ -10,21 +10,13 @@ PROJECT := RCC_TEMPLATE
 # ======================================================================================================================
 # OPTIONS
 
-MODE := debug
-
 CXX := g++
 CXXSTD := c++17
 
 # ======================================================================================================================
 # BUILD DETAILS
 
-CXXFLAGS = -Wall -Wextra -std=$(CXXSTD)
-
-ifeq ($(MODE),debug)
-	CXXFLAGS += -g -O0 -DDEBUG
-else ifeq ($(MODE),release)
-	CXXFLAGS += -flto=auto -O3 -march=native -DNDEBUG
-endif
+CXXFLAGS = -g0 -O0 -Wall -Wextra -std=$(CXXSTD)
 
 SRC := rcc_template.hpp
 DIR := $(SRC).gch
@@ -32,7 +24,7 @@ DIR := $(SRC).gch
 SIGNATURE_ARGS := $(CXXFLAGS)
 SIGNATURE := $(shell echo "a$(SIGNATURE_ARGS)b" | md5sum | cut -c1-12)
 
-PREFIX := $(CXX).$(CXXSTD).$(MODE).$(SIGNATURE)
+PREFIX := $(CXX).$(CXXSTD).$(SIGNATURE)
 TARGETS := $(DIR)/$(PREFIX).default.gch $(DIR)/$(PREFIX).stdc++.gch
 
 default: all
@@ -52,12 +44,6 @@ $(DIR)/%.stdc++.gch: $(SRC)
 # PHONY TARGETS
 
 all: $(TARGETS)
-
-debug:
-	@$(MAKE) -f $(CUR_MAKEFILE) MODE=debug --no-print-directory
-
-release:
-	@$(MAKE) -f $(CUR_MAKEFILE) MODE=release --no-print-directory
 
 clean:
 	rm -rf $(DIR)

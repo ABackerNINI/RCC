@@ -74,8 +74,16 @@ class Settings {
 
     std::string compiler{RCC_CXX}; // the compiler to use
     std::string std{RCC_CXXSTD}; // the c++ standard to use, relates to "-std"
-    // the c++ flags to use, default to a set of common flags.
-    std::vector<std::string> cxxflags{"-Wall", "-Wextra", "-Wno-unused-variable", "-Wno-unused-parameter",
+    // The c++ flags to use, default to a set of common flags.
+    // ! Should be consistent with the flags to compile the PCH in template/Makefile.
+    // * -W* flags have no effect when compiling PCH.
+    // * Use -g0 and -O0 to have the fastest compilation time.
+    std::vector<std::string> cxxflags{"-g0",
+                                      "-O0",
+                                      "-Wall",
+                                      "-Wextra",
+                                      "-Wno-unused-variable",
+                                      "-Wno-unused-parameter",
                                       "-Wno-unused-function"};
     // additional flags to pass to the compiler, at the end of the compile command, the libraries to link against have
     // to be specified after source files that use them. Relates to anything that starts with "-l", or "-pthread", or

@@ -69,10 +69,11 @@ void Paths::validate_cache_dir() {
     sub_cache_dir = cache_dir / SUB_DIR_CACHE;
     sub_templates_dir = cache_dir / SUB_DIR_TEMPLATES;
     sub_permanent_dir = cache_dir / SUB_DIR_PERMANENT;
-    sub_clang_pch_test = cache_dir / SUB_DIR_CLANG_PCH_TEST;
+    sub_clang_pch_test_cache_dir = cache_dir / SUB_DIR_CLANG_PCH_TEST;
 
     template_path = this->sub_templates_dir / "rcc_template.cpp";
     template_header_path = this->sub_templates_dir / "rcc_template.hpp";
+    template_pch_path = this->sub_templates_dir / "rcc_template.hpp.gch";
 
     // Check if the mandatory files or directories exist, if not, exit
     expect_exists(cache_dir.get_path());
@@ -81,37 +82,9 @@ void Paths::validate_cache_dir() {
     expect_exists(template_header_path.get_path());
 
     // Check if the non-mandatory directories exist, if not, create them
-    create_dir_if_not_exists(sub_clang_pch_test.get_path());
     create_dir_if_not_exists(sub_cache_dir.get_path());
     create_dir_if_not_exists(sub_permanent_dir.get_path());
-}
-
-Path Paths::get_cache_dir() const {
-    return this->cache_dir;
-}
-
-Path Paths::get_sub_cache_dir() const {
-    return this->sub_cache_dir;
-}
-
-Path Paths::get_sub_templates_dir() const {
-    return this->sub_templates_dir;
-}
-
-Path Paths::get_sub_permanent_dir() const {
-    return this->sub_permanent_dir;
-}
-
-Path Paths::get_sub_clang_pch_test() const {
-    return this->sub_clang_pch_test;
-}
-
-Path Paths::get_template_file_path() const {
-    return this->template_path;
-}
-
-Path Paths::get_template_header_path() const {
-    return this->template_header_path;
+    create_dir_if_not_exists(sub_clang_pch_test_cache_dir.get_path());
 }
 
 void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
@@ -137,7 +110,7 @@ void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_pa
     bin_path = cache_dir / SUB_DIR_CACHE / out_bin_name;
 }
 
-void Paths::get_src_bin_full_path_permanent(const std::string name,
+void Paths::get_src_bin_full_path_permanent(const std::string &name,
                                             Path &src_path,
                                             Path &bin_path,
                                             Path &desc_path) const {
