@@ -38,7 +38,7 @@ void Settings::add_options_and_flags(CLI::App &app) {
             included_stdcpp = true;
             additional_includes.push_back("bits/stdc++.h");
         },
-        "Include the bits/stdc++.h header, this will increase compile time");
+        "Include the `bits/stdc++.h` header, which will increase compile time");
 
     app.add_option_function<std::string>(
            "--compile-with", [&](const std::string &fname) { additional_sources.push_back(fname); },
@@ -156,7 +156,7 @@ void Settings::parse_remaining_options(CLI::App &app) {
 }
 
 int Settings::parse_argv(int argc, char **argv) {
-    // Locate arguments after '--', these arguments will be passed 
+    // Locate arguments after '--', these arguments will be passed
     // to the user program and will not be parsed by CLI11.
     int args_index = locate_args(argc, argv);
     if (args_index < argc) {
@@ -170,7 +170,7 @@ int Settings::parse_argv(int argc, char **argv) {
     // Allow non-standard options to be passed to the compiler, such as -std=c++17
     app.allow_non_standard_option_names();
 
-    // Allow extra arguments to be passed to the program and they can be accessed via app.remaining() 
+    // Allow extra arguments to be passed to the program and they can be accessed via app.remaining()
     app.allow_extras();
 
     // Add options and flags
