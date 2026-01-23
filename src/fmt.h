@@ -26,12 +26,14 @@ inline text_style TTY_TS(text_style ts, FILE *fp = stdout) {
     }
 }
 
+#if __cplusplus >= 201402L
+// C++14 or later
 constexpr text_style red_bold = fg(terminal_color::red) | emphasis::bold;
 constexpr text_style green_bold = fg(terminal_color::green) | emphasis::bold;
-constexpr text_style yellow_bold = fg(terminal_color::yellow) | emphasis::bold;
-constexpr text_style blue_bold = fg(terminal_color::blue) | emphasis::bold;
-constexpr text_style magenta_bold = fg(terminal_color::magenta) | emphasis::bold;
-constexpr text_style cyan_bold = fg(terminal_color::cyan) | emphasis::bold;
-constexpr text_style white_bold = fg(terminal_color::white) | emphasis::bold;
+#else
+// C++11 or earlier
+static text_style red_bold = fg(terminal_color::red) | emphasis::bold;
+static text_style green_bold = fg(terminal_color::green) | emphasis::bold;
+#endif
 
 #endif // __FMT_H__

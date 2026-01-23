@@ -414,8 +414,12 @@ TryCodeResult try_code(const Settings &settings, const std::string &code, bool s
 }
 
 struct AutoWrapResult {
-    bool tried{false};
+    bool tried;
     TryCodeResult try_result;
+
+    // For C++11 compatibility
+    AutoWrapResult(bool tried = false, TryCodeResult try_result = TryCodeResult())
+        : tried(tried), try_result(try_result) {}
 };
 
 AutoWrapResult auto_wrap(const Settings &settings) {
