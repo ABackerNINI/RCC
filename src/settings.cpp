@@ -101,9 +101,12 @@ int Settings::parse_argv(int argc, char **argv) {
         ->option_text("NAME");
 
     // Add create subcommand
-    CLI::App *create = app.add_subcommand("create", "Create a permanent code, same as --permanent");
+    CLI::App *create = app.add_subcommand("create", "Create a permanent code, same as --permanent")
+                           ->allow_extras(false)
+                           ->fallthrough(true);
 
     create->add_option("NAME", permanent, "Name of the permanent code to create")->required();
+    create->add_option("--desc", permanent_desc, "Description for the permanent code");
 
     // Add run subcommand
     CLI::App *run = app.add_subcommand("run", "Run a permanent code, same as --run-permanent")
