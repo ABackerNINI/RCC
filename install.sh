@@ -98,6 +98,8 @@ CXXSTD=""
 # The rcc cache directory
 CACHE_DIR="$HOME/.cache/rcc"
 
+# TODO: Add --fresh-install to remove the cache directory and reinstall everything
+
 # Parse the options and arguments
 while true; do
     case "$1" in
@@ -130,6 +132,11 @@ done
 # The remaining arguments
 # EXTRA_ARGS=("$@")
 
+make_mode=release
+if [ "$DEBUG" = true ]; then
+    make_mode=debug
+fi
+
 ################################################################################
 
 # For test_cpp_standard.sh
@@ -150,14 +157,8 @@ echo ""
 
 # Build rcc
 echo "${YELLOW}Building rcc with${NORMAL} ${UNDERLINE}$CXX${NORMAL} and ${UNDERLINE}$CXXSTD${NORMAL}"
-if [ $DEBUG == true ]; then
-    make debug "CXX=$CXX" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
-    check_error "make debug"
-else
-    make release "CXX=$CXX" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
-    check_error "make release"
-fi
-
+make $make_mode "CXX=$CXX" "CXXSTD=$CXXSTD" "RCC_CACHE_DIR=$CACHE_DIR" BUILD_PCH=FALSE
+check_error "make $make_mode"
 # Copy rcc to path
 echo "${YELLOW}Installing rcc to /usr/local/bin/${NORMAL}"
 sudo cp bin/rcc /usr/local/bin/
@@ -177,6 +178,8 @@ if [ -d "$CACHE_DIR" ]; then
     check_error "rm -r \"$CACHE_DIR/cache\"/*"
     rm -rf "$CACHE_DIR/templates"/*.hpp "$CACHE_DIR/templates"/*.cpp
     check_error "rm -rf \"$CACHE_DIR/templates\"/*.hpp \"$CACHE_DIR/templates\"/*.cpp"
+    rm -rf "$CACHE_DIR/templates/clang_pch_test_cache"
+    check_error "rm -rf \"$CACHE_DIR/templates/clang_pch_test_cache\""
 fi
 echo "${YELLOW}Creating cache directory \"$CACHE_DIR\"${NORMAL}"
 mkdir -p "$CACHE_DIR/cache"
@@ -187,7 +190,7 @@ mkdir -p "$CACHE_DIR/permanent"
 check_error "mkdir -p \"$CACHE_DIR/permanent\""
 
 # Copy templates to rcc cache dir
-make -C src/template clean "CXX=$CXX"
+make -C src/template clean
 check_error "make clean"
 echo "${YELLOW}Copying templates to cache directory${NORMAL}"
 cp -r --preserve=timestamps src/template/* -t "$CACHE_DIR/templates"
