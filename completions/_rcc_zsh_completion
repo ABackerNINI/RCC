@@ -19,6 +19,7 @@ _rcc() {
         '(-v --version)'{-v,--version}'[Show version]' \
         '--clean-cache[Clean cached source and binary files]' \
         '*--include[Include additional header]:header:_files -g "*.{h,hh,hpp,hxx,h++,inl,tcc,tpp,txx,cuh,clh}"' \
+        '(-fmt --include-fmt)'{-fmt,--include-fmt}'[Include the fmt library]' \
         '--include-all[Include the bits/stdc++.h header, this will increase compile time]' \
         '*--compile-with[Compile with additional source file]:source:_files -g "*.{cpp,cxx,cc,C,c++,cp,ii,ixx,cppm,cu,cl}"' \
         '*--put-above-main[Any code that should be put above the main function]:code' \
