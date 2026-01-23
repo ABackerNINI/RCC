@@ -1,6 +1,7 @@
 #ifndef __RCC_SETTINGS_H__
 #define __RCC_SETTINGS_H__
 
+#include "libs/CLI11.hpp"
 #include "utils.h"
 #include <string>
 #include <vector>
@@ -63,6 +64,11 @@ class Settings {
   private:
     // Locate the position of the "--" argument in the command line.
     static int locate_args(int argc, char **argv);
+
+    void add_options_and_flags(CLI::App &app);
+    void add_permanent_options(CLI::App &app);
+    void add_permanent_subcommands(CLI::App &app);
+    void parse_remaining_options(CLI::App &app);
 
   private:
     std::string permanent;

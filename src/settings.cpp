@@ -16,23 +16,7 @@ int Settings::locate_args(int argc, char **argv) {
     return argc;
 }
 
-int Settings::parse_argv(int argc, char **argv) {
-    int args_index = locate_args(argc, argv);
-
-    if (args_index < argc) {
-        args_start = &argv[args_index + 1];
-        args_count = argc - args_index - 1;
-        argc -= args_count + 1;
-    }
-
-    CLI::App app{"RCC - Run C/C++ codes in terminal"};
-
-    app.allow_non_standard_option_names();
-    app.allow_extras();
-
-    // TODO: opt code for vector options, and option_text
-    // TODO: BinPackArguments false -> true
-
+void Settings::add_options_and_flags(CLI::App &app) {
     app.add_flag("--clean-cache", clean_cache,
                  "Clean cached source and binary files. Permanent code will not be affected.");
 
@@ -47,6 +31,7 @@ int Settings::parse_argv(int argc, char **argv) {
            "Include additional header")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+
     app.add_flag_callback(
         "--include-all",
         [&]() {
@@ -54,52 +39,66 @@ int Settings::parse_argv(int argc, char **argv) {
             additional_includes.push_back("bits/stdc++.h");
         },
         "Include the bits/stdc++.h header, this will increase compile time");
+
     app.add_option_function<std::string>(
            "--compile-with", [&](const std::string &fname) { additional_sources.push_back(fname); },
            "Compile with additional source file")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse()
         ->check(CLI::ExistingFile);
+
     app.add_option_function<std::string>(
            "--put-above-main", [&](const std::string &code) { above_main.push_back(code); },
            "Any code that should be put above the main function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+
     app.add_option_function<std::string>(
            "--function", [&](const std::string &code) { functions.push_back(code); }, "Define a function")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+
     app.add_option_function<std::string>(
            "--code", [&](const std::string &code) { codes.push_back(code); }, "Add code explicitly")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll)
         ->trigger_on_parse();
+
     app.add_flag_callback("--g++", [&]() { compiler = "g++"; }, "Use g++ as compiler");
+
     app.add_flag_callback("--clang++", [&]() { compiler = "clang++"; }, "Use clang++ as compiler")->excludes("--g++");
+
     app.add_flag("-d0{0},-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}", debug_level,
                  "Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE")
         ->check(CLI::Range(0, 5))
         ->option_text("LEVEL");
+}
 
-    /*==========================================================================*/
-    // Permanent code options
-
+void Settings::add_permanent_options(CLI::App &app) {
     // TODO: add option -f, --force
     // TODO: add option --remove-invalid-permanents
     // TODO: add option --update-permanent
+    // TODO: add option --rename-permanent, add rn subcommand = rename permanent
+    // TODO: add option --update-permanent, add update subcommand
 
     app.add_option("--permanent", permanent, "Make the code permanent")->option_text("NAME");
+
+    app.add_option("--desc", permanent_desc, "Description for the permanent code")->needs("--permanent");
+
     app.add_option("--run-permanent", run_permanent, "Run a permanent code")
         ->excludes("--permanent")
         ->option_text("NAME");
-    app.add_option("--desc", permanent_desc, "Description for the permanent code")->needs("--permanent");
+
     app.add_flag("--list-permanent", flag_list_permanent, "List all permanents and exit");
+
     // TODO: excludes all other permanent options, using CLI option groups?
     app.add_option("--remove-permanent", remove_permanent, "Remove permanent(s) and exit")
         ->excludes("--permanent")
         ->excludes("--run-permanent")
         ->excludes("--list-permanent")
         ->option_text("NAME");
+}
 
+void Settings::add_permanent_subcommands(CLI::App &app) {
     // Add create subcommand
     CLI::App *create = app.add_subcommand("create", "Create a permanent code, same as --permanent")
                            ->allow_extras(false)
@@ -132,24 +131,9 @@ int Settings::parse_argv(int argc, char **argv) {
                            ->alias("rm");
 
     remove->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
+}
 
-    // TODO: add option --rename-permanent, add rn subcommand = rename permanent
-    // TODO: add option --update-permanent, add update subcommand
-
-    try {
-        app.parse(argc, argv);
-    } catch (const CLI::ParseError &e) {
-        std::stringstream out, err;
-        int ret = app.exit(e, out, err);
-
-        auto color = e.get_exit_code() == 0 ? text_style{} : fg(terminal_color::red);
-
-        print(stdout, "{}", styled(out.str(), TTY_TS(color)));
-        print(stderr, "{}", styled(err.str(), TTY_TS(color, stderr)));
-
-        return ret;
-    }
-
+void Settings::parse_remaining_options(CLI::App &app) {
     std::vector<std::string> remaining = app.remaining(true);
 
     for (auto &s : remaining) {
@@ -169,6 +153,50 @@ int Settings::parse_argv(int argc, char **argv) {
             codes.push_back(s);
         }
     }
+}
+
+int Settings::parse_argv(int argc, char **argv) {
+    // Locate arguments after '--', these arguments will be passed 
+    // to the user program and will not be parsed by CLI11.
+    int args_index = locate_args(argc, argv);
+    if (args_index < argc) {
+        args_start = &argv[args_index + 1];
+        args_count = argc - args_index - 1;
+        argc -= args_count + 1;
+    }
+
+    CLI::App app{"RCC - Run C/C++ codes in terminal"};
+
+    // Allow non-standard options to be passed to the compiler, such as -std=c++17
+    app.allow_non_standard_option_names();
+
+    // Allow extra arguments to be passed to the program and they can be accessed via app.remaining() 
+    app.allow_extras();
+
+    // Add options and flags
+    add_options_and_flags(app);
+    add_permanent_options(app);
+    add_permanent_subcommands(app);
+
+    // TODO: opt code for vector options, and option_text
+
+    // Parse the command line arguments
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError &e) {
+        std::stringstream out, err;
+        int ret = app.exit(e, out, err);
+
+        auto color = e.get_exit_code() == 0 ? text_style{} : fg(terminal_color::red);
+
+        print(stdout, "{}", styled(out.str(), TTY_TS(color)));
+        print(stderr, "{}", styled(err.str(), TTY_TS(color, stderr)));
+
+        return ret;
+    }
+
+    // Parse remaining options
+    parse_remaining_options(app);
 
     // Print the settings
     gstmt_msgdump(debug_print());
