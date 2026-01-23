@@ -150,7 +150,7 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources, c
 
     const Paths &paths = Paths::get_instance();
 
-    Path pch_path = paths.get_sub_templates_dir();
+    auto &pch_path = paths.get_template_pch_path();
 
     std::string compile_cmd = "clang++";
     if (!cxxflags.empty()) {
@@ -165,7 +165,7 @@ std::string linux_clang::get_compile_command(const std::vector<Path> &sources, c
     // Test if the generated PCH is compatible with the given flags.
     // Note: not like g++, clang++ treats PCH mismatch as an error. So we need to test it.
     if (test_pch(settings.get_std(), settings.get_cxxflags(), settings.get_additional_flags())) {
-        compile_cmd += " -include " + paths.get_template_header_path().quote_if_needed();
+        compile_cmd += " -include-pch " + pch_path.quote_if_needed();
     }
 
     compile_cmd += " -o " + bin_path.quote_if_needed();
@@ -233,7 +233,7 @@ bool linux_clang::get_test_pch_from_cache(const std::string &std,
 
     std::string out_name = u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
 
-    Path outpath = paths.get_sub_clang_pch_test() / out_name;
+    Path outpath = paths.get_sub_clang_pch_test_cache_dir() / out_name;
 
     // Check if the file exists
     if (!outpath.exists()) {
@@ -280,7 +280,7 @@ void linux_clang::save_test_pch_to_cache(const std::string &std,
 
     std::string out_name = u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
 
-    Path outpath = paths.get_sub_clang_pch_test() / out_name;
+    Path outpath = paths.get_sub_clang_pch_test_cache_dir() / out_name;
 
     try {
         std::ofstream out_file(outpath.string());
@@ -313,8 +313,11 @@ bool linux_clang::test_pch(const std::string &std,
 
     const Paths &paths = Paths::get_instance();
 
-    const std::string test_cmd = "clang++ " + vector_to_string(filtered_cxxflags, " ", "", true) + "-x c++ -include " +
-                                 paths.get_template_header_path().quote_if_needed() + " -x c++ /dev/null " +
+    auto &gch_path = paths.get_template_pch_path();
+
+    // -E: preprocess only, -P: remove line markers
+    const std::string test_cmd = "clang++ " + std + " " + vector_to_string(filtered_cxxflags, " ", "", true) +
+                                 "-x c++ -E -P -include-pch " + gch_path.quote_if_needed() + " /dev/null " +
                                  vector_to_string(filtered_additional_flags, " ", "", true) + "> /dev/null 2>&1";
 
     result = system(test_cmd.c_str()) == 0;
