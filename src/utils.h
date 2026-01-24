@@ -66,7 +66,7 @@ inline auto now() -> decltype(std::chrono::high_resolution_clock::now()) {
     return std::chrono::high_resolution_clock::now();
 }
 
-template <typename T> double duration_ms(const T &start, const T &end) {
+template <typename T> double duration_ms(const T &start, const T &end = now()) {
     return std::chrono::duration<double, std::milli>(end - start).count();
 }
 

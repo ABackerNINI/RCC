@@ -453,7 +453,7 @@ AutoWrapResult auto_wrap(const Settings &settings) {
             gpdebug(TTY_TS(fg(color::brown) | emphasis::bold, stderr), "AUTO-WRAP FAILED\n");
         }
         gpdebug(tty_dodger_blue_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-        gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin, now()));
+        gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin));
 
         return {true, try_result};
     }
@@ -461,34 +461,34 @@ AutoWrapResult auto_wrap(const Settings &settings) {
     return {false, {}};
 }
 
+// TODO: add options --g++ --clang++
+// TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
+// TODO: add -q, --quiet, or --silent flag to suppress output
+// TODO: add the fmt, ghc libraries
+// TODO: no color for non-tty
+// TODO: add json support
+// TODO: add csv support
+// TODO: add version info
+// TODO: add option, --debug, show debug messages
+// TODO: add option -c, --compile-only, compile only, return binary's name, run later
+// TODO: add option --dry-run, show what would be done without actually doing it
+// TODO: rcc_print, rcc_print_pretty: print c++ code only
+// TODO: add option --pretty
+// TODO: add option cat, cat last generated code
+// TODO: add option --print only
+// TODO: add support for Windows
+// TODO: make install_local: install it at the current directory
+// TODO: auto detect compiler
+// TODO: check template files during make install
+// TODO: store in .local, reproduce install if .cache/rcc files been removed
+// TODO: add a readme in .cache/rcc
+// TODO: add version and help messages
+// TODO: boost with multi-thread
+//? TODO: add option --stdin, read input from stdin instead of arguments
+
 // The main function of rcc.
 // Convenient for testing.
 int rcc_main(int argc, char **argv) {
-    // TODO: add options --g++ --clang++
-    // TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
-    // TODO: add -q, --quiet, or --silent flag to suppress output
-    // TODO: add the fmt, ghc libraries
-    // TODO: no color for non-tty
-    // TODO: add json support
-    // TODO: add csv support
-    // TODO: add version info
-    // TODO: add option, --debug, show debug messages
-    // TODO: add option -c, --compile-only, compile only, return binary's name, run later
-    // TODO: add option --dry-run, show what would be done without actually doing it
-    // TODO: rcc_print, rcc_print_pretty: print c++ code only
-    // TODO: add option --pretty
-    // TODO: add option cat, cat last generated code
-    // TODO: add option --print only
-    // TODO: add support for Windows
-    // TODO: make install_local: install it at the current directory
-    // TODO: auto detect compiler
-    // TODO: check template files during make install
-    // TODO: store in .local, reproduce install if .cache/rcc files been removed
-    // TODO: add a readme in .cache/rcc
-    // TODO: add version and help messages
-    // TODO: boost with multi-thread
-    //? TODO: add option --stdin, read input from stdin instead of arguments
-
     // Handle signals gracefully
     register_signal_handler();
 
@@ -542,11 +542,15 @@ int rcc_main(int argc, char **argv) {
         return auto_warp_result.try_result.exit_status;
     }
 
+    auto time_begin = now();
+
     // command line c++ code
     const std::string code = settings.get_codes_as_string();
 
     // Try to compile and run the unwrapped code
     auto try_result = try_code(settings, code);
+
+    gpinfo("Compile and run took: {:.2f} ms\n", duration_ms(time_begin));
 
     return try_result.exit_status;
 }

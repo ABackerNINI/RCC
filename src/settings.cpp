@@ -52,6 +52,7 @@ void Settings::add_options_and_flags(CLI::App &app) {
         },
         "Include the `fmt` library, which will increase compile time a lot");
 
+    //? Rename --include-all to --include-universal or --include-bits?
     app.add_flag_callback(
         "--include-all",
         [&]() {
