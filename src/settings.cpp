@@ -18,7 +18,7 @@ int Settings::locate_args(int argc, char **argv) {
 }
 
 void Settings::add_options_and_flags(CLI::App &app) {
-    app.add_flag("--clean-cache", clean_cache,
+    app.add_flag("--clean-cache", flag_clean_cache,
                  "Clean cached source and binary files. Permanent code will not be affected.");
 
     app.add_option_function<std::string>(
@@ -157,21 +157,21 @@ void Settings::add_permanent_subcommands(CLI::App &app) {
 void Settings::parse_remaining_options(CLI::App &app) {
     std::vector<std::string> remaining = app.remaining(true);
 
-    for (auto &s : remaining) {
-        if (s.substr(0, 1) == "-" && s.size() >= 2 && std::isalpha(s[1])) { // Option or flag
-            if (s.substr(0, 5) == "-std=") {
-                std = s;
-            } else if (s.substr(0, 2) == "-l") {
-                additional_flags.push_back(s);
+    for (auto &arg : remaining) {
+        if (arg.length() >= 2 && arg[0] == '-' && (std::isalpha(arg[1]) || arg[1] == '-')) { // Option or flag
+            if (arg.substr(0, 5) == "-std=") {
+                std = arg;
+            } else if (arg.substr(0, 2) == "-l") {
+                additional_flags.push_back(arg);
             } else {
                 if (codes.empty()) { // If no code has been added yet, add it to cxxflags
-                    cxxflags.push_back(s);
+                    cxxflags.push_back(arg);
                 } else { // Otherwise add it to additional flags
-                    additional_flags.push_back(s);
+                    additional_flags.push_back(arg);
                 }
             }
         } else { // Code
-            codes.push_back(s);
+            codes.push_back(arg);
         }
     }
 }
@@ -181,8 +181,13 @@ int Settings::parse_argv(int argc, char **argv) {
     // to the user program and will not be parsed by CLI11.
     int args_index = locate_args(argc, argv);
     if (args_index < argc) {
-        args_start = &argv[args_index + 1];
-        args_count = argc - args_index - 1;
+        char **args_start = &argv[args_index + 1];
+        int args_count = argc - args_index - 1;
+
+        for (int i = 0; i < args_count; i++) {
+            user_args.push_back(std::string(args_start[i]));
+        }
+
         argc -= args_count + 1;
     }
 
@@ -238,18 +243,8 @@ std::string Settings::get_std_cxxflags_as_string() const {
 
 std::string Settings::get_cli_args_as_string() const {
     std::string args = "";
-    for (int i = 0; i < args_count; i++) {
-        char *arg = args_start[i];
-
-        bool has_space = false;
-        char *p = arg;
-        while (*p) {
-            if (isspace(*p)) {
-                has_space = true;
-                break;
-            }
-            ++p;
-        }
+    for (auto &arg : user_args) {
+        bool has_space = std::count_if(arg.begin(), arg.end(), ::isspace);
 
         if (has_space) {
             // TODO: maybe wrap the arg in single or double quotes depending on whether it
@@ -281,8 +276,8 @@ void Settings::debug_print() const {
     gpmsgdump_c("functions_count: {}\n", functions.size());
     gpmsgdump_c("code_count: {}\n", codes.size());
     gpmsgdump_c("additional_sources: {}\n", vector_to_string(additional_sources, ", ", "<NONE>"));
-    gpmsgdump_c("args_count: {}\n", args_count);
-    gpmsgdump_c("clean_cache: {}\n", clean_cache);
+    gpmsgdump_c("user_args_count: {}\n", user_args.size());
+    gpmsgdump_c("clean_cache: {}\n", flag_clean_cache);
 
     // TODO: print more settings
 }

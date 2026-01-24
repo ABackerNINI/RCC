@@ -23,16 +23,9 @@ class Settings {
     // Parse the command line arguments and initialize the settings.
     int parse_argv(int argc, char **argv);
 
-    const std::string &get_permanent() const { return permanent; }
-    const std::string &get_run_permanent() const { return run_permanent; }
-    const std::string &get_permanent_desc() const { return permanent_desc; }
-    bool get_flag_list_permanent() const { return flag_list_permanent; }
-    const std::vector<std::string> &get_remove_permanent() const { return remove_permanent; }
-    bool get_flag_fetch_autocompletion_zsh() const { return flag_fetch_autocompletion_zsh; }
-
     const std::string &get_compiler() const { return compiler; }
     const std::string &get_std() const { return std; }
-    bool get_clean_cache_flag() const { return clean_cache; }
+    bool get_clean_cache_flag() const { return flag_clean_cache; }
     const std::vector<std::string> &get_additional_flags() const { return additional_flags; }
     const std::vector<std::string> &get_additional_includes() const { return additional_includes; }
     const std::vector<std::string> &get_above_main() const { return above_main; }
@@ -40,6 +33,13 @@ class Settings {
     const std::vector<std::string> &get_codes() const { return codes; }
     const std::vector<std::string> &get_cxxflags() const { return cxxflags; }
     const std::vector<std::string> &get_additional_sources() const { return additional_sources; }
+
+    const std::string &get_permanent() const { return permanent; }
+    const std::string &get_run_permanent() const { return run_permanent; }
+    const std::string &get_permanent_desc() const { return permanent_desc; }
+    bool get_flag_list_permanent() const { return flag_list_permanent; }
+    const std::vector<std::string> &get_remove_permanent() const { return remove_permanent; }
+    bool get_flag_fetch_autocompletion_zsh() const { return flag_fetch_autocompletion_zsh; }
 
     std::string get_std_cxxflags_as_string() const;
     std::string get_additional_flags_as_string() const { return vector_to_string(additional_flags); }
@@ -71,13 +71,6 @@ class Settings {
     void parse_remaining_options(CLI::App &app);
 
   private:
-    std::string permanent;
-    std::string run_permanent;
-    std::string permanent_desc;
-    std::vector<std::string> remove_permanent;
-    bool flag_list_permanent{false};
-    bool flag_fetch_autocompletion_zsh{false};
-
     std::string compiler{RCC_CXX}; // the compiler to use
     std::string std{RCC_CXXSTD}; // the c++ standard to use, relates to "-std"
     // The c++ flags to use, default to a set of common flags.
@@ -101,16 +94,22 @@ class Settings {
     std::vector<std::string> functions; // functions to declare before the main function, relates to "--function"
     std::vector<std::string> codes; // the command line code snippets
     std::vector<std::string> additional_sources; // additional source files to compile with, relates to "--compile-with"
-
-    bool clean_cache{false}; // whether to clean the cache, relates to "--clean-cache"
-
-    // the start of the arguments that are going to pass to the program, anything after "--".
+    // The arguments that are going to pass to the program, anything after "--".
     //* These arguments will not be parsed by CLI11, and will be passed to the program as is.
-    char **args_start{NULL};
-    int args_count{0}; // the number of arguments
+    std::vector<std::string> user_args;
+
+    bool flag_clean_cache{false}; // whether to clean the cache, relates to "--clean-cache"
 
     bool included_stdcpp{false}; // whether the `bits/stdc++.h` has been included, relates to "--include-all"
                                  // and "--include"
+
+    std::string permanent;
+    std::string run_permanent;
+    std::string permanent_desc;
+    std::vector<std::string> remove_permanent;
+    bool flag_list_permanent{false};
+    bool flag_fetch_autocompletion_zsh{false};
+
     // bool default_compiler_flags{true}; // true means no additional compiler flags are added
 };
 

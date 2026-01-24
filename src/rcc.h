@@ -12,7 +12,7 @@ class RCC {
   public:
     // The main function of rcc.
     // Convenient for testing.
-    int rcc_main(int argc, char **argv);
+    int rcc_main(const Settings &settings);
 
   private:
     // Delete old cached files with probability of 1/256.
