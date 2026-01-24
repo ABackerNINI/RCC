@@ -1,3 +1,4 @@
+#include "rcc.h"
 #include "compiler_support.h"
 #include "debug_fmt.h"
 #include "paths.h"
@@ -6,29 +7,10 @@
 #include <csignal>
 #include <iostream>
 
-using namespace rcc;
-
-// TODO: Handle signals
-
-// Signal handler for SIGINT (Control-C) to exit the program gracefully.
-void signal_handler(int s) {
-    (void)s;
-    std::cout << "Control-C detected, exiting..." << std::endl;
-    std::exit(1);
-}
-
-// Register signal handler for SIGINT to exit the program gracefully.
-void register_signal_handler() {
-    // Nice Control-C
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signal_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, nullptr);
-}
+namespace rcc {
 
 // Delete old cached files with probability of 1/256.
-pid_t random_clean_cache() {
+pid_t RCC::random_clean_cache() {
     // 1/256 chances
     //? Why not use the hash value of code as the seed?
     //* The srand() and rand() is fast enough. And the same code has the same hash value.
@@ -65,7 +47,7 @@ pid_t random_clean_cache() {
 }
 
 // Clean up all cached sources and binaries.
-int clean_cache() {
+int RCC::clean_cache() {
     //! Caution: rm command
     const std::string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().quote_if_needed();
     std::string rm_cmd = "rm -f " + sub_cache_dir + "/*.cpp " + sub_cache_dir + "/*.bin";
@@ -74,7 +56,7 @@ int clean_cache() {
 
 // Check if the binary is cached and the content matches.
 //* The file hash may collide, so we need to check the content as well.
-bool check_if_cached(const Path &bin_path, const Path &cpp_path, const std::string &full_code) {
+bool RCC::check_if_cached(const Path &bin_path, const Path &cpp_path, const std::string &full_code) {
     if (bin_path.exists()) {
         const std::string code_old = cpp_path.read_file();
         if (code_old == full_code) {
@@ -89,7 +71,7 @@ bool check_if_cached(const Path &bin_path, const Path &cpp_path, const std::stri
 }
 
 // Generate the execution command with the binary path and command line arguments.
-std::string gen_exec_cmd(const Settings &settings, const Path &bin_path) {
+std::string RCC::gen_exec_cmd(const Settings &settings, const Path &bin_path) {
     const std::string command_line_args = settings.get_cli_args_as_string();
     const std::string exec_cmd = bin_path.quote_if_needed() +
                                  (command_line_args.empty() ? "" : " " + command_line_args);
@@ -97,11 +79,11 @@ std::string gen_exec_cmd(const Settings &settings, const Path &bin_path) {
 }
 
 // Compile the code.
-bool compile_code(const Settings &settings,
-                  const Path &bin_path,
-                  const Path &cpp_path,
-                  const compiler_support &cs,
-                  bool silent = false) {
+bool RCC::compile_code(const Settings &settings,
+                       const Path &bin_path,
+                       const Path &cpp_path,
+                       const compiler_support &cs,
+                       bool silent) {
     std::vector<Path> sources = {cpp_path};
     for (auto &src : settings.get_additional_sources()) {
         sources.emplace_back(src);
@@ -132,7 +114,7 @@ bool compile_code(const Settings &settings,
 }
 
 // Run the binary executable, return the return code of the executable.
-int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path) {
+int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path) {
     const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
 
     /*------------------------------------------------------------------------*/
@@ -168,7 +150,7 @@ int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path
 }
 
 // Suggest a similar permanent, return empty string if not match found.
-std::string suggest_similar_permanent(const std::string &name) {
+std::string RCC::suggest_similar_permanent(const std::string &name) {
     if (name.size() <= 1) {
         return "";
     }
@@ -203,7 +185,7 @@ std::string suggest_similar_permanent(const std::string &name) {
 }
 
 // Run a permanent executable, return the return code of the executable or 1 if the executable does not exist.
-int run_permanent(const Settings &settings, const std::string &name) {
+int RCC::run_permanent(const Settings &settings, const std::string &name) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
 
@@ -238,7 +220,7 @@ int run_permanent(const Settings &settings, const std::string &name) {
 }
 
 // List all permanent executables, return 1 on error.
-int list_permanent(const Settings &settings) {
+int RCC::list_permanent(const Settings &settings) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
 
@@ -272,7 +254,7 @@ int list_permanent(const Settings &settings) {
 }
 
 // Remove file and handle exceptions. Return true if successful, false otherwise.
-bool remove_file(Path &p) noexcept {
+bool RCC::remove_file(Path &p) noexcept {
     try {
         // *Note: remove() does not throw if the file does not exist. It returns false in that case.
         // *Note: remove() may throw `std::bad_alloc` or `fs::filesystem_error`
@@ -284,7 +266,7 @@ bool remove_file(Path &p) noexcept {
 }
 
 // Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
-int remove_permanents(const Settings &settings) {
+int RCC::remove_permanents(const Settings &settings) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
 
@@ -314,15 +296,8 @@ int remove_permanents(const Settings &settings) {
     return ret;
 }
 
-struct TryCodeResult {
-    enum TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
-
-    TryStatus status;
-    int exit_status;
-};
-
 // Silent mode: no output of compiler errors, and no output after the compilation failed.
-TryCodeResult try_code(const Settings &settings, const std::string &code, bool silent = false) {
+RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &code, bool silent) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
 
@@ -413,16 +388,7 @@ TryCodeResult try_code(const Settings &settings, const std::string &code, bool s
     return {TryCodeResult::SUCCESS, ret};
 }
 
-struct AutoWrapResult {
-    bool tried;
-    TryCodeResult try_result;
-
-    // For C++11 compatibility
-    AutoWrapResult(bool tried = false, TryCodeResult try_result = TryCodeResult())
-        : tried(tried), try_result(try_result) {}
-};
-
-AutoWrapResult auto_wrap(const Settings &settings) {
+RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
     auto time_begin = now();
 
     auto &codes = settings.get_codes();
@@ -488,10 +454,7 @@ AutoWrapResult auto_wrap(const Settings &settings) {
 
 // The main function of rcc.
 // Convenient for testing.
-int rcc_main(int argc, char **argv) {
-    // Handle signals gracefully
-    register_signal_handler();
-
+int RCC::rcc_main(int argc, char **argv) {
     // Parse arguments and set up settings
     Settings settings;
     int result;
@@ -555,6 +518,32 @@ int rcc_main(int argc, char **argv) {
     return try_result.exit_status;
 }
 
+} // namespace rcc
+
+//*==========================================================================*/
+
+// TODO: Handle signals
+
+// Signal handler for SIGINT (Control-C) to exit the program gracefully.
+void signal_handler(int s) {
+    (void)s;
+    std::cout << "Control-C detected, exiting..." << std::endl;
+    std::exit(1);
+}
+
+// Register signal handler for SIGINT to exit the program gracefully.
+void register_signal_handler() {
+    // Nice Control-C
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signal_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, nullptr);
+}
+
 int main(int argc, char **argv) {
-    return rcc_main(argc, argv);
+    // Handle signals gracefully
+    register_signal_handler();
+
+    return rcc::RCC().rcc_main(argc, argv);
 }
