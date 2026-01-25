@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <algorithm>
 
 namespace rcc {
 
@@ -28,11 +29,10 @@ std::string u64_to_string_base64x(uint64_t val) {
     static constexpr char base64x_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                             "abcdefghijklmnopqrstuvwxyz"
                                             "0123456789+_";
-    std::string result;
-    result.reserve(11);
 
+    std::string result(11, '0');
     for (int i = 0; i < 11; i++) {
-        result += base64x_chars[val & 0x3F];
+        result[i] = base64x_chars[val & 0x3F];
         val >>= 6;
     }
 
@@ -44,18 +44,23 @@ std::string vector_to_string(const std::vector<std::string> &vec,
                              const std::string &default_for_empty,
                              bool keep_trailing_sep) {
     if (vec.empty()) {
-        return default_for_empty;
+        return default_for_empty + (keep_trailing_sep ? sep : "");
     }
 
-    std::string result = "";
+    std::string result;
+    result.reserve(vec.size() * (vec[0].length() + sep.length())); // Pre-allocate memory
+
     for (const auto &item : vec) {
         result += item + sep;
     }
+
+    // Remove trailing separator if needed
     if (!keep_trailing_sep && result.size() > 0) {
         for (size_t i = 0; i < sep.size(); i++) {
             result.pop_back();
         }
     }
+
     return result;
 }
 
@@ -63,10 +68,9 @@ std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::str
     std::vector<fs::path> files;
     for (const auto &entry : fs::recursive_directory_iterator(dir)) {
         if (entry.is_regular_file()) {
-            for (const auto &ext : extensions) {
-                if (entry.path().extension() == ext) {
-                    files.push_back(entry.path());
-                }
+            if (std::find(extensions.begin(), extensions.end(), entry.path().extension().string()) !=
+                extensions.end()) {
+                files.push_back(entry.path());
             }
         }
     }

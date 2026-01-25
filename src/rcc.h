@@ -35,7 +35,7 @@ class RCC {
                       const compiler_support &cs,
                       bool silent = false);
 
-    // Run the binary executable, return the return code of the executable.
+    // Run the binary executable, return the exit status of the executable, or 1 on error.
     int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path);
 
     // Suggest a similar permanent, return empty string if not match found.
@@ -72,6 +72,9 @@ class RCC {
             : tried(tried), try_result(try_result) {}
     };
 
+    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
+    // 'cout << ... << endl;' and try to compile and run it.
+    // This is for convenience, e.g. rcc '2+3*5'.
     AutoWrapResult auto_wrap(const Settings &settings);
 };
 

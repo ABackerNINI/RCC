@@ -24,9 +24,9 @@ pid_t RCC::random_clean_cache() {
             const Paths &paths = Paths::get_instance();
             // Find and remove src/bin files whose access time is 31 days ago
             //! Caution: rm command
-            std::string
-                find_rm_cmd = format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
-                                     paths.get_sub_cache_dir().quote_if_needed());
+            std::string find_rm_cmd =
+                format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
+                       paths.get_sub_cache_dir().quote_if_needed());
 
             const auto tty_ts = TTY_TS(fg(color::dark_red) | emphasis::bold, stderr);
             gpdebug("{}: {}\n", styled("Removing old cache files", tty_ts), find_rm_cmd);
@@ -113,7 +113,7 @@ bool RCC::compile_code(const Settings &settings,
     return true;
 }
 
-// Run the binary executable, return the return code of the executable.
+// Run the binary executable, return the exit status of the executable, or 1 on error.
 int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path) {
     const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
 
@@ -174,10 +174,10 @@ std::string RCC::suggest_similar_permanent(const std::string &name) {
             }
         }
     } catch (const fs::filesystem_error &e) {
-        gpdebug("Filesystem error: {}\n", e.what());
+        gpwarning("{}\n", e.what());
         return "";
     } catch (const std::exception &e) {
-        gpdebug("Error: {}\n", e.what());
+        gpwarning("{}\n", e.what());
         return "";
     }
 
@@ -239,14 +239,14 @@ int RCC::list_permanent(const Settings &settings) {
                 paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
                 // Show in red if the binary doesn't exist (compilation failed or has been deleted)
                 auto color = bin_path.exists() ? terminal_color::green : terminal_color::red;
-                print("{}: {}\n", styled(file.stem().string(), TTY_TS(fg(color))), desc);
+                print("{}: {}\n", styled(file.stem().string(), TTY_TS(fg(color), stdout)), desc);
             }
         }
     } catch (const fs::filesystem_error &e) {
-        print(stderr, "Filesystem error: {}\n", e.what());
+        gperror("Filesystem error: {}\n", e.what());
         return 1;
     } catch (const std::exception &e) {
-        print(stderr, "Error: {}\n", e.what());
+        gperror("{}\n", e.what());
         return 1;
     }
 
@@ -388,6 +388,9 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &co
     return {TryCodeResult::SUCCESS, ret};
 }
 
+// If the last code snippet doesn't end with ';' or '}', then, wrap it in
+// 'cout << ... << endl;' and try to compile and run it.
+// This is for convenience, e.g. rcc '2+3*5'.
 RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
     auto time_begin = now();
 
@@ -396,10 +399,6 @@ RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
     if (codes.empty()) {
         return {false, {}}; // No code to wrap
     }
-
-    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
-    // 'cout << ... << endl;' and try to compile and run it.
-    // This is for convenience, e.g. rcc '2+3*5'.
 
     auto &last_code = codes.back();
     if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {

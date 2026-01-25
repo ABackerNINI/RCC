@@ -215,7 +215,7 @@ int Settings::parse_argv(int argc, char **argv) {
 
         auto color = e.get_exit_code() == 0 ? text_style{} : fg(terminal_color::red);
 
-        print(stdout, "{}", styled(out.str(), TTY_TS(color)));
+        print(stdout, "{}", styled(out.str(), TTY_TS(color, stdout)));
         print(stderr, "{}", styled(err.str(), TTY_TS(color, stderr)));
 
         return ret;
