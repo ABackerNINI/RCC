@@ -194,10 +194,10 @@ $(config_file):
 
 	@echo "$(GREEN)### Compiling $(target)$(RESET)"
 	@if [ $(target_type) = "c" ]; then \
-		echo "CC       = $(CC)"; \
+		echo "CC       = $(cc)"; \
 		echo "CFLAGS   = $(cflags)"; \
 	else \
-		echo "CXX      = $(CXX)"; \
+		echo "CXX      = $(cxx)"; \
 		echo "CXXFLAGS = $(cxxflags)"; \
 	fi
 	@echo "LDFLAGS  = $(ldflags)"
