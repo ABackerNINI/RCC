@@ -32,14 +32,15 @@ pid_t RCC::random_clean_cache() {
             gpdebug("{}: {}\n", styled("Removing old cache files", tty_ts), find_rm_cmd);
 
             if (system(find_rm_cmd.c_str()) != 0) {
-                perror("system:find");
+                gperror("system(): {}\n", strerror(errno));
                 exit(1);
             }
 
             // Leave this process to the init
             exit(0);
         } else if (pid < 0) {
-            perror("fork");
+            gpwarning("fork(): {}\n", strerror(errno));
+            // Note: fork failed, continue anyway
         }
         return pid;
     }
@@ -98,12 +99,13 @@ bool RCC::compile_code(const Settings &settings,
     if (system(compile_cmd) != 0) {
         if (!silent) {
             const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
-            print(stderr, TTY_TS(red_bold, stderr), "\nCOMPILATION FAILED!\n");
             if (isatty(fileno(stderr))) {
-                print(stderr, "OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+                // This creates a hyperlink to the file in the terminal, only tested on zsh
+                gpwarning_ex("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
             } else {
-                print(stderr, "OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
+                gpwarning_ex("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
             }
+            gperror_ex(TTY_TS(red_bold, stderr), "\nCOMPILATION FAILED!\n");
             const auto tty_saddle_brown_bold = TTY_TS(fg(color::saddle_brown) | emphasis::bold, stderr);
             gpdebug("{}: {}\n", styled("COMPILE COMMAND", tty_saddle_brown_bold), compile_cmd);
             gpdebug("{}: {}\n", styled("EXECUTE COMMAND", tty_saddle_brown_bold), exec_cmd);
@@ -128,21 +130,21 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
     int ret = system(exec_cmd);
     gpdebug(tty_yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
-    const auto tty_red = TTY_TS(fg(color::red), stderr);
-
     if (ret == -1) { // System call failed. This is an error, e.g. fork() failed
-        print(stderr, tty_red, "system(): {}\n", strerror(errno));
+        gperror("system(): {}\n", strerror(errno));
         return 1;
-    };
+    }
+
+    const auto tty_red_bold = TTY_TS(red_bold, stderr);
 
     int exit_status = 1;
     if (WIFEXITED(ret)) { // The process exited normally
         exit_status = WEXITSTATUS(ret);
     } else if (WIFSIGNALED(ret)) { // The process was terminated by a signal
-        print(stderr, tty_red, "Killed by signal {}\n", WTERMSIG(ret));
+        gperror_ex(tty_red_bold, "Killed by signal {}\n", WTERMSIG(ret));
         return 1;
     } else { // The process was stopped by a signal or some other unexpected event
-        print(stderr, tty_red, "Unexpected exit status {}\n", ret);
+        gperror_ex(tty_red_bold, "Unexpected exit status {}\n", ret);
         return 1;
     }
 
@@ -196,20 +198,19 @@ int RCC::run_permanent(const Settings &settings, const std::string &name) {
         // If the binary does not exist but the source or description file exist, it's an invalid permanent.
         // So we don't need to suggest anything.
         if (cpp_path.exists() || desc_path.exists()) {
-            print(stderr,
-                  "Error: the binary of permanent '{}' does not exist. It's likely due to a compilation failure "
-                  "earlier.\n",
-                  styled(name, TTY_TS(red_bold, stderr)));
+            gperror_ex("Error: the binary of permanent '{}' does not exist. "
+                       "It's likely due to a compilation failure earlier.\n",
+                       styled(name, TTY_TS(red_bold, stderr)));
             return 1;
         }
 
         // Try to suggest similar names
         const std::string suggestion = suggest_similar_permanent(name);
-        print(stderr, "Error: permanent '{}' does not exist", styled(name, TTY_TS(red_bold, stderr)));
+        gperror_ex("Error: permanent '{}' does not exist", styled(name, TTY_TS(red_bold, stderr)));
         if (!suggestion.empty()) {
-            print(stderr, ", did you mean '{}'?\n", styled(suggestion, TTY_TS(green_bold, stderr)));
+            gperror_ex(", did you mean '{}'?\n", styled(suggestion, TTY_TS(green_bold, stderr)));
         } else {
-            print(stderr, ".\n");
+            gperror_ex(".\n");
         }
 
         return 1;

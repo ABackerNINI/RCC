@@ -97,15 +97,15 @@ std::string compiler_support::gen_code(const Path &template_filename,
     if (num_replaced != replaces.size()) {
         const auto tty_red_bold = TTY_TS(red_bold, stderr);
         if (num_replaced < replaces.size()) {
-            print(stderr, tty_red_bold, "ERROR: Template file is missing some placeholders");
+            gperror(tty_red_bold, "Template file is missing some placeholders\n");
         } else /* if (num_replaced > replaces.size()) */ {
-            print(stderr, tty_red_bold, "\nERROR: Template file has extra placeholders");
+            gperror(tty_red_bold, "Template file has extra placeholders\n");
         }
-        print(stderr, "\nrcc expects the following placeholders:\n");
+        gperror_c("rcc expects the following placeholders:\n");
         for (const auto &pair : replaces) {
-            print(stderr, "  {}\n", pair.first);
+            gperror_c("  {}\n", pair.first);
         }
-        print(stderr, "Please check your template file and try again.\n\n");
+        gperror_c("Please check your template file and try again.\n");
         exit(EXIT_FAILURE);
     }
 

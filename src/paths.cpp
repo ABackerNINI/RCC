@@ -1,6 +1,5 @@
-// #include "pch.h"
-
 #include "paths.h"
+#include "debug_fmt.h"
 #include "utils.h"
 #include <dirent.h>
 #include <iostream>
@@ -16,21 +15,26 @@ static void expect_exists(const fs::path &path) {
         std::cerr << "Please reinstall RCC." << std::endl;
         exit(1);
     }
+    gpmsgdump_c("{} {}\n", path, styled("exists", TTY_TS(green_bold, stderr)));
 }
 
 // Create a directory if it doesn't exist.
 static void create_dir_if_not_exists(const fs::path &path) {
     try {
         if (!fs::exists(path)) {
+            gpmsgdump_c("Creating directory: {}\n", path);
+
             fs::create_directories(path);
 
             // Set permissions to 755 (rwxr-xr-x)
             fs::perms perms = fs::perms::owner_all | fs::perms::group_read | fs::perms::group_exec |
                               fs::perms::others_read | fs::perms::others_exec;
             fs::permissions(path, perms);
+        } else {
+            gpmsgdump_c("{} {}\n", path, styled("exists", TTY_TS(green_bold, stderr)));
         }
     } catch (const std::exception &ex) {
-        std::cerr << ex.what() << std::endl;
+        gperror("Failed to create directory: {}, {}\n", path, ex.what());
         exit(1);
     }
 }
@@ -50,11 +54,15 @@ Paths::Paths() {
 
     this->cwd = std::string(cwd);
 
+    gpmsgdump("CWD: {}\n", cwd);
+
     validate_cache_dir();
 }
 
 // Check the cache directory of rcc.
 void Paths::validate_cache_dir() {
+    gpmsgdump("Checking RCC cache directory:\n");
+
     // Get rcc cache directory, default is $HOME/.cache/rcc
     cache_dir = RCC_CACHE_DIR;
     if (cache_dir.string().empty()) {
