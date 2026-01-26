@@ -11,9 +11,11 @@
     } while (0)
 
 #define __DPF_DO_NOTHING(...)                                                                                          \
-    if (0) {                                                                                                           \
-        __VA_ARGS__;                                                                                                   \
-    }
+    do {                                                                                                               \
+        if (0) {                                                                                                       \
+            __VA_ARGS__;                                                                                               \
+        }                                                                                                              \
+    } while (0)
 
 #ifdef DEBUG
     #include <cassert>
@@ -62,6 +64,13 @@ enum class DBG_LEVEL { ERROR = 0, WARNING = 1, INFO = 2, DEBUG_ = 3, MSGDUMP = 4
 /* Runtime debug level, you should declare it yourself. */
 extern DBG_LEVEL debug_level;
 
+    #define DPF_ERROR_COLOR fmt::fg(fmt::terminal_color::red)
+    #define DPF_WARNING_COLOR fmt::fg(fmt::terminal_color::yellow)
+    #define DPF_INFO_COLOR fmt::fg(fmt::terminal_color::blue)
+    #define DPF_DEBUG_COLOR fmt::fg(fmt::terminal_color::green)
+    #define DPF_MSGDUMP_COLOR fmt::fg(fmt::terminal_color::white)
+    #define DPF_EXCESSIVE_COLOR fmt::fg(fmt::terminal_color::white)
+
     #include <unistd.h>
 
     #ifndef RUNTIME_DEBUG_LEVEL
@@ -79,9 +88,11 @@ extern DBG_LEVEL debug_level;
         } while (0)
 #else // ENABLE_RUNTIME_DEBUG_LEVEL
     #define __DPF_DO_IF_RT_DBG(...)                                                                                    \
-        while (0) {                                                                                                    \
-            __VA_ARGS__;                                                                                               \
-        }
+        do {                                                                                                           \
+            if (0) {                                                                                                   \
+                __VA_ARGS__;                                                                                           \
+            }                                                                                                          \
+        } while (0)
 #endif // ENABLE_RUNTIME_DEBUG_LEVEL
 
 #define __DPF_PRINT_FUNC(lvl, ts, lvl_str, ...)                                                                        \
@@ -92,11 +103,11 @@ extern DBG_LEVEL debug_level;
 
 #if (RUNTIME_DEBUG_LEVEL >= 0)
     /* Print error msg. */
-    #define gperror(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), "[ERROR] ", __VA_ARGS__)
+    #define gperror(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, "[ERROR] ", __VA_ARGS__)
     /* Print continued error msg. */
-    #define gperror_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), ". ", __VA_ARGS__)
+    #define gperror_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, ". ", __VA_ARGS__)
     /* Print extended error msg. */
-    #define gperror_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, fmt::fg(fmt::terminal_color::red), "", __VA_ARGS__)
+    #define gperror_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, "", __VA_ARGS__)
     /* Statements for error. */
     #define gstmt_error(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::ERROR, __VA_ARGS__)
 #else
@@ -112,14 +123,11 @@ extern DBG_LEVEL debug_level;
 
 #if (RUNTIME_DEBUG_LEVEL >= 1)
     /* Print warning msg. */
-    #define gpwarning(...)                                                                                             \
-        __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, fmt::fg(fmt::terminal_color::yellow), "[WARNING] ", __VA_ARGS__)
+    #define gpwarning(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, "[WARNING] ", __VA_ARGS__)
     /* Print continued warning msg. */
-    #define gpwarning_c(...)                                                                                           \
-        __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, fmt::fg(fmt::terminal_color::yellow), ". ", __VA_ARGS__)
+    #define gpwarning_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, ". ", __VA_ARGS__)
     /* Print extended warning msg. */
-    #define gpwarning_ex(...)                                                                                          \
-        __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, fmt::fg(fmt::terminal_color::yellow), "", __VA_ARGS__)
+    #define gpwarning_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, "", __VA_ARGS__)
     /* Statements for warning. */
     #define gstmt_warning(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::WARNING, __VA_ARGS__)
 #else
@@ -135,11 +143,11 @@ extern DBG_LEVEL debug_level;
 
 #if (RUNTIME_DEBUG_LEVEL >= 2)
     /* Print info msg. */
-    #define gpinfo(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), "[INFO] ", __VA_ARGS__)
+    #define gpinfo(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, DPF_INFO_COLOR, "[INFO] ", __VA_ARGS__)
     /* Print continued info msg. */
-    #define gpinfo_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), " . ", __VA_ARGS__)
+    #define gpinfo_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, DPF_INFO_COLOR, " . ", __VA_ARGS__)
     /* Print extended info msg. */
-    #define gpinfo_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, fmt::fg(fmt::terminal_color::blue), "", __VA_ARGS__)
+    #define gpinfo_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::INFO, DPF_INFO_COLOR, "", __VA_ARGS__)
     /* Statements for info. */
     #define gstmt_info(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::INFO, __VA_ARGS__)
 #else
@@ -155,12 +163,11 @@ extern DBG_LEVEL debug_level;
 
 #if (RUNTIME_DEBUG_LEVEL >= 3)
     /* Print debug msg. */
-    #define gpdebug(...)                                                                                               \
-        __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "[DEBUG] ", __VA_ARGS__)
+    #define gpdebug(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, DPF_DEBUG_COLOR, "[DEBUG] ", __VA_ARGS__)
     /* Print continued debug msg. */
-    #define gpdebug_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), " . ", __VA_ARGS__)
+    #define gpdebug_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, DPF_DEBUG_COLOR, " . ", __VA_ARGS__)
     /* Print extended debug msg. */
-    #define gpdebug_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, fmt::fg(fmt::terminal_color::green), "", __VA_ARGS__)
+    #define gpdebug_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::DEBUG_, DPF_DEBUG_COLOR, "", __VA_ARGS__)
     /* Statements for debug. */
     #define gstmt_debug(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::DEBUG_, __VA_ARGS__)
 #else
@@ -176,13 +183,11 @@ extern DBG_LEVEL debug_level;
 
 #if (RUNTIME_DEBUG_LEVEL >= 4)
     /* Print msgdump msg. */
-    #define gpmsgdump(...)                                                                                             \
-        __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), "[MSGDUMP] ", __VA_ARGS__)
+    #define gpmsgdump(...) __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, DPF_MSGDUMP_COLOR, "[MSGDUMP] ", __VA_ARGS__)
     /* Print continued msgdump msg. */
-    #define gpmsgdump_c(...)                                                                                           \
-        __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), " . ", __VA_ARGS__)
+    #define gpmsgdump_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, DPF_MSGDUMP_COLOR, " . ", __VA_ARGS__)
     /* Print extended msgdump msg. */
-    #define gpmsgdump_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, fmt::fg(fmt::terminal_color::white), "", __VA_ARGS__)
+    #define gpmsgdump_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::MSGDUMP, DPF_MSGDUMP_COLOR, "", __VA_ARGS__)
     /* Statements for msgdump. */
     #define gstmt_msgdump(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::MSGDUMP, __VA_ARGS__)
 #else
@@ -198,14 +203,11 @@ extern DBG_LEVEL debug_level;
 
 #if (RUNTIME_DEBUG_LEVEL >= 5)
     /* Print excessive msg. */
-    #define gpexcessive(...)                                                                                           \
-        __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, fmt::fg(fmt::terminal_color::white), "[EXCESSIVE] ", __VA_ARGS__)
+    #define gpexcessive(...) __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, DPF_EXCESSIVE_COLOR, "[EXCESSIVE] ", __VA_ARGS__)
     /* Print continued excessive msg. */
-    #define gpexcessive_c(...)                                                                                         \
-        __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, fmt::fg(fmt::terminal_color::white), " . ", __VA_ARGS__)
+    #define gpexcessive_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, DPF_EXCESSIVE_COLOR, " . ", __VA_ARGS__)
     /* Print extended excessive msg. */
-    #define gpexcessive_ex(...)                                                                                        \
-        __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, fmt::fg(fmt::terminal_color::white), "", __VA_ARGS__)
+    #define gpexcessive_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::EXCESSIVE, DPF_EXCESSIVE_COLOR, "", __VA_ARGS__)
     /* Statements for excessive. */
     #define gstmt_excessive(...) __DPF_DO_IF_RT_DBG(DBG_LEVEL::EXCESSIVE, __VA_ARGS__)
 #else
