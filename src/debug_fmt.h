@@ -64,12 +64,12 @@ enum class DBG_LEVEL { ERROR = 0, WARNING = 1, INFO = 2, DEBUG_ = 3, MSGDUMP = 4
 /* Runtime debug level, you should declare it yourself. */
 extern DBG_LEVEL debug_level;
 
-    #define DPF_ERROR_COLOR fmt::fg(fmt::terminal_color::red)
-    #define DPF_WARNING_COLOR fmt::fg(fmt::terminal_color::yellow)
-    #define DPF_INFO_COLOR fmt::fg(fmt::terminal_color::blue)
-    #define DPF_DEBUG_COLOR fmt::fg(fmt::terminal_color::green)
-    #define DPF_MSGDUMP_COLOR fmt::fg(fmt::terminal_color::white)
-    #define DPF_EXCESSIVE_COLOR fmt::fg(fmt::terminal_color::white)
+    #define DPF_ERROR_COLOR fmt::fg(fmt::terminal_color::red) | fmt::emphasis::bold
+    #define DPF_WARNING_COLOR fmt::fg(fmt::terminal_color::yellow) | fmt::emphasis::bold
+    #define DPF_INFO_COLOR fmt::fg(fmt::terminal_color::blue) | fmt::emphasis::bold
+    #define DPF_DEBUG_COLOR fmt::fg(fmt::terminal_color::green) | fmt::emphasis::bold
+    #define DPF_MSGDUMP_COLOR fmt::fg(fmt::terminal_color::white) | fmt::emphasis::bold
+    #define DPF_EXCESSIVE_COLOR fmt::fg(fmt::terminal_color::white) | fmt::emphasis::bold
 
     #include <unistd.h>
 
@@ -105,7 +105,7 @@ extern DBG_LEVEL debug_level;
     /* Print error msg. */
     #define gperror(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, "[ERROR] ", __VA_ARGS__)
     /* Print continued error msg. */
-    #define gperror_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, ". ", __VA_ARGS__)
+    #define gperror_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, " . ", __VA_ARGS__)
     /* Print extended error msg. */
     #define gperror_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::ERROR, DPF_ERROR_COLOR, "", __VA_ARGS__)
     /* Statements for error. */
@@ -125,7 +125,7 @@ extern DBG_LEVEL debug_level;
     /* Print warning msg. */
     #define gpwarning(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, "[WARNING] ", __VA_ARGS__)
     /* Print continued warning msg. */
-    #define gpwarning_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, ". ", __VA_ARGS__)
+    #define gpwarning_c(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, " . ", __VA_ARGS__)
     /* Print extended warning msg. */
     #define gpwarning_ex(...) __DPF_PRINT_FUNC(DBG_LEVEL::WARNING, DPF_WARNING_COLOR, "", __VA_ARGS__)
     /* Statements for warning. */
