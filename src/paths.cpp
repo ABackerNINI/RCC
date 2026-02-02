@@ -15,14 +15,14 @@ static void expect_exists(const fs::path &path) {
         std::cerr << "Please reinstall RCC." << std::endl;
         exit(1);
     }
-    gpmsgdump_c("{} {}\n", path, styled("exists", TTY_TS(green_bold, stderr)));
+    gpmsgdump_c("{} {}\n", path.string(), styled("exists", TTY_TS(green_bold, stderr)));
 }
 
 // Create a directory if it doesn't exist.
 static void create_dir_if_not_exists(const fs::path &path) {
     try {
         if (!fs::exists(path)) {
-            gpmsgdump_c("Creating directory: {}\n", path);
+            gpmsgdump_c("Creating directory: {}\n", path.string());
 
             fs::create_directories(path);
 
@@ -31,10 +31,10 @@ static void create_dir_if_not_exists(const fs::path &path) {
                               fs::perms::others_read | fs::perms::others_exec;
             fs::permissions(path, perms);
         } else {
-            gpmsgdump_c("{} {}\n", path, styled("exists", TTY_TS(green_bold, stderr)));
+            gpmsgdump_c("{} {}\n", path.string(), styled("exists", TTY_TS(green_bold, stderr)));
         }
     } catch (const std::exception &ex) {
-        gperror("Failed to create directory: {}, {}\n", path, ex.what());
+        gperror("Failed to create directory: {}, {}\n", path.string(), ex.what());
         exit(1);
     }
 }
