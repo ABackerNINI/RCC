@@ -31,7 +31,7 @@ pid_t RCC::random_clean_cache() {
             const auto tty_ts = TTY_TS(fg(color::dark_red) | emphasis::bold, stderr);
             gpdebug("{}: {}\n", styled("Removing old cache files", tty_ts), find_rm_cmd);
 
-            if (system(find_rm_cmd.c_str()) != 0) {
+            if (system_s(find_rm_cmd) != 0) {
                 gperror("system(): {}\n", strerror(errno));
                 exit(1);
             }
@@ -52,7 +52,7 @@ int RCC::clean_cache() {
     //! Caution: rm command
     const std::string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().quote_if_needed();
     std::string rm_cmd = "rm -f " + sub_cache_dir + "/*.cpp " + sub_cache_dir + "/*.bin";
-    return system(rm_cmd.c_str());
+    return system_s(rm_cmd);
 }
 
 // Check if the binary is cached and the content matches.
@@ -94,9 +94,7 @@ bool RCC::compile_code(const Settings &settings,
 
     gpdebug("{}\n", compile_cmd);
 
-    using namespace fmt;
-
-    if (system(compile_cmd) != 0) {
+    if (system_s(compile_cmd) != 0) {
         if (!silent) {
             const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
             if (isatty(fileno(stderr))) {
@@ -132,7 +130,7 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
     const auto tty_yellow_bold = TTY_TS(fg(color::yellow) | emphasis::bold, stderr);
     gpdebug(tty_yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     // TODO: need to flush the output before running the command
-    int ret = system(exec_cmd);
+    int ret = system_s(exec_cmd);
     gpdebug(tty_yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
     if (ret == -1) { // System call failed. This is an error, e.g. fork() failed

@@ -320,7 +320,7 @@ bool linux_clang::test_pch(const std::string &std,
                                  "-x c++ -E -P -include-pch " + gch_path.quote_if_needed() + " /dev/null " +
                                  vector_to_string(filtered_additional_flags, " ", "", true) + "> /dev/null 2>&1";
 
-    result = system(test_cmd.c_str()) == 0;
+    result = system_s(test_cmd) == 0;
 
     const auto tty_ts = TTY_TS(result ? fg(terminal_color::green) : fg(terminal_color::red), stderr);
     gpdebug("PCH test result: {}\n", styled(result ? "true" : "false", tty_ts));

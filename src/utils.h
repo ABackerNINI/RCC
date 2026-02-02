@@ -14,22 +14,25 @@ namespace rcc {
 // unused return result.
 template <typename T> void IGNORE_RESULT(T &&) {}
 
-// Wrapper function of system(const char *);
-inline int system(const std::string &cmd) {
+// Wrapper function of system(const char *), it flushes stdout and stderr before
+// calling system().
+inline int system_s(const std::string &cmd) {
     // print(cmd);
-    return ::system(cmd.c_str());
+    fflush(stdout);
+    fflush(stderr);
+    return std::system(cmd.c_str());
 }
 
 // Wrapper for system() to ignore return value.
 inline void ignore_system(const char *cmd) {
     // [[maybe_unused]] auto result = system(cmd); // ignore result
-    IGNORE_RESULT(system(cmd));
+    IGNORE_RESULT(system_s(cmd));
 }
 
 // Wrapper for system() to ignore return value.
 inline void ignore_system(const std::string &cmd) {
     // [[maybe_unused]] auto result = system(cmd); // ignore result
-    IGNORE_RESULT(system(cmd));
+    IGNORE_RESULT(system_s(cmd));
 }
 
 // Check if the string starts with the given prefix.
@@ -71,5 +74,8 @@ template <typename T> double duration_ms(const T &start, const T &end = now()) {
 }
 
 } // namespace rcc
+
+[[deprecated("Please use system_s() instead of system().")]]
+int system(const char *command);
 
 #endif // __RCC_UTILS_H__

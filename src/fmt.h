@@ -56,6 +56,7 @@ template <typename T> void patch_styled_arg(FILE *fp, T &&styled_arg) {
 // It is a wrapper around `fmt::print` that checks if the file descriptor is a
 // TTY, and if not, it will not print the color codes.
 template <typename... T> void cprint(FILE *fp, fmt::format_string<T...> fmt, T &&...args) {
+    // TODO: fold-expression is not available before C++17
     // Call patch_styled_arg for each argument
     (patch_styled_arg(fp, args), ...);
 
