@@ -48,11 +48,11 @@
      *
      * You should declare global variable `DBG_LEVEL debug_level;` in your .cpp source
      * file and set `debug_level` to `DBG_LVL::XXX`, macros `gpxxx`,
-     * print_`xxx`_ex and stmt_`xxx` will be executed only if debug_level is not
+     * gp`xxx` and gstmt_`xxx` will be executed only if debug_level is not
      * less than the corresponding value.
      *
-     * E.g. If you set debug_level to `DBG_LVL::INFO`, print_error/warning/info will be
-     * executed but print_debug/msgdump/excessive will not.
+     * E.g. If you set debug_level to `DBG_LVL::INFO`, gperror/warning/info will be
+     * executed but gpdebug/msgdump/excessive will not.
      */
     #define ENABLE_RUNTIME_DEBUG_LEVEL 1
 #endif
@@ -95,11 +95,23 @@ extern DBG_LEVEL debug_level;
         } while (0)
 #endif // ENABLE_RUNTIME_DEBUG_LEVEL
 
-#define __DPF_PRINT_FUNC(lvl, ts, lvl_str, ...)                                                                        \
-    __DPF_DO_IF_RT_DBG(                                                                                                \
-        lvl, if (isatty(STDERR_FILENO)) { fmt::print(stderr, "{}", fmt::styled(lvl_str, ts)); } else {                 \
-            fmt::print(stderr, lvl_str);                                                                               \
-        } fmt::print(stderr, __VA_ARGS__);)
+#define __DPF_PRINT_FUNC(lvl, ts, lvl_str, ...) __DPF_DO_IF_RT_DBG(lvl, __dpf_print_func(ts, lvl_str, __VA_ARGS__))
+
+template <size_t N, typename... T>
+void __dpf_print_func(text_style lvl_str_ts, const char (&lvl_str)[N], fmt::format_string<T...> fmt, T &&...args) {
+    print(stderr, "{}", styled(lvl_str, lvl_str_ts));
+    print(stderr, fmt, std::forward<T>(args)...);
+}
+
+template <size_t N, typename... T>
+void __dpf_print_func(text_style lvl_str_ts,
+                      const char (&lvl_str)[N],
+                      text_style ts,
+                      fmt::format_string<T...> fmt,
+                      T &&...args) {
+    print(stderr, "{}", styled(lvl_str, lvl_str_ts));
+    print(stderr, ts, fmt, std::forward<T>(args)...);
+}
 
 #if (RUNTIME_DEBUG_LEVEL >= 0)
     /* Print error msg. */
