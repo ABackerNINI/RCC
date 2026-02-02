@@ -53,12 +53,27 @@ template <typename T> void patch_styled_arg(FILE *fp, T &&styled_arg) {
     (void)styled_arg;
 }
 
+#if __cplusplus < 201703L
+inline void patch_styled_arg_compatible(FILE *fp) {
+    (void)fp;
+}
+
+template <typename First, typename... Rest> void patch_styled_arg_compatible(FILE *fp, First &&first, Rest &&...args) {
+    patch_styled_arg(fp, std::forward<First>(first));
+    patch_styled_arg_compatible(fp, std::forward<Rest>(args)...);
+}
+#endif
+
 // It is a wrapper around `fmt::print` that checks if the file descriptor is a
 // TTY, and if not, it will not print the color codes.
 template <typename... T> void cprint(FILE *fp, fmt::format_string<T...> fmt, T &&...args) {
-    // TODO: fold-expression is not available before C++17
-    // Call patch_styled_arg for each argument
-    (patch_styled_arg(fp, args), ...);
+// Call patch_styled_arg for each argument
+// Fold-expression is not available before C++17
+#if __cplusplus < 201703L
+    patch_styled_arg_compatible(fp, std::forward<T>(args)...);
+#else
+    (patch_styled_arg(fp, std::forward<T>(args)), ...);
+#endif
 
     fmt::print(fp, fmt, std::forward<T>(args)...);
 }
