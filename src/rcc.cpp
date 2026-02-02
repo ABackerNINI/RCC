@@ -122,11 +122,16 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
-    gpdebug("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+    if (isatty(STDERR_FILENO)) {
+        gpdebug("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+    } else {
+        gpdebug("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
+    }
     gpdebug("EXECUTING : {}\n", styled(exec_cmd, TTY_TS(emphasis::underline, stderr)));
 
     const auto tty_yellow_bold = TTY_TS(fg(color::yellow) | emphasis::bold, stderr);
     gpdebug(tty_yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    // TODO: need to flush the output before running the command
     int ret = system(exec_cmd);
     gpdebug(tty_yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
