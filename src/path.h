@@ -35,8 +35,8 @@ class Path {
         return *this;
     }
 
-    Path &replace_extension() {
-        path_.replace_extension();
+    Path &replace_extension(const Path &replacement) {
+        path_.replace_extension(replacement.path_);
         return *this;
     }
 
