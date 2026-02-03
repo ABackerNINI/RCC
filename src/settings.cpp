@@ -213,10 +213,10 @@ int Settings::parse_argv(int argc, char **argv) {
         std::stringstream out, err;
         int ret = app.exit(e, out, err);
 
-        auto color = e.get_exit_code() == 0 ? text_style{} : fg(terminal_color::red);
+        const auto color = e.get_exit_code() == 0 ? text_style{} : fg(terminal_color::red);
 
-        print(stdout, "{}", styled(out.str(), TTY_TS(color, stdout)));
-        print(stderr, "{}", styled(err.str(), TTY_TS(color, stderr)));
+        print(stdout, "{}", styled(out.str(), color));
+        print(stderr, "{}", styled(err.str(), color));
 
         return ret;
     }

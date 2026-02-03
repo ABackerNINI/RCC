@@ -28,8 +28,8 @@ pid_t RCC::random_clean_cache() {
                 format("find {} -type f \\( -name \"*.cpp\" -o -name \"*.bin\" \\) -atime +30 -delete",
                        paths.get_sub_cache_dir().quote_if_needed());
 
-            const auto tty_ts = TTY_TS(fg(color::dark_red) | emphasis::bold, stderr);
-            gpdebug("{}: {}\n", styled("Removing old cache files", tty_ts), find_rm_cmd);
+            const auto ts = fg(color::dark_red) | emphasis::bold;
+            gpdebug("{}: {}\n", styled("Removing old cache files", ts), find_rm_cmd);
 
             if (system_s(find_rm_cmd) != 0) {
                 gperror("system(): {}\n", strerror(errno));
@@ -64,9 +64,9 @@ bool RCC::check_if_cached(const Path &bin_path, const Path &cpp_path, const std:
             return true;
         }
 
-        gpdebug(TTY_TS(red_bold, stderr), "WARNING: hash collided but content does not match!\n");
-        gpdebug("{}:\n{}", styled("Old Code", TTY_TS(fg(color::red), stderr)), code_old);
-        gpdebug("{}:\n{}", styled("New Code", TTY_TS(fg(color::red), stderr)), full_code);
+        gpdebug(red_bold, "WARNING: hash collided but content does not match!\n");
+        gpdebug("{}:\n{}", styled("Old Code", fg(color::red)), code_old);
+        gpdebug("{}:\n{}", styled("New Code", fg(color::red)), full_code);
     }
     return false;
 }
@@ -103,10 +103,10 @@ bool RCC::compile_code(const Settings &settings,
             } else {
                 gpwarning_ex("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
             }
-            gperror_ex(TTY_TS(red_bold, stderr), "\nCOMPILATION FAILED!\n");
-            const auto tty_saddle_brown_bold = TTY_TS(fg(color::saddle_brown) | emphasis::bold, stderr);
-            gpdebug("{}: {}\n", styled("COMPILE COMMAND", tty_saddle_brown_bold), compile_cmd);
-            gpdebug("{}: {}\n", styled("EXECUTE COMMAND", tty_saddle_brown_bold), exec_cmd);
+            gperror_ex(red_bold, "\nCOMPILATION FAILED!\n");
+            const auto ts = fg(color::saddle_brown) | emphasis::bold;
+            gpdebug("{}: {}\n", styled("COMPILE COMMAND", ts), compile_cmd);
+            gpdebug("{}: {}\n", styled("EXECUTE COMMAND", ts), exec_cmd);
         }
         return false;
     }
@@ -125,28 +125,26 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
     } else {
         gpdebug("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
     }
-    gpdebug("EXECUTING : {}\n", styled(exec_cmd, TTY_TS(emphasis::underline, stderr)));
+    gpdebug("EXECUTING : {}\n", styled(exec_cmd, emphasis::underline));
 
-    const auto tty_yellow_bold = TTY_TS(fg(color::yellow) | emphasis::bold, stderr);
-    gpdebug(tty_yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    const auto yellow_bold = fg(color::yellow) | emphasis::bold;
+    gpdebug(yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     int ret = system_s(exec_cmd);
-    gpdebug(tty_yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+    gpdebug(yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
     if (ret == -1) { // System call failed. This is an error, e.g. fork() failed
         gperror("system(): {}\n", strerror(errno));
         return 1;
     }
 
-    const auto tty_red_bold = TTY_TS(red_bold, stderr);
-
     int exit_status = 1;
     if (WIFEXITED(ret)) { // The process exited normally
         exit_status = WEXITSTATUS(ret);
     } else if (WIFSIGNALED(ret)) { // The process was terminated by a signal
-        gperror_ex(tty_red_bold, "Killed by signal {}\n", WTERMSIG(ret));
+        gperror_ex(red_bold, "Killed by signal {}\n", WTERMSIG(ret));
         return 1;
     } else { // The process was stopped by a signal or some other unexpected event
-        gperror_ex(tty_red_bold, "Unexpected exit status {}\n", ret);
+        gperror_ex(red_bold, "Unexpected exit status {}\n", ret);
         return 1;
     }
 
@@ -202,15 +200,15 @@ int RCC::run_permanent(const Settings &settings, const std::string &name) {
         if (cpp_path.exists() || desc_path.exists()) {
             gperror_ex("Error: the binary of permanent '{}' does not exist. "
                        "It's likely due to a compilation failure earlier.\n",
-                       styled(name, TTY_TS(red_bold, stderr)));
+                       styled(name, red_bold));
             return 1;
         }
 
         // Try to suggest similar names
         const std::string suggestion = suggest_similar_permanent(name);
-        gperror_ex("Error: permanent '{}' does not exist", styled(name, TTY_TS(red_bold, stderr)));
+        gperror_ex("Error: permanent '{}' does not exist", styled(name, red_bold));
         if (!suggestion.empty()) {
-            gperror_ex(", did you mean '{}'?\n", styled(suggestion, TTY_TS(green_bold, stderr)));
+            gperror_ex(", did you mean '{}'?\n", styled(suggestion, green_bold));
         } else {
             gperror_ex(".\n");
         }
@@ -242,7 +240,7 @@ int RCC::list_permanent(const Settings &settings) {
                 paths.get_src_bin_full_path_permanent(file.stem(), cpp_path, bin_path, desc_path);
                 // Show in red if the binary doesn't exist (compilation failed or has been deleted)
                 auto color = bin_path.exists() ? terminal_color::green : terminal_color::red;
-                print("{}: {}\n", styled(file.stem().string(), TTY_TS(fg(color), stdout)), desc);
+                print("{}: {}\n", styled(file.stem().string(), fg(color)), desc);
             }
         }
     } catch (const fs::filesystem_error &e) {
@@ -290,7 +288,7 @@ int RCC::remove_permanents(const Settings &settings) {
             gpdebug("Removed '{}'\n", permanent);
         } else {
             ret = 1;
-            gperror("Permanent '{}' does not exist!\n", styled(permanent, TTY_TS(fg(terminal_color::red), stderr)));
+            gperror("Permanent '{}' does not exist!\n", styled(permanent, fg(terminal_color::red)));
         }
     }
 
@@ -375,7 +373,7 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &co
 
     if (settings.get_permanent().empty() && check_if_cached(bin_path, cpp_path, full_code)) {
         // Cached, skip the compiling process, run the executable directly
-        gpdebug(TTY_TS(fg(color::green), stderr), "Running cached binary\n");
+        gpdebug(fg(color::green), "Running cached binary\n");
     } else { // Not cached, compile
         if (!settings.get_permanent().empty()) {
             // TODO: confirm overwrite, add option -f, --force
@@ -430,15 +428,15 @@ RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
         }
         code.append("cout << (" + last_code + ") << endl;");
 
-        const auto tty_dodger_blue_bold = TTY_TS(fg(color::dodger_blue) | emphasis::bold, stderr);
+        const auto ts = fg(color::dodger_blue) | emphasis::bold;
 
-        gpdebug(tty_dodger_blue_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+        gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
         gpdebug("Trying to wrap code with 'cout << ... << endl;'\n");
         auto try_result = try_code(settings, code, true); // silent mode
         if (try_result.status != TryCodeResult::SUCCESS) {
-            gpdebug(TTY_TS(fg(color::brown) | emphasis::bold, stderr), "AUTO-WRAP FAILED\n");
+            gpdebug(fg(color::brown) | emphasis::bold, "AUTO-WRAP FAILED\n");
         }
-        gpdebug(tty_dodger_blue_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+        gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
         gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin));
 
         return {true, try_result};
@@ -447,11 +445,9 @@ RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
     return {false, {}};
 }
 
-// TODO: add options --g++ --clang++
 // TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
 // TODO: add -q, --quiet, or --silent flag to suppress output
 // TODO: add the fmt, ghc libraries
-// TODO: no color for non-tty
 // TODO: add json support
 // TODO: add csv support
 // TODO: add version info

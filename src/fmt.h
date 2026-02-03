@@ -39,15 +39,19 @@ template <typename T> struct patched_styled_arg : fmt::detail::view {
     patched_styled_arg(const T &v, fmt::text_style s) : value(v), style(s), enable(true) {}
 };
 
+// Wrapper around `fmt::styled` that allows to disable color codes when not in a TTY.
 template <typename T>
 FMT_CONSTEXPR auto cstyled(const T &value, fmt::text_style ts) -> patched_styled_arg<fmt::remove_cvref_t<T>> {
     return patched_styled_arg<fmt::remove_cvref_t<T>>{value, ts};
 }
 
+// Patch the styled arguments to disable color codes when not in a TTY.
 template <typename T> void patch_styled_arg(FILE *fp, const patched_styled_arg<T> &styled_arg) {
     styled_arg.enable = !isatty(fileno(fp));
 }
 
+// Specialization for non-styled arguments. Do nothing. This is needed to make the function work with both styled and
+// non-styled arguments.
 template <typename T> void patch_styled_arg(FILE *fp, T &&styled_arg) {
     (void)fp;
     (void)styled_arg;
@@ -67,11 +71,12 @@ template <typename First, typename... Rest> void patch_styled_arg_compatible(FIL
 // It is a wrapper around `fmt::print` that checks if the file descriptor is a
 // TTY, and if not, it will not print the color codes.
 template <typename... T> void cprint(FILE *fp, fmt::format_string<T...> fmt, T &&...args) {
-// Call patch_styled_arg for each argument
-// Fold-expression is not available before C++17
 #if __cplusplus < 201703L
+    // Call patch_styled_arg for each argument, template parameter pack recursive expansion
+    //* Fold-expression is not available before C++17
     patch_styled_arg_compatible(fp, std::forward<T>(args)...);
 #else
+    // Call patch_styled_arg for each argument, fold-expression
     (patch_styled_arg(fp, std::forward<T>(args)), ...);
 #endif
 
@@ -133,16 +138,6 @@ using fmt::fg;
 using fmt::format;
 using fmt::terminal_color;
 using fmt::text_style;
-
-// If the file descriptor is a TTY, return the text style, otherwise return a
-// default text style. This is used to make the output look nice in terminals.
-// If the output is redirected to a file, the colors are disabled.
-// TODO: remove it
-inline text_style TTY_TS(text_style ts, FILE *fp) {
-    // return isatty(fileno(fp)) ? ts : text_style();
-    (void)fp;
-    return ts;
-}
 
 #if __cplusplus >= 201402L
 // C++14 or later

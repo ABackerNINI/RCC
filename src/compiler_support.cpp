@@ -95,11 +95,10 @@ std::string compiler_support::gen_code(const Path &template_filename,
     size_t num_replaced = safe_replacer::replace(temp, replaces);
 
     if (num_replaced != replaces.size()) {
-        const auto tty_red_bold = TTY_TS(red_bold, stderr);
         if (num_replaced < replaces.size()) {
-            gperror(tty_red_bold, "Template file is missing some placeholders\n");
+            gperror(red_bold, "Template file is missing some placeholders\n");
         } else /* if (num_replaced > replaces.size()) */ {
-            gperror(tty_red_bold, "Template file has extra placeholders\n");
+            gperror(red_bold, "Template file has extra placeholders\n");
         }
         gperror_c("rcc expects the following placeholders:\n");
         for (const auto &pair : replaces) {
@@ -262,7 +261,7 @@ bool linux_clang::get_test_pch_from_cache(const std::string &std,
         result = (result_read == "true");
         return true;
     } catch (const std::exception &e) {
-        gpwarning(TTY_TS(fg(terminal_color::red), stderr), "Failed to read clang test PCH cache file: {}\n", e.what());
+        gpwarning(fg(terminal_color::red), "Failed to read clang test PCH cache file: {}\n", e.what());
         return false;
     }
 }
@@ -290,7 +289,7 @@ void linux_clang::save_test_pch_to_cache(const std::string &std,
                  << (result ? "true" : "false") << "\n";
         out_file.close();
     } catch (const std::exception &e) {
-        gpwarning(TTY_TS(fg(terminal_color::red), stderr), "Failed to write clang pch test file: {}\n", e.what());
+        gpwarning(fg(terminal_color::red), "Failed to write clang pch test file: {}\n", e.what());
     }
 }
 
@@ -322,8 +321,8 @@ bool linux_clang::test_pch(const std::string &std,
 
     result = system_s(test_cmd) == 0;
 
-    const auto tty_ts = TTY_TS(result ? fg(terminal_color::green) : fg(terminal_color::red), stderr);
-    gpdebug("PCH test result: {}\n", styled(result ? "true" : "false", tty_ts));
+    const auto ts = result ? fg(terminal_color::green) : fg(terminal_color::red);
+    gpdebug("PCH test result: {}\n", styled(result ? "true" : "false", ts));
     gpmsgdump("TEST CMD: {}\n", test_cmd);
 
     gpinfo("PCH test took {:.2f} ms\n", duration_ms(time_begin, now()));
