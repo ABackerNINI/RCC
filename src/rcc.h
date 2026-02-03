@@ -66,6 +66,12 @@ class RCC {
         int exit_status;
     };
 
+    // Try to compile and run code for permanent.
+    RCC::TryCodeResult try_code_permanent(const Settings &settings, const std::string &code, bool silent);
+
+    // Try to compile and run code for normal mode.
+    RCC::TryCodeResult try_code_normal(const Settings &settings, const std::string &code, bool silent);
+
     // Silent mode: no output of compiler errors, and no output after the compilation failed.
     TryCodeResult try_code(const Settings &settings, const std::string &code, bool silent = false);
 

@@ -101,6 +101,8 @@ void Settings::add_permanent_options(CLI::App &app) {
     // TODO: add option --rename-permanent, add rn subcommand = rename permanent
     // TODO: add option --update-permanent, add update subcommand
 
+    // TODO: validate the permanent name
+
     app.add_option("--permanent", permanent, "Make the code permanent")->option_text("NAME");
 
     app.add_option("--desc", permanent_desc, "Description for the permanent code")->needs("--permanent");
