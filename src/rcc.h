@@ -45,7 +45,7 @@ class RCC {
     int run_permanent(const Settings &settings, const std::string &name);
 
     // List all permanent executables, return 1 on error.
-    int list_permanent(const Settings &settings);
+    int list_permanents(const Settings &settings);
 
     // Remove file and handle exceptions. Return true if successful, false otherwise.
     bool remove_file(Path &p) noexcept;

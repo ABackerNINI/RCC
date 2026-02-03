@@ -223,7 +223,7 @@ int RCC::run_permanent(const Settings &settings, const std::string &name) {
 }
 
 // List all permanent executables, return 1 on error.
-int RCC::list_permanent(const Settings &settings) {
+int RCC::list_permanents(const Settings &settings) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
 
@@ -511,7 +511,7 @@ int RCC::rcc_main(const Settings &settings) {
 
     // If --list-permanent is set, list all permanent programs
     if (settings.get_flag_list_permanent()) {
-        return list_permanent(settings);
+        return list_permanents(settings);
     }
 
     // If --remove-permanent is set, remove the specified permanents
