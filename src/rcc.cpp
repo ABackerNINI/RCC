@@ -129,7 +129,6 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
 
     const auto tty_yellow_bold = TTY_TS(fg(color::yellow) | emphasis::bold, stderr);
     gpdebug(tty_yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-    // TODO: need to flush the output before running the command
     int ret = system_s(exec_cmd);
     gpdebug(tty_yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
@@ -300,13 +299,8 @@ int RCC::remove_permanents(const Settings &settings) {
     return ret;
 }
 
-// Silent mode: no output of compiler errors, and no output after the compilation failed.
-RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &code, bool silent) {
-    // rcc paths
-    const Paths &paths = Paths::get_instance();
-
-    // the compiler
-    const std::string compiler = settings.get_compiler();
+std::string RCC::gen_first_hash_filename(const Settings &settings, const std::string &code) const {
+    const std::string &compiler = settings.get_compiler();
 
     const std::string cxxflags = settings.get_std_cxxflags_as_string();
     const std::string additional_flags = settings.get_additional_flags_as_string();
@@ -315,17 +309,47 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &co
     const std::string functions = settings.get_functions_as_string();
     const std::string additional_sources = settings.get_additional_sources_as_string();
 
+    // The string to hash, which determines the output file name.
+    // It is used to determine if we need to recompile the code or not.
+    const std::string to_hash = code + "a" + compiler + "b" + cxxflags + "a" + additional_flags + "c" +
+                                additional_includes + "k" + above_main + "e" + functions + "r" + additional_sources;
+
+    return u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
+}
+
+std::string RCC::gen_second_hash_identifier(const Settings &settings) const {
+    const std::string &compiler = settings.get_compiler();
+
+    const std::string cxxflags = settings.get_std_cxxflags_as_string();
+    const std::string additional_flags = settings.get_additional_flags_as_string();
+    const std::string additional_includes = settings.get_additional_includes_as_string();
+    const std::string additional_sources = settings.get_additional_sources_as_string();
+
+    // The hash of this string will be written into the cpp file, so that if one of the fields change, we can detect it
+    // and recompile the code. This is an insurance in case the first hash collides.
+    //* So in theory, if this program somehow runs the wrong binary, it means the two different inputs must have the
+    //* same two hashes, and the same code, includes, above main, and functions, since these fields will go into the cpp
+    //* file as well, and as what they were given.
+    const std::string to_hash = compiler + "n" + cxxflags + "i" + additional_flags + "n" + additional_includes + "i" +
+                                additional_sources;
+
+    return u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
+}
+
+// TODO: separate permanent code
+// Silent mode: no output of compiler errors, and no output after the compilation failed.
+RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &code, bool silent) {
+    // rcc paths
+    const Paths &paths = Paths::get_instance();
+
     // the output cpp code and executable file's full paths
     Path cpp_path, bin_path, desc_path;
     bool desc_written = false;
 
     if (settings.get_permanent().empty()) {
-        // The string to hash, which determines the output file name.
-        // It is used to determine if we need to recompile the code or not.
-        const std::string to_hash = code + "a" + compiler + "b" + cxxflags + "a" + additional_flags + "c" +
-                                    additional_includes + "k" + above_main + "e" + functions + "r" + additional_sources;
+        const std::string name = gen_first_hash_filename(settings, code);
 
-        paths.get_src_bin_full_path(to_hash, cpp_path, bin_path);
+        paths.get_src_bin_full_path(name, cpp_path, bin_path);
     } else {
         paths.get_src_bin_full_path_permanent(settings.get_permanent(), cpp_path, bin_path, desc_path);
 
@@ -338,20 +362,13 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &co
     }
 
     // the compiler support
-    auto cs = create_compiler_support(compiler, settings);
+    auto cs = create_compiler_support(settings.get_compiler(), settings);
 
-    // The hash of this string will be written into the cpp file, so that if one of the fields change, we can detect it
-    // and recompile the code. This is an insurance in case the first hash collides.
-    //* So in theory, if this program somehow runs the wrong binary, then the two different inputs must have the same
-    //* two hashes, and the same code, includes, above main, and functions, since these fields will go into the cpp file
-    //* as well, and as what they were given.
-    const std::string identifier = compiler + "n" + cxxflags + "i" + additional_flags + "n" + additional_includes +
-                                   "i" + additional_sources;
+    const std::string identifier = gen_second_hash_identifier(settings);
 
     // full c++ code generated by the template and the command line arguments
     const std::string full_code = cs->gen_code(paths.get_template_file_path(), settings.get_additional_includes(),
-                                               settings.get_above_main(), settings.get_functions(), code,
-                                               u64_to_string_base64x(fnv1a_64_hash_string(identifier)));
+                                               settings.get_above_main(), settings.get_functions(), code, identifier);
 
     /*------------------------------------------------------------------------*/
     // * Compile If Needed
@@ -359,7 +376,7 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &co
     if (settings.get_permanent().empty() && check_if_cached(bin_path, cpp_path, full_code)) {
         // Cached, skip the compiling process, run the executable directly
         gpdebug(TTY_TS(fg(color::green), stderr), "Running cached binary\n");
-    } else {
+    } else { // Not cached, compile
         if (!settings.get_permanent().empty()) {
             // TODO: confirm overwrite, add option -f, --force
         }
@@ -377,7 +394,7 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &co
         // If compilation succeeded, we need to update the description
         // * This means if the compilation failed, we do NOT update the description
         if (!desc_written) {
-            desc_path.write_file(settings.get_permanent_desc().empty() ? "No description provided"
+            desc_path.write_file(settings.get_permanent_desc().empty() ? "[No description provided]"
                                                                        : settings.get_permanent_desc());
         }
 

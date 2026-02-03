@@ -1,16 +1,13 @@
 #include "paths.h"
 #include "debug_fmt.h"
-#include "utils.h"
-#include <dirent.h>
 #include <iostream>
-#include <sys/stat.h>
-#include <unistd.h>
 
 namespace rcc {
 
 // Check if a path exists, if not, exit with error.
 static void expect_exists(const fs::path &path) {
     if (!fs::exists(path)) {
+        // TODO: use gperror
         std::cerr << "RCC mandatory file/directory does not exist: " << path << std::endl;
         std::cerr << "Please reinstall RCC." << std::endl;
         exit(1);
@@ -97,21 +94,11 @@ void Paths::validate_cache_dir() {
     create_dir_if_not_exists(sub_clang_pch_test_cache_dir.get_path());
 }
 
-void Paths::get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const {
-    const uint64_t hash = fnv1a_64_hash_string(code_for_hash);
-
-    // Max value of uint64_t is 18446744073709551615, 20 digits,
-    // so we make the length of hash_str to 20 so that all the filenames of
-    // files generated will be the same length
-    // string hash_str = std::to_string(hash);
-    // hash_str = string(20 - hash_str.length(), '0') + hash_str;
-
-    std::string hash_str = u64_to_string_base64x(hash);
-
+void Paths::get_src_bin_full_path(const std::string &name, Path &src_path, Path &bin_path) const {
     // write temporary c++ code in this file
-    const std::string out_cpp_name = hash_str + ".cpp";
+    const std::string out_cpp_name = name + ".cpp";
     // compile output file
-    const std::string out_bin_name = hash_str + ".bin";
+    const std::string out_bin_name = name + ".bin";
 
     // the source code full path
     src_path = cache_dir / SUB_DIR_CACHE / out_cpp_name;

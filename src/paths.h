@@ -70,7 +70,7 @@ class Paths {
 
     // Get the full path of the output cpp file and binary file for a given piece of code.
     // The filenames are based on the hash of the code.
-    void get_src_bin_full_path(const std::string &code_for_hash, Path &src_path, Path &bin_path) const;
+    void get_src_bin_full_path(const std::string &name, Path &src_path, Path &bin_path) const;
 
     // Get the full path of the given permanent code name.
     void get_src_bin_full_path_permanent(const std::string &name,

@@ -53,6 +53,12 @@ class RCC {
     // Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
     int remove_permanents(const Settings &settings);
 
+    // Generate hash for the output filename.
+    std::string gen_first_hash_filename(const Settings &settings, const std::string &code) const;
+
+    // Generate hash for the identifier.
+    std::string gen_second_hash_identifier(const Settings &settings) const;
+
     struct TryCodeResult {
         enum TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
 
