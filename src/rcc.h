@@ -20,6 +20,14 @@ class RCC {
     // Run the binary executable, return the exit status of the executable, or 1 on error.
     static int run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path);
 
+    // Compile the file.
+    // Silent mode: no output of compiler errors, and no output after the compilation failed.
+    static bool compile_file(const Settings &settings,
+                             const Path &cpp_path,
+                             const Path &bin_path,
+                             compiler_support &cs,
+                             bool silent);
+
     // Generate hash for the output filename.
     static std::string gen_first_hash_filename(const Settings &settings, const std::string &code);
 
@@ -32,18 +40,6 @@ class RCC {
 
     // Clean up all cached sources and binaries.
     int clean_cache();
-
-//     // Check if the binary is cached and the content matches.
-//     //* The file hash may collide, so we need to check the content as well.
-//     bool check_if_cached(const Path &bin_path, const Path &cpp_path, const std::string &full_code);
-// 
-//     // Compile the code.
-//     bool compile_code(const Settings &settings,
-//                       const Path &bin_path,
-//                       const Path &cpp_path,
-//                       const compiler_support &cs,
-//                       bool silent = false);
-// 
 
     // Suggest a similar permanent, return empty string if not match found.
     std::string suggest_similar_permanent(const std::string &name);
@@ -60,6 +56,16 @@ class RCC {
     // Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
     int remove_permanents(const Settings &settings);
 
+    struct AutoWrapResult {
+        bool tried;
+        std::string code;
+    };
+
+    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
+    // 'cout << ... << endl;' and try to compile and run it.
+    // This is for convenience, e.g. rcc '2+3*5'.
+    AutoWrapResult gen_auto_wrap_code(const Settings &settings);
+
     struct TryCodeResult {
         enum TryStatus { SUCCESS, COMPILE_FAILED, ERROR };
 
@@ -67,36 +73,14 @@ class RCC {
         int exit_status;
     };
 
-    // bool try_compile(const Settings &settings,
-    //                  const std::string &code,
-    //                  const std::string &code_name,
-    //                  const Path &cpp_path,
-    //                  const Path &bin_path,
-    //                  const compiler_support &cs,
-    //                  bool silent);
-
     // Try to compile and run code for permanent.
-    RCC::TryCodeResult try_code_permanent(const Settings &settings);
+    TryCodeResult try_code_permanent(const Settings &settings);
 
     // Try to compile and run code for normal mode.
-    RCC::TryCodeResult try_code_normal(const Settings &settings);
+    TryCodeResult try_code_normal(const Settings &settings);
 
     // Silent mode: no output of compiler errors, and no output after the compilation failed.
     TryCodeResult try_code(const Settings &settings);
-
-//     struct AutoWrapResult {
-//         bool tried;
-//         TryCodeResult try_result;
-// 
-//         // For C++11 compatibility
-//         AutoWrapResult(bool tried = false, TryCodeResult try_result = TryCodeResult())
-//             : tried(tried), try_result(try_result) {}
-//     };
-
-    // If the last code snippet doesn't end with ';' or '}', then, wrap it in
-    // 'cout << ... << endl;' and try to compile and run it.
-    // This is for convenience, e.g. rcc '2+3*5'.
-    // bool auto_wrap(const Settings &settings, const Path &cpp_path, const Path &bin_path, const compiler_support &cs);
 };
 
 } // namespace rcc

@@ -1,4 +1,5 @@
 #include "rcc.h"
+#include "code.h"
 #include "compiler_support.h"
 #include "debug_fmt.h"
 #include "paths.h"
@@ -9,9 +10,8 @@
 
 namespace rcc {
 
-static const std::string DEFAULT_PERMANENT_DESC = "[No description provided]";
+static const std::string DEFAULT_PERMANENT_DESC = "No description provided";
 
-// Delete old cached files with probability of 1/256.
 pid_t RCC::random_clean_cache() {
     // 1/256 chances
     //? Why not use the hash value of code as the seed?
@@ -49,7 +49,6 @@ pid_t RCC::random_clean_cache() {
     return -1;
 }
 
-// Clean up all cached sources and binaries.
 int RCC::clean_cache() {
     //! Caution: rm command
     const std::string sub_cache_dir = Paths::get_instance().get_sub_cache_dir().quote_if_needed();
@@ -57,7 +56,6 @@ int RCC::clean_cache() {
     return system_s(rm_cmd);
 }
 
-// Generate the execution command with the binary path and command line arguments.
 std::string RCC::gen_exec_cmd(const Settings &settings, const Path &bin_path) {
     const std::string command_line_args = settings.get_cli_args_as_string();
     const std::string exec_cmd = bin_path.quote_if_needed() +
@@ -65,24 +63,28 @@ std::string RCC::gen_exec_cmd(const Settings &settings, const Path &bin_path) {
     return exec_cmd;
 }
 
-// Run the binary executable, return the exit status of the executable, or 1 on error.
 int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin_path) {
-    const std::string exec_cmd = gen_exec_cmd(settings, bin_path);
+    const std::string exec_cmd = RCC::gen_exec_cmd(settings, bin_path);
 
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
     if (isatty(STDERR_FILENO)) {
-        gpdebug("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+        // This creates a hyperlink to the file in the terminal, only tested on zsh
+        gpdebug("SRC FILE: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
     } else {
-        gpdebug("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
+        // This creates a hyperlink to the file
+        gpdebug("SRC FILE: file://{}\n", cpp_path.quote_if_needed());
     }
-    gpdebug("EXECUTING : {}\n", styled(exec_cmd, emphasis::underline));
+    gpdebug("EXECUTING: {}\n", styled(exec_cmd, emphasis::underline));
+
+    const auto time_begin = now();
 
     const auto yellow_bold = fg(color::yellow) | emphasis::bold;
     gpdebug(yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
     int ret = system_s(exec_cmd);
     gpdebug(yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+    gpdebug("RUNNING TIME: {:.2f} ms\n", duration_ms(time_begin));
 
     if (ret == -1) { // System call failed. This is an error, e.g. fork() failed
         gperror("system(): {}\n", strerror(errno));
@@ -101,6 +103,40 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
     }
 
     return exit_status;
+}
+
+bool RCC::compile_file(const Settings &settings,
+                       const Path &cpp_path,
+                       const Path &bin_path,
+                       compiler_support &cs,
+                       bool silent) {
+    std::vector<Path> sources = {cpp_path};
+    for (auto &src : settings.get_additional_sources()) {
+        sources.emplace_back(src);
+    }
+
+    const std::string compile_cmd = cs.get_compile_command(sources, bin_path) + (silent ? " >/dev/null 2>&1" : "");
+
+    gpdebug("{}\n", compile_cmd);
+
+    if (system_s(compile_cmd) != 0) {
+        if (!silent) {
+            const std::string exec_cmd = RCC::gen_exec_cmd(settings, bin_path);
+            if (isatty(fileno(stderr))) {
+                // This creates a hyperlink to the file in the terminal, only tested on zsh
+                gpwarning_ex("SRC FILE: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
+            } else {
+                // This creates a hyperlink to the file
+                gpwarning_ex("SRC FILE: file://{}\n", cpp_path.quote_if_needed());
+            }
+            gperror_ex(red_bold, "\nCOMPILATION FAILED!\n");
+            const auto ts = fg(color::saddle_brown) | emphasis::bold;
+            gpdebug("{}: {}\n", styled("COMPILE COMMAND", ts), compile_cmd);
+            gpdebug("{}: {}\n", styled("EXECUTE COMMAND", ts), exec_cmd);
+        }
+        return false;
+    }
+    return true;
 }
 
 std::string RCC::gen_first_hash_filename(const Settings &settings, const std::string &code) {
@@ -140,7 +176,6 @@ std::string RCC::gen_second_hash_identifier(const Settings &settings) {
     return u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
 }
 
-// Suggest a similar permanent, return empty string if not match found.
 std::string RCC::suggest_similar_permanent(const std::string &name) {
     if (name.size() <= 1) {
         return "";
@@ -175,7 +210,6 @@ std::string RCC::suggest_similar_permanent(const std::string &name) {
     return suggestion;
 }
 
-// Run a permanent executable, return the return code of the executable or 1 if the executable does not exist.
 int RCC::run_permanent(const Settings &settings, const std::string &name) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
@@ -209,7 +243,6 @@ int RCC::run_permanent(const Settings &settings, const std::string &name) {
     return run_bin(settings, cpp_path, bin_path);
 }
 
-// List all permanent executables, return 1 on error.
 int RCC::list_permanents(const Settings &settings) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
@@ -244,7 +277,6 @@ int RCC::list_permanents(const Settings &settings) {
     return 0;
 }
 
-// Remove file and handle exceptions. Return true if successful, false otherwise.
 bool RCC::remove_file(Path &p) noexcept {
     try {
         // *Note: remove() does not throw if the file does not exist. It returns false in that case.
@@ -256,7 +288,6 @@ bool RCC::remove_file(Path &p) noexcept {
     }
 }
 
-// Remove permanent files, return 0 if all files were removed successfully, 1 otherwise.
 int RCC::remove_permanents(const Settings &settings) {
     // rcc paths
     const Paths &paths = Paths::get_instance();
@@ -287,15 +318,7 @@ int RCC::remove_permanents(const Settings &settings) {
     return ret;
 }
 
-struct AutoWrapResult {
-    bool tried;
-    std::string code;
-};
-
-// If the last code snippet doesn't end with ';' or '}', then, wrap it in
-// 'cout << ... << endl;' and try to compile and run it.
-// This is for convenience, e.g. rcc '2+3*5'.
-AutoWrapResult gen_auto_wrap_code(const Settings &settings) {
+RCC::AutoWrapResult RCC::gen_auto_wrap_code(const Settings &settings) {
     auto &codes = settings.get_codes();
 
     if (codes.empty()) {
@@ -314,187 +337,8 @@ AutoWrapResult gen_auto_wrap_code(const Settings &settings) {
         return {true, code};
     }
 
-    return {false, {}};
+    return {false, {}}; // No need to wrap
 }
-
-class RCCode {
-  public:
-    RCCode(const Settings &settings,
-           const Paths &paths,
-           const std::string &identifier,
-           compiler_support &cs,
-           const std::string &code,
-           const std::string &code_name)
-        : settings(settings), paths(paths), identifier(identifier), cs(cs), code(code), code_name(code_name) {}
-
-    // Init the output cpp and bin paths.
-    // This requires the full_code to be generated first.
-    void init_cpp_bin_paths() {
-        if (!full_code_generated) {
-            gen_full_code();
-        }
-        // the output cpp file and executable file's name
-        const std::string filename = RCC::gen_first_hash_filename(settings, full_code);
-        paths.get_src_bin_full_path(filename, cpp_path, bin_path);
-    }
-
-    // Check if the binary is cached and the content matches.
-    //* The file hash may collide, so we need to check the content as well.
-    bool is_cached() {
-        if (bin_path.exists()) {
-            if (!full_code_generated) {
-                gen_full_code();
-            }
-
-            const std::string code_old = cpp_path.read_file();
-            if (code_old == full_code) {
-                return true;
-            }
-
-            gpdebug(red_bold, "WARNING: hash collided but content does not match!\n");
-            gpdebug("{}:\n{}", styled("Old Code", fg(color::red)), code_old);
-            gpdebug("{}:\n{}", styled("New Code", fg(color::red)), full_code);
-        }
-        return false;
-    }
-
-    // Write the full code to the cpp file and compile it.
-    // This requires the full_code to be generated first.
-    bool compile(bool silent) {
-        if (!full_code_generated) {
-            gen_full_code();
-        }
-
-        try {
-            // Write c++ code to the cpp file
-            cpp_path.write_file(full_code);
-        } catch (std::exception &e) {
-            gperror("Failed to write code to file: %s", e.what());
-            return false;
-        }
-
-        const auto ts = fg(color::dodger_blue) | emphasis::bold;
-        gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-        gpdebug("Compiling {} code\n", code_name);
-
-        bool result = compile_file(silent);
-
-        if (result) {
-            gpdebug("COMPILATION {} ({})\n", styled("OK", green_bold), code_name);
-        } else {
-            gpdebug("COMPILATION {} ({})\n", styled("FAILED", red_bold), code_name);
-        }
-        gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-
-        return result;
-    }
-
-    // Run the binary executable, return the exit status of the executable, or 1 on error.
-    int run_bin() {
-        const std::string exec_cmd = RCC::gen_exec_cmd(settings, bin_path);
-
-        /*------------------------------------------------------------------------*/
-        // * Run the Executable
-
-        if (isatty(STDERR_FILENO)) {
-            gpdebug("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
-        } else {
-            gpdebug("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
-        }
-        gpdebug("EXECUTING : {}\n", styled(exec_cmd, emphasis::underline));
-
-        const auto yellow_bold = fg(color::yellow) | emphasis::bold;
-        gpdebug(yellow_bold, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-        int ret = system_s(exec_cmd);
-        gpdebug(yellow_bold, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-
-        if (ret == -1) { // System call failed. This is an error, e.g. fork() failed
-            gperror("system(): {}\n", strerror(errno));
-            return 1;
-        }
-
-        int exit_status = 1;
-        if (WIFEXITED(ret)) { // The process exited normally
-            exit_status = WEXITSTATUS(ret);
-        } else if (WIFSIGNALED(ret)) { // The process was terminated by a signal
-            gperror_ex(red_bold, "Killed by signal {}\n", WTERMSIG(ret));
-            return 1;
-        } else { // The process was stopped by a signal or some other unexpected event
-            gperror_ex(red_bold, "Unexpected exit status {}\n", ret);
-            return 1;
-        }
-
-        return exit_status;
-    }
-
-  private:
-    void gen_full_code() {
-        full_code = cs.gen_code(paths.get_template_file_path(), settings.get_additional_includes(),
-                                settings.get_above_main(), settings.get_functions(), code, identifier);
-        full_code_generated = true;
-    }
-
-    // Compile the file.
-    bool compile_file(bool silent) {
-        std::vector<Path> sources = {cpp_path};
-        for (auto &src : settings.get_additional_sources()) {
-            sources.emplace_back(src);
-        }
-
-        const std::string compile_cmd = cs.get_compile_command(sources, bin_path) + (silent ? " >/dev/null 2>&1" : "");
-
-        gpdebug("{}\n", compile_cmd);
-
-        if (system_s(compile_cmd) != 0) {
-            if (!silent) {
-                const std::string exec_cmd = RCC::gen_exec_cmd(settings, bin_path);
-                if (isatty(fileno(stderr))) {
-                    // This creates a hyperlink to the file in the terminal, only tested on zsh
-                    gpwarning_ex("OUTPUT CPP: \e]8;;file://{}\a{}\e]8;;\a\n", cpp_path.quote_if_needed(), "file");
-                } else {
-                    gpwarning_ex("OUTPUT CPP: file://{}\n", cpp_path.quote_if_needed());
-                }
-                gperror_ex(red_bold, "\nCOMPILATION FAILED!\n");
-                const auto ts = fg(color::saddle_brown) | emphasis::bold;
-                gpdebug("{}: {}\n", styled("COMPILE COMMAND", ts), compile_cmd);
-                gpdebug("{}: {}\n", styled("EXECUTE COMMAND", ts), exec_cmd);
-            }
-            return false;
-        }
-        return true;
-    }
-
-  protected:
-    const Settings &settings;
-    const Paths &paths;
-    const std::string identifier;
-    compiler_support &cs;
-    std::string code;
-    std::string code_name;
-    std::string full_code;
-    Path cpp_path;
-    Path bin_path;
-    bool full_code_generated{false};
-};
-
-class RCCodePermanent : public RCCode {
-  public:
-    RCCodePermanent(const Settings &settings,
-                    const Paths &paths,
-                    const std::string &identifier,
-                    compiler_support &cs,
-                    const std::string &code,
-                    const std::string &code_name)
-        : RCCode(settings, paths, identifier, cs, code, code_name) {}
-
-    // Init the output cpp and bin paths.
-    void init_cpp_bin_paths() {
-        paths.get_src_bin_full_path_permanent(settings.get_permanent(), cpp_path, bin_path, desc_path);
-    }
-
-  protected:
-    Path desc_path;
-};
 
 RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings) {
     const Paths &paths = Paths::get_instance();
@@ -517,12 +361,12 @@ RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings) {
     // the compiler support
     auto cs = create_compiler_support(settings.get_compiler(), settings);
 
+    // the identifier
     const std::string identifier = gen_second_hash_identifier(settings);
 
+    // original code
     RCCodePermanent code_original(settings, paths, identifier, *cs, code, "original");
     code_original.init_cpp_bin_paths();
-
-    const auto auto_warp = gen_auto_wrap_code(settings);
 
     /*------------------------------------------------------------------------*/
     // * Compile Anyway
@@ -531,6 +375,8 @@ RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings) {
 
     // TODO: confirm overwrite, add option -f, --force
 
+    // Try to compile the auto-wrapped code first
+    const auto auto_warp = gen_auto_wrap_code(settings);
     if (auto_warp.tried) {
         RCCodePermanent code_auto_wrap(settings, paths, identifier, *cs, auto_warp.code, "auto-wrapped");
         code_auto_wrap.init_cpp_bin_paths();
@@ -540,12 +386,13 @@ RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings) {
         }
     }
 
+    // If the auto-wrapped code failed to compile, try the original code
     if (!compile_success && code_original.compile(false)) {
         compile_success = true;
     }
 
     if (!compile_success) {
-        return {TryCodeResult::COMPILE_FAILED, 1};
+        return {TryCodeResult::COMPILE_FAILED, 1}; // Both compilation failed
     }
 
     // If compilation succeeded, we need to update the description
@@ -571,38 +418,43 @@ RCC::TryCodeResult RCC::try_code_normal(const Settings &settings) {
     // the identifier
     const std::string identifier = gen_second_hash_identifier(settings);
 
+    // the original code
     RCCode code_original(settings, paths, identifier, *cs, code, "original");
     code_original.init_cpp_bin_paths();
 
+    // Check if the original code is cached. If so, just run it
     if (code_original.is_cached()) {
         gpdebug(green_bold, "Running cached binary ({})\n", "original");
         return {TryCodeResult::SUCCESS, code_original.run_bin()};
     }
 
+    // Try to auto-wrap the code and try to compile it
     const auto auto_warp = gen_auto_wrap_code(settings);
-
     if (auto_warp.tried) {
         RCCode code_auto_wrap(settings, paths, identifier, *cs, auto_warp.code, "auto-wrapped");
         code_auto_wrap.init_cpp_bin_paths();
 
+        // If the auto-wrapped code is cached, just run it
         if (code_auto_wrap.is_cached()) {
             gpdebug(green_bold, "Running cached binary ({})\n", "auto-wrapped");
             return {TryCodeResult::SUCCESS, code_auto_wrap.run_bin()};
         }
 
+        // If the auto-wrapped code compiles successfully, run it
         if (code_auto_wrap.compile(true)) {
             return {TryCodeResult::SUCCESS, code_auto_wrap.run_bin()};
         }
     }
 
+    // Compile and run the original code
     if (code_original.compile(false)) {
         return {TryCodeResult::SUCCESS, code_original.run_bin()};
     }
 
+    // Both the auto-wrapped code and the original code failed to compile
     return {TryCodeResult::COMPILE_FAILED, 1};
 }
 
-// Silent mode: no output of compiler errors, and no output after the compilation failed.
 RCC::TryCodeResult RCC::try_code(const Settings &settings) {
     return settings.get_permanent().empty() ? try_code_normal(settings) : try_code_permanent(settings);
 }
@@ -664,15 +516,8 @@ int RCC::rcc_main(const Settings &settings) {
         return 0;
     }
 
-    // Try to auto-wrap the code, if successful, return the result directly
-    auto time_begin = now();
-
     // Try to compile and run the code
-    auto try_result = try_code(settings);
-
-    gpinfo("Compile and run took: {:.2f} ms\n", duration_ms(time_begin));
-
-    return try_result.exit_status;
+    return try_code(settings).exit_status;
 }
 
 } // namespace rcc
@@ -682,14 +527,14 @@ int RCC::rcc_main(const Settings &settings) {
 // TODO: Handle signals
 
 // Signal handler for SIGINT (Control-C) to exit the program gracefully.
-void signal_handler(int s) {
+static void signal_handler(int s) {
     (void)s;
     std::cout << "Control-C detected, exiting..." << std::endl;
     std::exit(1);
 }
 
 // Register signal handler for SIGINT to exit the program gracefully.
-void register_signal_handler() {
+static void register_signal_handler() {
     // Nice Control-C
     struct sigaction sigIntHandler;
     sigIntHandler.sa_handler = signal_handler;
@@ -700,6 +545,8 @@ void register_signal_handler() {
 
 int main(int argc, char **argv) {
     using namespace rcc;
+
+    const auto time_begin = now();
 
     // Handle signals gracefully
     register_signal_handler();
@@ -714,8 +561,13 @@ int main(int argc, char **argv) {
     Settings settings;
     int result;
     if ((result = settings.parse_argv(argc, argv)) != 0) {
+        gpdebug("OVERALL TIME: {:.2f}ms\n", duration_ms(time_begin));
         return result;
     }
 
-    return RCC().rcc_main(settings);
+    int exit_status = RCC().rcc_main(settings);
+
+    gpdebug("OVERALL TIME: {:.2f}ms\n", duration_ms(time_begin));
+
+    return exit_status;
 }
