@@ -337,8 +337,111 @@ std::string RCC::gen_second_hash_identifier(const Settings &settings) const {
     return u64_to_string_base64x(fnv1a_64_hash_string(to_hash));
 }
 
-RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings, const std::string &code, bool silent) {
+struct AutoWrapResult {
+    bool tried;
+    std::string code;
+};
+
+AutoWrapResult gen_auto_wrap_code(const Settings &settings) {
+    auto &codes = settings.get_codes();
+
+    if (codes.empty()) {
+        return {false, {}}; // No code to wrap
+    }
+
+    auto &last_code = codes.back();
+    if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
+        std::string code;
+
+        for (size_t i = 0; i < codes.size() - 1; i++) {
+            code.append(codes[i]);
+        }
+        code.append("cout << (" + last_code + ") << endl;");
+
+        return {true, code};
+    }
+
+    return {false, {}};
+}
+
+// If the last code snippet doesn't end with ';' or '}', then, wrap it in
+// 'cout << ... << endl;' and try to compile and run it.
+// This is for convenience, e.g. rcc '2+3*5'.
+// bool RCC::auto_wrap(const Settings &settings, const Path &cpp_path, const Path &bin_path, const compiler_support &cs)
+// {
+//     auto time_begin = now();
+//
+//     auto &codes = settings.get_codes();
+//
+//     if (codes.empty()) {
+//         return false; // No code to wrap
+//     }
+//
+//     auto &last_code = codes.back();
+//     if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
+//         std::string code;
+//
+//         for (size_t i = 0; i < codes.size() - 1; i++) {
+//             code.append(codes[i]);
+//         }
+//         code.append("cout << (" + last_code + ") << endl;");
+//
+//         const auto ts = fg(color::dodger_blue) | emphasis::bold;
+//
+//         gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+//         gpdebug("Trying to wrap code with 'cout << ... << endl;'\n");
+//
+//         cpp_path.write_file(code);
+//
+//         bool result = compile_code(settings, bin_path, cpp_path, cs, true);
+//
+//         if (!result) {
+//             gpdebug(fg(color::brown) | emphasis::bold, "AUTO-WRAP FAILED\n");
+//         }
+//         gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+//         gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin));
+//
+//         return result;
+//     }
+//
+//     return false;
+// }
+
+bool RCC::try_compile(const Settings &settings,
+                      const std::string &code,
+                      const std::string &code_name,
+                      const Path &cpp_path,
+                      const Path &bin_path,
+                      const compiler_support &cs,
+                      bool silent) {
+    try {
+        // Write c++ code to the cpp file
+        cpp_path.write_file(code);
+    } catch (std::exception &e) {
+        gperror("Failed to write code to file: %s", e.what());
+        return false;
+    }
+
+    const auto ts = fg(color::dodger_blue) | emphasis::bold;
+    gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    gpdebug("Compiling {} code\n", code_name);
+
+    bool result = compile_code(settings, bin_path, cpp_path, cs, silent);
+
+    if (result) {
+        gpdebug("COMPILATION {} ({})\n", styled("OK", green_bold), code_name);
+    } else {
+        gpdebug("COMPILATION {} ({})\n", styled("FAILED", red_bold), code_name);
+    }
+    gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+
+    return result;
+}
+
+RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings) {
     const Paths &paths = Paths::get_instance();
+
+    const std::string &code = settings.get_codes_as_string();
 
     // the output cpp code and executable file's full paths
     Path cpp_path, bin_path, desc_path;
@@ -372,7 +475,7 @@ RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings, const std::
     // Write c++ code to the cpp file
     cpp_path.write_file(full_code);
 
-    if (!compile_code(settings, bin_path, cpp_path, *cs, silent)) {
+    if (!compile_code(settings, bin_path, cpp_path, *cs, false)) {
         // Compile failed
         return {TryCodeResult::COMPILE_FAILED, 1};
     }
@@ -388,93 +491,139 @@ RCC::TryCodeResult RCC::try_code_permanent(const Settings &settings, const std::
     return {TryCodeResult::SUCCESS, 0};
 }
 
-RCC::TryCodeResult RCC::try_code_normal(const Settings &settings, const std::string &code, bool silent) {
+enum CodeType { ORIG_CODE = 0, AUTO_WRAP = 1, NONE = 2 };
+
+RCC::TryCodeResult RCC::try_code_normal(const Settings &settings) {
     const Paths &paths = Paths::get_instance();
 
-    // the output cpp code and executable file's full paths
-    Path cpp_path, bin_path;
-
-    const std::string filename = gen_first_hash_filename(settings, code);
-
-    paths.get_src_bin_full_path(filename, cpp_path, bin_path);
+    const std::string &code = settings.get_codes_as_string();
+    const auto auto_warp = gen_auto_wrap_code(settings);
 
     // the compiler support
     auto cs = create_compiler_support(settings.get_compiler(), settings);
 
+    // the identifier
     const std::string identifier = gen_second_hash_identifier(settings);
 
     // full c++ code generated by the template and the command line arguments
-    const std::string full_code = cs->gen_code(paths.get_template_file_path(), settings.get_additional_includes(),
-                                               settings.get_above_main(), settings.get_functions(), code, identifier);
+    const std::string full_code_orig = cs->gen_code(paths.get_template_file_path(), settings.get_additional_includes(),
+                                                    settings.get_above_main(), settings.get_functions(), code,
+                                                    identifier);
+
+    // the auto-wrapped code
+    const std::string full_code_auto_wrap =
+        auto_warp.tried ? cs->gen_code(paths.get_template_file_path(), settings.get_additional_includes(),
+                                       settings.get_above_main(), settings.get_functions(), auto_warp.code, identifier)
+                        : "";
+
+    const std::string full_code[2] = {full_code_orig, full_code_auto_wrap};
+
+    // the code type name, original or auto-wrapped
+    const std::string code_name[2] = {"original", "auto-wrapped"};
+
+    // the output cpp file and executable file's name
+    std::string filename[2];
+
+    // the output cpp code and executable file's full paths
+    Path cpp_path[2], bin_path[2];
+
+    for (int i = 0; i < 2; ++i) {
+        filename[i] = gen_first_hash_filename(settings, full_code[i]);
+        paths.get_src_bin_full_path(filename[i], cpp_path[i], bin_path[i]);
+    }
+
+    // the code type, original or auto-wrapped
+    CodeType code_type = CodeType::NONE;
+
+    /*------------------------------------------------------------------------*/
+    // * Check If Cached
+
+    bool cached = false;
+
+    for (int i = 0; i < 2; ++i) {
+        if (i == CodeType::AUTO_WRAP && !auto_warp.tried) {
+            continue; // skip auto-wrap if auto-wrap is not tried
+        }
+
+        if (check_if_cached(bin_path[i], cpp_path[i], full_code[i])) {
+            // Cached, skip the compiling process, run the executable directly
+            gpdebug(green_bold, "Running cached binary ({})\n", code_name[i]);
+            cached = true;
+            code_type = static_cast<CodeType>(i);
+            break; // skip the compiling process, run the executable directly
+        }
+    }
 
     /*------------------------------------------------------------------------*/
     // * Compile If Needed
 
-    // TODO: auto-wrap here?
+    if (!cached) {
+        // Not cached, compile code
+        bool compile_succeed = false;
+        for (int i = 0; i < 2; ++i) {
+            if (try_compile(settings, full_code[i], code_name[i], cpp_path[i], bin_path[i], *cs,
+                            i == CodeType::AUTO_WRAP)) {
+                code_type = static_cast<CodeType>(i);
+                compile_succeed = true;
+                break;
+            }
+        }
 
-    if (check_if_cached(bin_path, cpp_path, full_code)) {
-        // Cached, skip the compiling process, run the executable directly
-        gpdebug(fg(color::green), "Running cached binary\n");
-    } else { // Not cached, compile
-        // Write c++ code to the cpp file
-        cpp_path.write_file(full_code);
-
-        if (!compile_code(settings, bin_path, cpp_path, *cs, silent)) {
-            return {TryCodeResult::COMPILE_FAILED, 1}; // Compile failed
+        if (!compile_succeed) { // Compile failed
+            return {TryCodeResult::COMPILE_FAILED, 1};
         }
     }
 
     /*------------------------------------------------------------------------*/
     // * Run the Executable
 
-    int ret = run_bin(settings, cpp_path, bin_path);
+    int exit_status = run_bin(settings, cpp_path[code_type], bin_path[code_type]);
 
-    return {TryCodeResult::SUCCESS, ret};
+    return {TryCodeResult::SUCCESS, exit_status};
 }
 
 // Silent mode: no output of compiler errors, and no output after the compilation failed.
-RCC::TryCodeResult RCC::try_code(const Settings &settings, const std::string &code, bool silent) {
-    return settings.get_permanent().empty() ? try_code_normal(settings, code, silent)
-                                            : try_code_permanent(settings, code, silent);
+RCC::TryCodeResult RCC::try_code(const Settings &settings) {
+    return settings.get_permanent().empty() ? try_code_normal(settings) : try_code_permanent(settings);
 }
 
 // If the last code snippet doesn't end with ';' or '}', then, wrap it in
 // 'cout << ... << endl;' and try to compile and run it.
 // This is for convenience, e.g. rcc '2+3*5'.
-RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
-    auto time_begin = now();
-
-    auto &codes = settings.get_codes();
-
-    if (codes.empty()) {
-        return {false, {}}; // No code to wrap
-    }
-
-    auto &last_code = codes.back();
-    if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
-        std::string code;
-
-        for (size_t i = 0; i < codes.size() - 1; i++) {
-            code.append(codes[i]);
-        }
-        code.append("cout << (" + last_code + ") << endl;");
-
-        const auto ts = fg(color::dodger_blue) | emphasis::bold;
-
-        gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-        gpdebug("Trying to wrap code with 'cout << ... << endl;'\n");
-        auto try_result = try_code(settings, code, true); // silent mode
-        if (try_result.status != TryCodeResult::SUCCESS) {
-            gpdebug(fg(color::brown) | emphasis::bold, "AUTO-WRAP FAILED\n");
-        }
-        gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-        gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin));
-
-        return {true, try_result};
-    }
-
-    return {false, {}};
-}
+// RCC::AutoWrapResult RCC::auto_wrap(const Settings &settings) {
+//     auto time_begin = now();
+//
+//     auto &codes = settings.get_codes();
+//
+//     if (codes.empty()) {
+//         return {false, {}}; // No code to wrap
+//     }
+//
+//     auto &last_code = codes.back();
+//     if (last_code.length() > 0 && last_code.back() != ';' && last_code.back() != '}') {
+//         std::string code;
+//
+//         for (size_t i = 0; i < codes.size() - 1; i++) {
+//             code.append(codes[i]);
+//         }
+//         code.append("cout << (" + last_code + ") << endl;");
+//
+//         const auto ts = fg(color::dodger_blue) | emphasis::bold;
+//
+//         gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+//         gpdebug("Trying to wrap code with 'cout << ... << endl;'\n");
+//         auto try_result = try_code(settings, code, true); // silent mode
+//         if (try_result.status != TryCodeResult::SUCCESS) {
+//             gpdebug(fg(color::brown) | emphasis::bold, "AUTO-WRAP FAILED\n");
+//         }
+//         gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+//         gpinfo("Auto-wrapping took {:.2f} ms\n", duration_ms(time_begin));
+//
+//         return {true, try_result};
+//     }
+//
+//     return {false, {}};
+// }
 
 // TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
 // TODO: add -q, --quiet, or --silent flag to suppress output
@@ -534,18 +683,10 @@ int RCC::rcc_main(const Settings &settings) {
     }
 
     // Try to auto-wrap the code, if successful, return the result directly
-    auto auto_warp_result = auto_wrap(settings);
-    if (auto_warp_result.tried && auto_warp_result.try_result.status == TryCodeResult::SUCCESS) {
-        return auto_warp_result.try_result.exit_status;
-    }
-
     auto time_begin = now();
 
-    // command line c++ code
-    const std::string code = settings.get_codes_as_string();
-
-    // Try to compile and run the unwrapped code
-    auto try_result = try_code(settings, code);
+    // Try to compile and run the code
+    auto try_result = try_code(settings);
 
     gpinfo("Compile and run took: {:.2f} ms\n", duration_ms(time_begin));
 

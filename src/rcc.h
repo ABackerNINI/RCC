@@ -66,14 +66,22 @@ class RCC {
         int exit_status;
     };
 
+    bool try_compile(const Settings &settings,
+                     const std::string &code,
+                     const std::string &code_name,
+                     const Path &cpp_path,
+                     const Path &bin_path,
+                     const compiler_support &cs,
+                     bool silent);
+
     // Try to compile and run code for permanent.
-    RCC::TryCodeResult try_code_permanent(const Settings &settings, const std::string &code, bool silent);
+    RCC::TryCodeResult try_code_permanent(const Settings &settings);
 
     // Try to compile and run code for normal mode.
-    RCC::TryCodeResult try_code_normal(const Settings &settings, const std::string &code, bool silent);
+    RCC::TryCodeResult try_code_normal(const Settings &settings);
 
     // Silent mode: no output of compiler errors, and no output after the compilation failed.
-    TryCodeResult try_code(const Settings &settings, const std::string &code, bool silent = false);
+    TryCodeResult try_code(const Settings &settings);
 
     struct AutoWrapResult {
         bool tried;
@@ -87,7 +95,7 @@ class RCC {
     // If the last code snippet doesn't end with ';' or '}', then, wrap it in
     // 'cout << ... << endl;' and try to compile and run it.
     // This is for convenience, e.g. rcc '2+3*5'.
-    AutoWrapResult auto_wrap(const Settings &settings);
+    bool auto_wrap(const Settings &settings, const Path &cpp_path, const Path &bin_path, const compiler_support &cs);
 };
 
 } // namespace rcc
