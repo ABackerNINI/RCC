@@ -65,6 +65,7 @@ class Settings {
     // Locate the position of the "--" argument in the command line.
     static int locate_args(int argc, char **argv);
 
+    void add_debug_flags(CLI::App &app);
     void add_options_and_flags(CLI::App &app);
     void add_permanent_options(CLI::App &app);
     void add_permanent_subcommands(CLI::App &app);

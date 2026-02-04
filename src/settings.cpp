@@ -17,6 +17,16 @@ int Settings::locate_args(int argc, char **argv) {
     return argc;
 }
 
+void Settings::add_debug_flags(CLI::App &app) {
+    // Flags -d{0-5} are non-standard options, so we need to allow non-standard options
+    app.allow_non_standard_option_names();
+
+    app.add_flag("-d0{0},-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}", debug_level,
+                 "Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE")
+        ->check(CLI::Range(0, 5))
+        ->option_text("LEVEL");
+}
+
 void Settings::add_options_and_flags(CLI::App &app) {
     app.add_flag("--clean-cache", flag_clean_cache,
                  "Clean cached source and binary files. Permanent code will not be affected.");
@@ -87,11 +97,6 @@ void Settings::add_options_and_flags(CLI::App &app) {
     app.add_flag_callback("--g++", [&]() { compiler = "g++"; }, "Use g++ as compiler");
 
     app.add_flag_callback("--clang++", [&]() { compiler = "clang++"; }, "Use clang++ as compiler")->excludes("--g++");
-
-    app.add_flag("-d0{0},-d1{1},-d2{2},-d3{3},-d4{4},-d5{5},--debug{3}", debug_level,
-                 "Debug level, 0: ERROR, 1: WARNING, 2: INFO, 3: DEBUG, 4: MSGDUMP, 5: EXCESSIVE")
-        ->check(CLI::Range(0, 5))
-        ->option_text("LEVEL");
 }
 
 void Settings::add_permanent_options(CLI::App &app) {
@@ -138,6 +143,8 @@ void Settings::add_permanent_subcommands(CLI::App &app) {
 
     run->add_option("NAME", run_permanent, "Name of the permanent code to run")->required();
 
+    add_debug_flags(*run);
+
     // Add list subcommand
     CLI::App *list = app.add_subcommand("list", "List all permanents, same as --list-permanent")
                          ->parse_complete_callback([&]() { flag_list_permanent = true; })
@@ -147,6 +154,8 @@ void Settings::add_permanent_subcommands(CLI::App &app) {
 
     list->add_flag("--fetch-autocompletion-zsh", flag_fetch_autocompletion_zsh, "Fetch autocompletion for zsh");
 
+    add_debug_flags(*list);
+
     // Add remove subcommand
     CLI::App *remove = app.add_subcommand("remove", "Remove permanent(s) and exit, same as --remove-permanent")
                            ->allow_extras(false)
@@ -154,6 +163,8 @@ void Settings::add_permanent_subcommands(CLI::App &app) {
                            ->alias("rm");
 
     remove->add_option("NAME", remove_permanent, "Name of the permanent code to remove")->required();
+
+    add_debug_flags(*remove);
 }
 
 void Settings::parse_remaining_options(CLI::App &app) {
@@ -202,6 +213,7 @@ int Settings::parse_argv(int argc, char **argv) {
     app.allow_extras();
 
     // Add options and flags
+    add_debug_flags(app);
     add_options_and_flags(app);
     add_permanent_options(app);
     add_permanent_subcommands(app);
