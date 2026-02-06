@@ -8,6 +8,7 @@ DBG_LEVEL debug_level = DBG_LEVEL::WARNING;
 
 namespace rcc {
 
+// TODO: use the longest `---...` as the separator
 int Settings::locate_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--") == 0) {
@@ -203,6 +204,9 @@ int Settings::parse_argv(int argc, char **argv) {
 
         argc -= args_count + 1;
     }
+
+    this->argc = argc;
+    this->argv = argv;
 
     CLI::App app{"RCC - Run C/C++ codes in terminal"};
 

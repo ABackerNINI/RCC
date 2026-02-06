@@ -50,6 +50,9 @@ class Settings {
     std::string get_codes_as_string() const { return vector_to_string(codes, ""); }
     std::string get_additional_sources_as_string() const { return vector_to_string(additional_sources); }
 
+    int get_argc() const { return argc; }
+    char **get_argv() const { return argv; }
+
     // Check if at least one code snippet is present.
     bool has_code() const { return !codes.empty(); }
 
@@ -72,6 +75,9 @@ class Settings {
     void parse_remaining_options(CLI::App &app);
 
   private:
+    int argc;
+    char **argv;
+
     std::string compiler{RCC_CXX}; // the compiler to use
     std::string std{RCC_CXXSTD}; // the c++ standard to use, relates to "-std"
     // The c++ flags to use, default to a set of common flags.
