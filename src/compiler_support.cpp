@@ -306,7 +306,9 @@ bool linux_clang::test_pch(const std::string &std,
     // If already in cache, return the cached result.
     bool result;
     if (get_test_pch_from_cache(std, filtered_cxxflags, filtered_additional_flags, result)) {
-        gpinfo("clang pch test cached ({:.2f}ms)\n", duration_ms(time_begin));
+        const double duration = duration_ms(time_begin);
+        gpdebug("clang pch test cached, {}: ({:.2f} ms)\n",
+                styled("TIME", fg(terminal_color::yellow) | emphasis::bold), colored_duration(10, 20, duration));
         return result;
     }
 
@@ -325,7 +327,9 @@ bool linux_clang::test_pch(const std::string &std,
     gpdebug("PCH test result: {}\n", styled(result ? "true" : "false", ts));
     gpmsgdump("TEST CMD: {}\n", test_cmd);
 
-    gpinfo("PCH test took {:.2f} ms\n", duration_ms(time_begin, now()));
+    const double duration = duration_ms(time_begin);
+    gpdebug("{}: {:.2f} ms\n", styled("PCH TEST TIME", fg(terminal_color::yellow) | emphasis::bold),
+            colored_duration(60, 200, duration));
 
     save_test_pch_to_cache(std, filtered_cxxflags, filtered_additional_flags, result);
 

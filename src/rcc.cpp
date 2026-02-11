@@ -459,6 +459,7 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings) {
     return settings.get_permanent().empty() ? try_code_normal(settings) : try_code_permanent(settings);
 }
 
+// TODO: save CLI arguments of a permanent code
 // TODO: --error-exitcode=<number> exit code to return if errors found [0=disable]
 // TODO: add -q, --quiet, or --silent flag to suppress output
 // TODO: add the fmt, ghc libraries
@@ -478,7 +479,6 @@ RCC::TryCodeResult RCC::try_code(const Settings &settings) {
 // TODO: check template files during make install
 // TODO: store in .local, reproduce install if .cache/rcc files been removed
 // TODO: add a readme in .cache/rcc
-// TODO: add version and help messages
 // TODO: boost with multi-thread
 //? TODO: add option --stdin, read input from stdin instead of arguments
 
@@ -557,17 +557,26 @@ int main(int argc, char **argv) {
     //* times, and get the same seed.
     srand((unsigned int)time(NULL) + (unsigned int)getpid());
 
+    // static std::vector<DurationAndTS> dts = {{1.0, fg(terminal_color::green) | emphasis::bold},
+    //                                          {1.0, fg(terminal_color::cyan) | emphasis::bold},
+    //                                          {1.0, fg(terminal_color::yellow) | emphasis::bold},
+    //                                          {1.0, fg(terminal_color::red) | emphasis::bold}};
+
     // Parse arguments and set up settings
     Settings settings;
     int result;
     if ((result = settings.parse_argv(argc, argv)) != 0) {
-        gpdebug("OVERALL TIME: {:.2f}ms\n", duration_ms(time_begin));
+        const double duration_in_ms = duration_ms(time_begin);
+        gpdebug("{}: {:.2f} ms\n", styled("OVERALL TIME", fg(terminal_color::yellow) | emphasis::bold),
+                colored_duration(20, 100, duration_in_ms));
         return result;
     }
 
     int exit_status = RCC().rcc_main(settings);
 
-    gpdebug("OVERALL TIME: {:.2f}ms\n", duration_ms(time_begin));
+    const double duration_in_ms = duration_ms(time_begin);
+    gpdebug("{}: {:.2f} ms\n", styled("OVERALL TIME", fg(terminal_color::yellow) | emphasis::bold),
+            colored_duration(80, 600, duration_in_ms));
 
     return exit_status;
 }

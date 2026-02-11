@@ -2,6 +2,8 @@
 #define __RCC_UTILS_H__
 
 #include "libs/ghc/fs_std.hpp" // IWYU pragma: keep
+
+#include "fmt.h"
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -72,6 +74,29 @@ inline auto now() -> decltype(std::chrono::high_resolution_clock::now()) {
 template <typename T> double duration_ms(const T &start, const T &end = now()) {
     return std::chrono::duration<double, std::milli>(end - start).count();
 }
+
+// struct DurationAndTS {
+//     double time_ms;
+//     text_style ts;
+// };
+//
+// template <typename T>
+// auto colored_duration(const std::vector<DurationAndTS> &dts,
+//                       const std::chrono::time_point<T> &start,
+//                       const std::chrono::time_point<T> &end = rcc::now()) {
+//     double duration_in_ms = rcc::duration_ms(start, end);
+//     for (auto &p : dts) {
+//         if (duration_in_ms <= p.time_ms) {
+//             return styled(duration_in_ms, p.ts);
+//         }
+//     }
+//     return styled(duration_in_ms, dts.back().ts);
+// }
+
+fmt::text_style duration_color(double green_time_ms, double red_time_ms, double duration_in_ms);
+
+#define colored_duration(green_time_ms, red_time_ms, duration_ms)                                                      \
+    styled(duration_ms, duration_color(green_time_ms, red_time_ms, duration_ms))
 
 } // namespace rcc
 

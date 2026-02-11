@@ -52,7 +52,7 @@ bool RCCode::compile(bool silent) {
 
     const auto ts = fg(color::dodger_blue) | emphasis::bold;
     gpdebug(ts, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-    gpdebug("Compiling {} code\n", code_name);
+    gpdebug(fg(terminal_color::yellow) | emphasis::bold, "Compiling {} code\n", code_name);
 
     const auto time_begin = now();
 
@@ -63,8 +63,9 @@ bool RCCode::compile(bool silent) {
     } else {
         gpdebug("COMPILATION {} ({})", styled("FAILED", red_bold), code_name);
     }
-    // TODO: colored duration
-    gpdebug_ex(", TIME: {:.2f} ms\n", duration_ms(time_begin));
+    double duration = duration_ms(time_begin);
+    gpdebug_ex(", {}: {:.2f} ms\n", styled("TIME", fg(terminal_color::yellow) | emphasis::bold),
+               colored_duration(100, 600, duration));
     gpdebug(ts, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
     return result;

@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <algorithm>
+#include <cassert>
 
 namespace rcc {
 
@@ -106,6 +107,23 @@ size_t edit_distance(const char *s1, size_t len1, const char *s2, size_t len2) {
 
 size_t edit_distance(const std::string &s1, const std::string &s2) {
     return edit_distance(s1.c_str(), s1.length(), s2.c_str(), s2.length());
+}
+
+fmt::text_style duration_color(double green_time_ms, double red_time_ms, double duration_in_ms) {
+    assert(green_time_ms < red_time_ms);
+
+    uint8_t r, g, b = 0;
+    if (duration_in_ms <= green_time_ms) {
+        r = 0;
+        g = 255;
+    } else if (duration_in_ms >= red_time_ms) {
+        r = 255;
+        g = 0;
+    } else {
+        r = static_cast<uint8_t>(duration_in_ms * 255 / (red_time_ms - green_time_ms));
+        g = 255 - r;
+    }
+    return fg(fmt::rgb(r, g, b)) | emphasis::bold;
 }
 
 } // namespace rcc
