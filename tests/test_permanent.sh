@@ -42,4 +42,14 @@ check_error "rcc remove"
 rcc list | grep test_permanent
 check_error "rcc list after remove" "1" true
 
+# Test some edge cases
+
+# Test --permanent without code
+rcc --permanent test_permanent --desc "This is a test permanent" >out.txt 2>err.txt
+check_error "rcc --permanent no code" 1
+
+# Test create without code
+rcc create test_permanent --desc "This is a test permanent" >out.txt 2>err.txt
+check_error "rcc create no code" 1
+
 rm out.txt err.txt
