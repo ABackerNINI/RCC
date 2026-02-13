@@ -76,7 +76,7 @@ int RCC::run_bin(const Settings &settings, const Path &cpp_path, const Path &bin
         // This creates a hyperlink to the file
         gpdebug("SRC FILE: file://{}\n", cpp_path.quote_if_needed());
     }
-    gpdebug("EXECUTING: {}\n", styled(exec_cmd, emphasis::underline));
+    gpdebug("EXECUTING: {}\n", styled(escapeforprint(exec_cmd), emphasis::underline));
 
     const auto time_begin = now();
 

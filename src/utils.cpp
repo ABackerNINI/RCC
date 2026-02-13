@@ -85,7 +85,53 @@ std::string escapeshellarg(const std::string &arg) {
 
     // Wrap the argument inside single quotes, this keeps it be interpreted as is
     // * DO NOT use double quotes
-    return "'" + escaped + "' ";
+    return "'" + escaped + "'";
+}
+
+std::string escapeforprint(const std::string &input) {
+    std::ostringstream oss;
+    for (unsigned char ch : input) {
+        switch (ch) {
+        case '\n':
+            oss << "\\n";
+            break;
+        case '\r':
+            oss << "\\r";
+            break;
+        case '\t':
+            oss << "\\t";
+            break;
+        case '\f':
+            oss << "\\f";
+            break;
+        case '\v':
+            oss << "\\v";
+            break;
+        case '\a':
+            oss << "\\a";
+            break;
+        case '\b':
+            oss << "\\b";
+            break;
+        // case '\\':
+        //     oss << "\\\\";
+        //     break;
+        // case '\"':
+        //     oss << "\\\"";
+        //     break;
+        // case '\'':
+        //     oss << "\\\'";
+        //     break;
+        default:
+            if (ch >= 32 && ch < 127) { // printable ASCII characters
+                oss << ch;
+            } else { // non-printable characters
+                oss << "{\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(ch) << "}";
+            }
+            break;
+        }
+    }
+    return oss.str();
 }
 
 std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions) {

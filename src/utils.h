@@ -64,6 +64,9 @@ std::string &replace_all(std::string &str, const std::string &find, const std::s
 // Escape a string for use in a shell command as an argument.
 std::string escapeshellarg(const std::string &arg);
 
+// Escape a string for nice printing.
+std::string escapeforprint(const std::string &input);
+
 // Find all files with the given extensions in the given directory and all subdirectories.
 std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions);
 
