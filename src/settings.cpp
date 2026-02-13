@@ -260,17 +260,9 @@ std::string Settings::get_std_cxxflags_as_string() const {
 }
 
 std::string Settings::get_cli_args_as_string() const {
-    std::string args = "";
+    std::string args;
     for (auto &arg : user_args) {
-        bool has_space = std::count_if(arg.begin(), arg.end(), ::isspace);
-
-        if (has_space) {
-            // TODO: maybe wrap the arg in single or double quotes depending on whether it
-            // contains single or double quotes.
-            args += "'" + std::string(arg) + "' ";
-        } else {
-            args += std::string(arg) + " ";
-        }
+        args += escapeshellarg(arg) + " ";
     }
 
     if (args.size() > 0) {

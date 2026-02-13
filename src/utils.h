@@ -58,6 +58,12 @@ std::string vector_to_string(const std::vector<std::string> &vec,
                              const std::string &default_for_empty = "",
                              bool keep_trailing_sep = false);
 
+// Replace all occurrences of `find` in `str` with `replacement`.
+std::string &replace_all(std::string &str, const std::string &find, const std::string &replacement);
+
+// Escape a string for use in a shell command as an argument.
+std::string escapeshellarg(const std::string &arg);
+
 // Find all files with the given extensions in the given directory and all subdirectories.
 std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions);
 
@@ -67,16 +73,21 @@ size_t edit_distance(const char *s1, size_t len1, const char *s2, size_t len2);
 // Calculate the edit distance between two strings, C++ style.
 size_t edit_distance(const std::string &s1, const std::string &s2);
 
+// Get the current time.
 inline auto now() -> decltype(std::chrono::high_resolution_clock::now()) {
     return std::chrono::high_resolution_clock::now();
 }
 
+// Calculate the duration in milliseconds between two time points. If end is not provided, use now().
 template <typename T> double duration_ms(const T &start, const T &end = now()) {
     return std::chrono::duration<double, std::milli>(end - start).count();
 }
 
+// Get the color for a duration. The color will be greener if the `duration` is closer to `green_time_ms`, and redder if
+// it's closer to `red_time_ms`.
 fmt::text_style duration_color(double green_time_ms, double red_time_ms, double duration_in_ms);
 
+// A macro to print a duration with color.
 #define colored_duration(green_time_ms, red_time_ms, duration_ms)                                                      \
     styled(duration_ms, duration_color(green_time_ms, red_time_ms, duration_ms))
 

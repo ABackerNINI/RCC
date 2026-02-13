@@ -65,6 +65,29 @@ std::string vector_to_string(const std::vector<std::string> &vec,
     return result;
 }
 
+std::string &replace_all(std::string &str, const std::string &find, const std::string &replacement) {
+    size_t pos = 0;
+    while ((pos = str.find(find, pos)) != std::string::npos) {
+        str.replace(pos, find.length(), replacement);
+        pos += replacement.length(); // Move past the replacement
+    }
+    return str;
+}
+
+std::string escapeshellarg(const std::string &arg) {
+    // If the argument contains single quotes, escape them
+    // * Why use `'\\''` instead of `\\'`? Because the shell will interpret anything
+    // * inside the single quotes as literal, so `\\'` will be interpreted
+    // * as `\\` and the end single quote, which is not what we want.
+    // ! THINGS MIGHT BE DIFFERENT ON WINDOWS
+    std::string escaped = arg;
+    replace_all(escaped, "'", "'\\''");
+
+    // Wrap the argument inside single quotes, this keeps it be interpreted as is
+    // * DO NOT use double quotes
+    return "'" + escaped + "' ";
+}
+
 std::vector<fs::path> find_files(const fs::path &dir, const std::vector<std::string> &extensions) {
     std::vector<fs::path> files;
     for (const auto &entry : fs::recursive_directory_iterator(dir)) {
