@@ -557,11 +557,6 @@ int main(int argc, char **argv) {
     //* times, and get the same seed.
     srand((unsigned int)time(NULL) + (unsigned int)getpid());
 
-    // static std::vector<DurationAndTS> dts = {{1.0, fg(terminal_color::green) | emphasis::bold},
-    //                                          {1.0, fg(terminal_color::cyan) | emphasis::bold},
-    //                                          {1.0, fg(terminal_color::yellow) | emphasis::bold},
-    //                                          {1.0, fg(terminal_color::red) | emphasis::bold}};
-
     // Parse arguments and set up settings
     Settings settings;
     int result;
