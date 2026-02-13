@@ -63,8 +63,10 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 # 总是在多行string字面量前换行
 AlwaysBreakBeforeMultilineStrings: false
-# 总是在template声明后换行
-AlwaysBreakTemplateDeclarations: MultiLine
+# 总是在template声明后换行(deprecated)
+# AlwaysBreakTemplateDeclarations: true
+# Possible values: BTDS_Leave, BTDS_No, BTDS_MultiLine, BTDS_Yes. Seems does't work well in clang-format 20
+# BreakTemplateDeclarationsStyle: BTDS_Leave
 
 # Detailed Break ###############################################################
 
