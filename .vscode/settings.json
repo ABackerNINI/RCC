@@ -2,6 +2,7 @@
 	// Visual Studio, LLVM, Google, Chromium, Mozilla, WebKit, none
 	"C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 120 }",
 	"cSpell.words": [
+        "BTDS",
         "ccobjs",
         "cdbc",
         "cdbgc",
@@ -19,6 +20,9 @@
         "DINCLUDE",
         "DRCC",
         "DTEST",
+        "escapeforprint",
+        "exitonerr",
+        "flto",
         "FORI",
         "FORJ",
         "FORR",
@@ -56,6 +60,7 @@
         "stdc",
         "stdcpp",
         "toupper",
+        "xchar",
         "Xclang"
     ],
     // "C_Cpp.intelliSenseEngine": "disabled",
